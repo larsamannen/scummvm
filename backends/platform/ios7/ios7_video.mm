@@ -30,6 +30,8 @@
 
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
+#include "graphics/opengl/context.h"
+
 static int g_needsScreenUpdate = 0;
 
 #if 0
@@ -75,9 +77,7 @@ void iOS7_updateScreen() {
 	//printf("Mouse: (%i, %i)\n", mouseX, mouseY);
 	if (!g_needsScreenUpdate) {
 		g_needsScreenUpdate = 1;
-		execute_on_main_thread(^{
-			[[iOS7AppDelegate iPhoneView] updateSurface];
-		});
+		[[iOS7AppDelegate iPhoneView] updateSurface];
 	}
 }
 
@@ -123,19 +123,30 @@ uint getSizeNextPOT(uint size) {
 	                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
 	                                };
 
-	_context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+	_renderContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
 	// In case creating the OpenGL ES context failed, we will error out here.
-	if (_context == nil) {
+	if (_renderContext == nil) {
 		printError("Could not create OpenGL ES context.");
 		abort();
 	}
 
-	if ([EAGLContext setCurrentContext:_context]) {
-		// glEnableClientState(GL_TEXTURE_COORD_ARRAY); printOpenGLError();
-		// glEnableClientState(GL_VERTEX_ARRAY); printOpenGLError();
-		[self setupOpenGL];
+	if ([EAGLContext setCurrentContext:_renderContext]) {
+		OpenGLContext.initialize(OpenGL::kContextGLES2);
+		[self setupRenderBuffer];
 	}
+}
+
+- (EAGLSharegroup *)getGLShareGroup {
+	return _renderContext.sharegroup;
+}
+
+- (void)setGLContext:(EAGLContext *)context {
+	_context = context;
+}
+
+- (EAGLContext *)getGLContext {
+	return _context;
 }
 
 - (void)setupOpenGL {
@@ -166,30 +177,38 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)rebuildFrameBuffer {
-	[self deleteFramebuffer];
 	[self setupFramebuffer];
 	[self finishGLSetup];
 }
 
-- (void)setupFramebuffer {
-	glGenRenderbuffers(1, &_viewRenderbuffer);
+- (void)rebuildRenderBuffer {
+	[self setupRenderBuffer];
+}
+
+- (void)setupRenderBuffer {
+	if (!_viewRenderbuffer)
+		glGenRenderbuffers(1, &_viewRenderbuffer);
 	printOpenGLError();
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
 	printOpenGLError();
-	[_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer];
-
-	glGenFramebuffers(1, &_viewFramebuffer);
-	printOpenGLError();
-	glBindFramebuffer(GL_FRAMEBUFFER, _viewFramebuffer);
-	printOpenGLError();
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _viewRenderbuffer);
-	printOpenGLError();
-
+	if (![_renderContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer]) {
+		printError("Failed renderbufferStorage");
+	}
 	// Retrieve the render buffer size. This *should* match the frame size,
 	// i.e. g_fullWidth and g_fullHeight.
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
 	printOpenGLError();
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
+	printOpenGLError();
+}
+
+- (void)setupFramebuffer {
+	if (!_viewFramebuffer)
+		glGenFramebuffers(1, &_viewFramebuffer);
+	printOpenGLError();
+	glBindFramebuffer(GL_FRAMEBUFFER, _viewFramebuffer);
+	printOpenGLError();
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _viewRenderbuffer);
 	printOpenGLError();
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -218,21 +237,37 @@ uint getSizeNextPOT(uint size) {
 	_overlayCoords[2].x = 0; _overlayCoords[2].y = 0; _overlayCoords[2].u = 0; _overlayCoords[2].v = v;
 	_overlayCoords[3].x = 0; _overlayCoords[3].y = 0; _overlayCoords[3].u = u; _overlayCoords[3].v = v;
 
+	if (_videoContext.overlayTexture.getPixels())
+		_videoContext.overlayTexture.free();
 	_videoContext.overlayTexture.create((uint16) overlayTextureWidthPOT, (uint16) overlayTextureHeightPOT, Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 }
 
+- (void)deleteRenderBuffer {
+	if (_viewRenderbuffer) {
+		glDeleteRenderbuffers(1, &_viewRenderbuffer);
+		_viewRenderbuffer = 0;
+	}
+}
+
 - (void)deleteFramebuffer {
-	glDeleteRenderbuffers(1, &_viewRenderbuffer);
-	glDeleteFramebuffers(1, &_viewFramebuffer);
+	if (_viewFramebuffer) {
+		glDeleteFramebuffers(1, &_viewFramebuffer);
+		_viewFramebuffer = 0;
+	}
 }
 
 - (void)setupVBOs {
-	glGenBuffers(1, &_vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+	if (!_vertexBuffer) {
+		glGenBuffers(1, &_vertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+	}
 }
 
 - (void)deleteVBOs {
-	glDeleteBuffers(1, &_vertexBuffer);
+	if (_vertexBuffer) {
+		glDeleteBuffers(1, &_vertexBuffer);
+		_vertexBuffer = 0;
+	}
 }
 
 - (GLuint)compileShader:(const char*)shaderPrg withType:(GLenum)shaderType {
@@ -283,6 +318,9 @@ uint getSizeNextPOT(uint size) {
 			"	gl_FragColor = texture2D(Texture, o_TexCoord);"
 			"}";
 
+	if (_vertexShader || _fragmentShader)
+		return;
+
 	_vertexShader = [self compileShader:vertexPrg withType:GL_VERTEX_SHADER];
 	_fragmentShader = [self compileShader:fragmentPrg withType:GL_FRAGMENT_SHADER];
 
@@ -315,14 +353,23 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)deleteShaders {
-	glDeleteShader(_vertexShader);
-	glDeleteShader(_fragmentShader);
+	if (!_vertexShader) {
+		glDeleteShader(_vertexShader);
+		_vertexShader = 0;
+	}
+	if (!_fragmentShader) {
+		glDeleteShader(_fragmentShader);
+		_fragmentShader = 0;
+	}
 }
 
 - (void)setupTextures {
-	glGenTextures(1, &_screenTexture); printOpenGLError();
-	glGenTextures(1, &_overlayTexture); printOpenGLError();
-	glGenTextures(1, &_mouseCursorTexture); printOpenGLError();
+	if (!_screenTexture)
+		glGenTextures(1, &_screenTexture); printOpenGLError();
+	if (!_overlayTexture)
+		glGenTextures(1, &_overlayTexture); printOpenGLError();
+	if (!_mouseCursorTexture)
+		glGenTextures(1, &_mouseCursorTexture); printOpenGLError();
 
 	[self setGraphicsMode];
 }
@@ -472,6 +519,11 @@ uint getSizeNextPOT(uint size) {
 	_overlayTexture = 0;
 	_mouseCursorTexture = 0;
 
+	_viewRenderbuffer = 0;
+	_viewFramebuffer = 0;
+	_vertexBuffer = 0;
+	_fragmentShader = 0;
+
 	_scaledShakeXOffset = 0;
 	_scaledShakeYOffset = 0;
 
@@ -482,6 +534,7 @@ uint getSizeNextPOT(uint size) {
 	memset(_mouseCoords, 0, sizeof(GLVertex) * 4);
 
 	// Initialize the OpenGL ES context
+	_context = nil;
 	[self createContext];
 
 	return self;
@@ -682,8 +735,12 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)initSurface {
-	if (_context) {
-		[self rebuildFrameBuffer];
+	if ([EAGLContext setCurrentContext:_renderContext] == NO) {
+		printError("Could not set OpenGL ES current context.");
+	}
+	[self rebuildRenderBuffer];
+	if ([EAGLContext setCurrentContext:_context] == NO) {
+		printError("Could not set OpenGL ES current context.");
 	}
 
 	BOOL isLandscape = (self.bounds.size.width > self.bounds.size.height); // UIDeviceOrientationIsLandscape([[UIDevice currentDevice] orientation]);
@@ -692,8 +749,7 @@ uint getSizeNextPOT(uint size) {
 	if (isLandscape) {
 		screenWidth = MAX(_renderBufferWidth, _renderBufferHeight);
 		screenHeight = MIN(_renderBufferWidth, _renderBufferHeight);
-	}
-	else {
+	} else {
 		screenWidth = MIN(_renderBufferWidth, _renderBufferHeight);
 		screenHeight = MAX(_renderBufferWidth, _renderBufferHeight);
 	}
@@ -705,10 +761,6 @@ uint getSizeNextPOT(uint size) {
 		[self addSubview: _keyboardView];
 		[self showKeyboard];
 	}
-
-	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer); printOpenGLError();
-
-	[self clearColorBuffer];
 
 	GLfloat adjustedWidth = _videoContext.screenWidth;
 	GLfloat adjustedHeight = _videoContext.screenHeight;
@@ -769,9 +821,22 @@ uint getSizeNextPOT(uint size) {
 	_overlayCoords[1].x = _overlayCoords[3].x = CGRectGetMaxX(_overlayRect);
 	_overlayCoords[2].y = _overlayCoords[3].y = CGRectGetMaxY(_overlayRect);
 
-	[self setViewTransformation];
 	[self updateMouseCursorScaling];
 	[self adjustViewFrameForSafeArea];
+}
+
+- (void)initSurfacePre {
+	[self deleteFramebuffer];
+}
+
+- (void)initSurfacePost {
+	[self rebuildFrameBuffer];
+
+	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer); printOpenGLError();
+
+	[self clearColorBuffer];
+
+	[self setViewTransformation];
 }
 
 #ifndef __has_builtin

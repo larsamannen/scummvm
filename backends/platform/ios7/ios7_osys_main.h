@@ -153,6 +153,8 @@ public:
 
 	float getHiDPIScreenFactor() const override;
 
+	static void allocGameGlContext();
+
 protected:
 	// PaletteManager API
 	void setPalette(const byte *colors, uint start, uint num) override;

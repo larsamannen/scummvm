@@ -166,3 +166,12 @@ void OSystem_iOS7::handleEvent_applicationRestoreState() {
 void OSystem_iOS7::handleEvent_applicationClearState() {
 	clearState();
 }
+
+void OSystem_iOS7::allocGameGlContext() {
+	EAGLSharegroup *shareGroup = [[iOS7AppDelegate iPhoneView] getGLShareGroup];
+	EAGLContext *context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:shareGroup];
+	[[iOS7AppDelegate iPhoneView] setGLContext:context];
+	if ([EAGLContext setCurrentContext:context] == NO) {
+		error("Could not set OpenGL ES current context.");
+	}
+}

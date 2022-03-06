@@ -185,6 +185,8 @@ void OSystem_iOS7::initSize(uint width, uint height, const Graphics::PixelFormat
 		_framebuffer.h = height;
 	}
 
+	[[iOS7AppDelegate iPhoneView] setupOpenGL];
+
 	_fullScreenIsDirty = false;
 	dirtyFullScreen();
 	_mouseCursorPaletteEnabled = false;
@@ -197,17 +199,17 @@ void OSystem_iOS7::beginGFXTransaction() {
 OSystem::TransactionError OSystem_iOS7::endGFXTransaction() {
 	_screenChangeCount++;
 	updateOutputSurface();
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] setGraphicsMode];
-	});
+	[[iOS7AppDelegate iPhoneView] setGraphicsMode];
 
 	return _gfxTransactionError;
 }
 
 void OSystem_iOS7::updateOutputSurface() {
+	[[iOS7AppDelegate iPhoneView] initSurfacePre];
 	execute_on_main_thread(^ {
 		[[iOS7AppDelegate iPhoneView] initSurface];
 	});
+	[[iOS7AppDelegate iPhoneView] initSurfacePost];
 }
 
 int16 OSystem_iOS7::getHeight() {
@@ -368,9 +370,7 @@ void OSystem_iOS7::setShakePos(int shakeXOffset, int shakeYOffset) {
 	//printf("setShakePos(%i, %i)\n", shakeXOffset, shakeYOffset);
 	_videoContext->shakeXOffset = shakeXOffset;
 	_videoContext->shakeYOffset = shakeYOffset;
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] setViewTransformation];
-	});
+	[[iOS7AppDelegate iPhoneView] setViewTransformation];
 	// HACK: We use this to force a redraw.
 	_mouseDirty = true;
 }
@@ -381,10 +381,8 @@ void OSystem_iOS7::showOverlay(bool inGUI) {
 	_videoContext->overlayInGUI = inGUI;
 	dirtyFullOverlayScreen();
 	updateScreen();
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] updateMouseCursorScaling];
-		[[iOS7AppDelegate iPhoneView] clearColorBuffer];
-	});
+	[[iOS7AppDelegate iPhoneView] updateMouseCursorScaling];
+	[[iOS7AppDelegate iPhoneView] clearColorBuffer];
 }
 
 void OSystem_iOS7::hideOverlay() {
@@ -393,10 +391,8 @@ void OSystem_iOS7::hideOverlay() {
 	_videoContext->overlayInGUI = false;
 	_dirtyOverlayRects.clear();
 	dirtyFullScreen();
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] updateMouseCursorScaling];
-		[[iOS7AppDelegate iPhoneView] clearColorBuffer];
-	});
+	[[iOS7AppDelegate iPhoneView] updateMouseCursorScaling];
+	[[iOS7AppDelegate iPhoneView] clearColorBuffer];
 }
 
 void OSystem_iOS7::clearOverlay() {
@@ -596,9 +592,7 @@ void OSystem_iOS7::updateMouseTexture() {
 		}
 	}
 
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] updateMouseCursor];
-	});
+	[[iOS7AppDelegate iPhoneView] updateMouseCursor];
 }
 
 void OSystem_iOS7::setShowKeyboard(bool show) {

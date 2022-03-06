@@ -164,6 +164,8 @@ bool OSystem_iOS7::hasFeature(Feature f) {
 #endif
 	case kFeatureOpenUrl:
 	case kFeatureNoQuit:
+	case kFeatureOpenGLForGame:
+	case kFeatureShadersForGame:
 		return true;
 
 	default:
@@ -409,6 +411,7 @@ void iOS7_main(int argc, char **argv) {
 #endif
 
 	g_system = OSystem_iOS7::sharedInstance();
+	OSystem_iOS7::allocGameGlContext();
 	assert(g_system);
 
 	// Invoke the actual ScummVM main entry point:

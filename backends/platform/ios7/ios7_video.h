@@ -54,6 +54,7 @@ uint getSizeNextPOT(uint size);
 
 	UIBackgroundTaskIdentifier _backgroundSaveStateTask;
 
+	EAGLContext *_renderContext;
 	EAGLContext *_context;
 	GLuint _viewRenderbuffer;
 	GLuint _viewFramebuffer;
@@ -99,10 +100,16 @@ uint getSizeNextPOT(uint size);
 - (id)initWithFrame:(struct CGRect)frame;
 
 - (VideoContext *)getVideoContext;
+- (EAGLSharegroup *)getGLShareGroup;
+- (void)setGLContext:(EAGLContext *)context;
+- (EAGLContext *)getGLContext;
 
 - (void)setGameScreenCoords;
 - (void)initSurface;
+- (void)initSurfacePre;
+- (void)initSurfacePost;
 - (void)setViewTransformation;
+- (void)setupOpenGL;
 
 - (void)setGraphicsMode;
 
