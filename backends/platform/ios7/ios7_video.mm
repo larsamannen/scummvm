@@ -132,6 +132,8 @@ uint getSizeNextPOT(uint size) {
 	if ([EAGLContext setCurrentContext:_renderContext]) {
 		[self setupRenderBuffer];
 	}
+
+	_render3d = NO;
 }
 
 - (EAGLSharegroup *)getGLShareGroup {
@@ -154,6 +156,10 @@ uint getSizeNextPOT(uint size) {
 	[self setupTextures];
 
 	[self finishGLSetup];
+}
+
+- (void)set3dMode:(BOOL)mode {
+	_render3d = mode;
 }
 
 - (void)finishGLSetup {
@@ -578,16 +584,20 @@ uint getSizeNextPOT(uint size) {
 	}
 	g_needsScreenUpdate = 0;
 
-	glClear(GL_COLOR_BUFFER_BIT); printOpenGLError();
+	if (!_render3d) {
+		glClear(GL_COLOR_BUFFER_BIT); printOpenGLError();
+	}
 
-	[self updateMainSurface];
-
+	if (!_render3d) {
+		[self updateMainSurface];
+	}
 	if (_videoContext.overlayVisible)
 		[self updateOverlaySurface];
 
+	if (!_render3d) {
 	if (_videoContext.mouseIsVisible)
 		[self updateMouseSurface];
-
+	}
 	[_context presentRenderbuffer:GL_RENDERBUFFER];
 	glFinish();
 }

@@ -136,6 +136,8 @@ public:
 	void beginGFXTransaction() override;
 	TransactionError endGFXTransaction() override;
 
+	bool setGraphicsMode(int mode, uint flags) override;
+
 	int16 getHeight() override;
 	int16 getWidth() override;
 

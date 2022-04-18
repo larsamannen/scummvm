@@ -103,6 +103,17 @@ void OSystem_iOS7::initVideoContext() {
 	_videoContext = [[iOS7AppDelegate iPhoneView] getVideoContext];
 }
 
+bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
+	bool render3d = flags & OSystem::kGfxModeRender3d;
+
+	if (render3d)
+		[[iOS7AppDelegate iPhoneView] set3dMode:YES];
+	else
+		[[iOS7AppDelegate iPhoneView] set3dMode:NO];
+
+	return mode == 0; // taken from system.h
+}
+
 #ifdef USE_RGB_COLOR
 Common::List<Graphics::PixelFormat> OSystem_iOS7::getSupportedFormats() const {
 	Common::List<Graphics::PixelFormat> list;

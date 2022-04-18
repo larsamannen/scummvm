@@ -54,6 +54,7 @@ uint getSizeNextPOT(uint size);
 
 	UIBackgroundTaskIdentifier _backgroundSaveStateTask;
 
+	BOOL _render3d;
 	EAGLContext *_renderContext;
 	EAGLContext *_context;
 	GLuint _viewRenderbuffer;
@@ -112,6 +113,8 @@ uint getSizeNextPOT(uint size);
 - (void)setupOpenGL;
 
 - (void)setGraphicsMode;
+
+- (void)set3dMode:(BOOL)mode;
 
 - (void)updateSurface;
 - (void)updateMainSurface;
