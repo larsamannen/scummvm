@@ -361,8 +361,8 @@ uint getSizeNextPOT(uint size) {
 	UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingersSwipeDown:)];
 	swipeDown.direction = UISwipeGestureRecognizerDirectionDown;
 	swipeDown.numberOfTouchesRequired = 2;
-	swipeDown.delaysTouchesBegan = NO;
-	swipeDown.delaysTouchesEnded = NO;
+	swipeDown.delaysTouchesBegan = YES;
+	swipeDown.delaysTouchesEnded = YES;
 
 	UISwipeGestureRecognizer *swipeRight3 = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeRight:)];
 	swipeRight3.direction = UISwipeGestureRecognizerDirectionRight;
