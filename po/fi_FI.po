@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.6.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-11-25 04:01+0000\n"
-"PO-Revision-Date: 2022-10-17 00:33+0000\n"
+"POT-Creation-Date: 2022-11-28 23:21+0000\n"
+"PO-Revision-Date: 2022-11-27 20:29+0000\n"
 "Last-Translator: Timo Mikkolainen <tmikkola@gmail.com>\n"
 "Language-Team: Finnish <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/fi/>\n"
@@ -178,15 +178,14 @@ msgstr ""
 #: engines/groovie/script.cpp:650 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:926
-#: engines/scumm/scumm.cpp:1100 engines/scumm/scumm.cpp:1126
-#: engines/scumm/scumm.cpp:1148 engines/scumm/scumm.cpp:1446
-#: engines/scumm/scumm.cpp:1919 engines/scumm/scumm.cpp:1935
-#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:531
-#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
-#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
-#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
-#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
+#: engines/scumm/scumm.cpp:1094 engines/scumm/scumm.cpp:1120
+#: engines/scumm/scumm.cpp:1142 engines/scumm/scumm.cpp:1440
+#: engines/scumm/scumm.cpp:1909 engines/scumm/scumm.cpp:1925
+#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:529
+#: engines/sword1/animation.cpp:560 engines/sword1/animation.cpp:568
+#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
+#: engines/sword2/animation.cpp:426 engines/sword2/animation.cpp:456
+#: engines/sword2/animation.cpp:466 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "OK"
 
@@ -789,7 +788,7 @@ msgstr "Valitse kriteeri jonka mukaan ryhmittää"
 msgid "~Q~uit"
 msgstr "~L~opeta"
 
-#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:234
+#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:252
 msgid "Quit ScummVM"
 msgstr "Lopeta ScummVM"
 
@@ -797,7 +796,7 @@ msgstr "Lopeta ScummVM"
 msgid "A~b~out"
 msgstr "~T~ietoa"
 
-#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:228
+#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:246
 msgid "About ScummVM"
 msgstr "Tietoa ScummVM:stä"
 
@@ -2206,7 +2205,7 @@ msgstr "Disabloitu GFX"
 msgid "Standard renderer"
 msgstr "Standardirenderöijä"
 
-#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:887
+#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:947
 msgid "Standard"
 msgstr "Standardi"
 
@@ -2917,7 +2916,7 @@ msgstr "Ei musiikkia"
 msgid "Apple II GS emulator (NOT IMPLEMENTED)"
 msgstr "Apple II GS emulaattori (EI TOTEUTETTU)"
 
-#: audio/softsynth/cms.cpp:354
+#: audio/softsynth/cms.cpp:355
 msgid "Creative Music System emulator"
 msgstr "Creative Music System emulaattori"
 
@@ -3570,7 +3569,7 @@ msgstr "Yhtään tiedostoa ei siirretty!"
 msgid "Uploaded successfully!"
 msgstr "Lähetetty onnistuneesti!"
 
-#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:276
+#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:277
 msgid "~C~lose"
 msgstr "~S~ulje"
 
@@ -3823,23 +3822,23 @@ msgstr "Touchpad tila pois päältä."
 msgid "Click Mode"
 msgstr "Klikkaus moodi"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:230
+#: backends/platform/sdl/macosx/appmenu_osx.mm:248
 msgid "Hide ScummVM"
 msgstr "Piilota ScummVM"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:231
+#: backends/platform/sdl/macosx/appmenu_osx.mm:249
 msgid "Hide Others"
 msgstr "Piilota muut"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:232
+#: backends/platform/sdl/macosx/appmenu_osx.mm:250
 msgid "Show All"
 msgstr "Näytä kaikki"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:237
+#: backends/platform/sdl/macosx/appmenu_osx.mm:255
 msgid "Window"
 msgstr "Ikkuna"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:239
+#: backends/platform/sdl/macosx/appmenu_osx.mm:257
 msgid "Minimize"
 msgstr "Minimoi"
 
@@ -3847,44 +3846,44 @@ msgstr "Minimoi"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
-#: backends/platform/sdl/macosx/appmenu_osx.mm:244
+#: backends/platform/sdl/macosx/appmenu_osx.mm:262
 #: engines/bladerunner/metaengine.cpp:321 engines/zvision/metaengine.cpp:226
 msgid "Help"
 msgstr "Ohje"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:249
+#: backends/platform/sdl/macosx/appmenu_osx.mm:267
 msgid "User Manual"
 msgstr "Käyttöohje"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:251
+#: backends/platform/sdl/macosx/appmenu_osx.mm:269
 msgid "General Information"
 msgstr "Yleistä Tietoa"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:252
+#: backends/platform/sdl/macosx/appmenu_osx.mm:270
 msgid "What's New in ScummVM"
 msgstr "Uutta ScummVM:ssä"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:254
+#: backends/platform/sdl/macosx/appmenu_osx.mm:272
 msgid "Credits"
 msgstr "Tekijät"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:255
+#: backends/platform/sdl/macosx/appmenu_osx.mm:273
 msgid "GPL License"
 msgstr "GPL-lisenssi"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:256
+#: backends/platform/sdl/macosx/appmenu_osx.mm:274
 msgid "LGPL License"
 msgstr "LGPL-lisenssi"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:257
+#: backends/platform/sdl/macosx/appmenu_osx.mm:275
 msgid "Freefont License"
 msgstr "Freefont-lisenssi"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:258
+#: backends/platform/sdl/macosx/appmenu_osx.mm:276
 msgid "OFL License"
 msgstr "OFL-lisenssi"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:259
+#: backends/platform/sdl/macosx/appmenu_osx.mm:277
 msgid "BSD License"
 msgstr "BSD-lisenssi"
 
@@ -4139,6 +4138,7 @@ msgstr "Poista NTSC-häiriövärien emulointi tekstille"
 #: engines/agi/detection_tables.h:310
 msgid "Early AGI games for Tandy Color Computer are not yet supported."
 msgstr ""
+"Varhaiset AGI-pelit Tandy Color Computer:ille eivät vielä ole tuettuja."
 
 #: engines/agi/font.cpp:1096
 msgid ""
@@ -4262,7 +4262,7 @@ msgstr "Lataa tallenne"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Pelin pikalataus tai tallennus ei ole tuettu tässä sijainnissa"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2696
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2687
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4273,7 +4273,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2683
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2674
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4284,7 +4284,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2712
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2703
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4582,12 +4582,12 @@ msgstr "Näytä käännösteksitys introssa oleville teksteille"
 
 #: engines/bladerunner/metaengine.cpp:111
 msgid "Fix credits for voice actors"
-msgstr ""
+msgstr "Korjaa ääninäyttelijöiden lopputekstit"
 
 #: engines/bladerunner/metaengine.cpp:112
 msgid ""
 "Updates the end credits with corrected credits for the Spanish voice actors"
-msgstr ""
+msgstr "Korjaa lopputekstit Espanjankielisten ääninäyttelijöiden osalta"
 
 #. I18N: These are keymaps that work in the main gameplay and also when KIA (Knowledge Integration Assistant) is open.
 #: engines/bladerunner/metaengine.cpp:199
@@ -4734,10 +4734,8 @@ msgid "Skip support"
 msgstr "Ohita tuki"
 
 #: engines/buried/metaengine.cpp:41
-#, fuzzy
-#| msgid "Allow text and cutscenes to be skipped"
 msgid "Allow cutscenes to be skipped"
-msgstr "Salli tekstin ja videoiden ohittaminen"
+msgstr "Salli videoiden ohittaminen"
 
 #: engines/buried/saveload.cpp:66
 msgid ""
@@ -4781,11 +4779,8 @@ msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "Käytä TTS:ää tekstin lukemiseen pelissä (jos TTS on saatavilla)"
 
 #: engines/cge2/metaengine.cpp:55
-#, fuzzy
-#| msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgid "Enable Text to Speech for Objects and Options"
-msgstr ""
-"Tekstistä puheeksi -toiminto esineille, asetuksille ja raamattulainaukselle"
+msgstr "Tekstistä puheeksi -toiminto esineille ja asetuksille"
 
 #: engines/cge2/metaengine.cpp:56 engines/dreamweb/metaengine.cpp:62
 #: engines/griffon/metaengine.cpp:41 engines/lure/metaengine.cpp:40
@@ -4815,15 +4810,15 @@ msgstr ""
 "Käytä läpinäkyviä dialogilaatikoita 16-värisissä näkymissä vaikka "
 "alkuperäinen peli ei niitä tukisikaan"
 
-#: engines/cine/metaengine.cpp:164
+#: engines/cine/metaengine.cpp:158
 msgid "Unnamed autosave"
 msgstr "Nimetön automaattinen tallennus"
 
-#: engines/cine/metaengine.cpp:166 engines/cine/metaengine.cpp:238
+#: engines/cine/metaengine.cpp:160 engines/cine/metaengine.cpp:232
 msgid "Unnamed savegame"
 msgstr "Nimetön pelitallennus"
 
-#: engines/cine/metaengine.cpp:183 engines/cine/metaengine.cpp:246
+#: engines/cine/metaengine.cpp:177 engines/cine/metaengine.cpp:240
 msgid "Empty autosave"
 msgstr "Tyhjä autom. tallennus"
 
@@ -4941,29 +4936,36 @@ msgstr ""
 
 #: engines/freescape/metaengine.cpp:31
 msgid "Prerecorded sounds"
-msgstr ""
+msgstr "Esiäänitetyt äänet"
 
 #: engines/freescape/metaengine.cpp:32
 msgid "Use high-quality pre-recorded sounds instead of pc speaker emulation"
 msgstr ""
+"Käytä korkealaatuisia esiäänitettyjä ääniä pc speaker-emulaation sijaan"
 
 #: engines/freescape/metaengine.cpp:42
-msgid "Automatic drilling"
-msgstr ""
+msgid "Extended timer"
+msgstr "Pidennetty ajastin"
 
 #: engines/freescape/metaengine.cpp:43
-msgid "Allow to succefully drill in any part of the area in Driller"
-msgstr ""
+msgid "Start the game timer at 99:59:59"
+msgstr "Aloita peliajastin ajasta 99:59:59"
 
 #: engines/freescape/metaengine.cpp:53
-#, fuzzy
-#| msgid "Enable debug mode"
-msgid "Disable demo mode"
-msgstr "Käytä debugtilaa"
+msgid "Automatic drilling"
+msgstr "Automaattinen poraus"
 
 #: engines/freescape/metaengine.cpp:54
+msgid "Allow to succefully drill in any part of the area in Driller"
+msgstr "Salli onnistunut poraus missä tahansa alueella Driller:issä"
+
+#: engines/freescape/metaengine.cpp:64
+msgid "Disable demo mode"
+msgstr "Ei demotilaa"
+
+#: engines/freescape/metaengine.cpp:65
 msgid "Never activate demo mode"
-msgstr ""
+msgstr "Älä koskaan aktivoi demotilaa"
 
 #: engines/glk/glk_api.cpp:62
 msgid "[ press any key to exit ]"
@@ -6165,15 +6167,13 @@ msgstr "Käynnistä debuggeri päällä"
 msgid "Starts with the debugger dashboard active."
 msgstr "Käynnistää debuggerikojelauta aktiivisena."
 
-#: engines/mtropolis/metaengine.cpp:172
-#, fuzzy
-#| msgid "Toggle Clue Privacy"
+#: engines/mtropolis/metaengine.cpp:160
 msgid "Toggle debug overlay"
-msgstr "Vihjeen julkisuus päälle / pois"
+msgstr "Debug overlay päälle / pois"
 
-#: engines/mtropolis/metaengine.cpp:177
+#: engines/mtropolis/metaengine.cpp:165
 msgid "Force any playing movies to end"
-msgstr ""
+msgstr "Lopeta kaikki käynnissä olevat videot"
 
 #: engines/mtropolis/saveload.cpp:142
 msgid "Failed to read version information from save file"
@@ -6187,14 +6187,12 @@ msgstr ""
 "versioinformaatiota."
 
 #: engines/mtropolis/saveload.cpp:166
-#, fuzzy
-#| msgid ""
-#| "Saved game was created with a newer version of ScummVM. Unable to load."
 msgid ""
 "Saved game was created with an earlier, incompatible version of ScummVM. "
 "Unable to load."
 msgstr ""
-"Tämä pelitallenne on luotu ScummVM:n uudemmalla versiolla. Lataus ei onnistu."
+"Tämä pelitallenne on luotu ScummVM:n aikaisemmalla, yhteensopimattomalla "
+"versiolla. Lataus ei onnistu."
 
 #: engines/mtropolis/saveload.cpp:174
 msgid "Failed to load save, an error occurred when reading the save game data."
@@ -6566,21 +6564,21 @@ msgid "Use an easier to read custom font"
 msgstr "Käytä helppolukuisempaa räätälöityä kirjasinmallia"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:673
+#: engines/saga/detection_tables.h:697
 msgid "Windows Trial version is not supported"
 msgstr "Windows:in koeversio ei ole vielä tuettu"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:699
+#: engines/saga/detection_tables.h:724
 msgid "macOS Trial version is not supported"
 msgstr "macOS:n koeversio ei ole tuettu"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:724
+#: engines/saga/detection_tables.h:750
 msgid "Pocket PC Trial version is not supported"
 msgstr "Pocket PC:n koeversio ei ole tuettu"
 
-#: engines/saga/metaengine.cpp:108
+#: engines/saga/metaengine.cpp:114
 msgid "I Have No Mouth support not compiled in"
 msgstr "I Have No Mouth-tukea ei ole käännetty mukaan"
 
@@ -6595,7 +6593,7 @@ msgstr ""
 "Musiikki ei tule kuulostamaan samalta kuin\n"
 "alkuperäisessä pelissä ilman niitä."
 
-#: engines/saga/saga.cpp:375
+#: engines/saga/saga.cpp:387
 msgid "Error loading game resources."
 msgstr "Peliresursseja lukiessa tapahtui virhe."
 
@@ -6940,53 +6938,53 @@ msgstr ""
 "tiedostoversiot KryoFlux-dumpeista jotka Limited Run Games myös toimitti."
 
 #. I18N: Previous page button
-#: engines/scumm/dialogs.cpp:273
+#: engines/scumm/dialogs.cpp:274
 msgid "~P~revious"
 msgstr "E~d~ellinen"
 
 #. I18N: Next page button
-#: engines/scumm/dialogs.cpp:275
+#: engines/scumm/dialogs.cpp:276
 msgid "~N~ext"
 msgstr "Se~u~raava"
 
-#: engines/scumm/dialogs.cpp:826
+#: engines/scumm/dialogs.cpp:886
 msgid "Speech Only"
 msgstr "Vain puhe"
 
-#: engines/scumm/dialogs.cpp:827
+#: engines/scumm/dialogs.cpp:887
 msgid "Speech and Subtitles"
 msgstr "Puhe ja Tekstitys"
 
-#: engines/scumm/dialogs.cpp:828
+#: engines/scumm/dialogs.cpp:888
 msgid "Subtitles Only"
 msgstr "Vain tekstitys"
 
-#: engines/scumm/dialogs.cpp:836
+#: engines/scumm/dialogs.cpp:896
 msgctxt "lowres"
 msgid "Speech & Subs"
 msgstr "Puhe & teksti"
 
-#: engines/scumm/dialogs.cpp:882
+#: engines/scumm/dialogs.cpp:942
 msgid "Select a Proficiency Level."
 msgstr "Valitse taitotasosi."
 
-#: engines/scumm/dialogs.cpp:884
+#: engines/scumm/dialogs.cpp:944
 msgid "Refer to your Loom(TM) manual for help."
 msgstr "Lue Loom(TM) ohjekirjaa saadaksesi ohjeita."
 
-#: engines/scumm/dialogs.cpp:888
+#: engines/scumm/dialogs.cpp:948
 msgid "Practice"
 msgstr "Harjoitus"
 
-#: engines/scumm/dialogs.cpp:889
+#: engines/scumm/dialogs.cpp:949
 msgid "Expert"
 msgstr "Ekspertti"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:647
 msgid "Enable game-specific enhancements"
 msgstr "Pelikohtaiset parannukset"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:648
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6994,11 +6992,11 @@ msgstr ""
 "Salli ScummVM:n tehdä pieniä parannuksia peliin, usein pohjautuen saman "
 "pelin toisiin versioihin."
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:665
 msgid "Enable the original GUI and Menu"
 msgstr "Käytä alkuperäistä käyttöliittymää ja valikkoa"
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:666
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
 "save/load menu."
@@ -7006,11 +7004,11 @@ msgstr ""
 "Salli pelin käyttää pelimoottorin sisäistä graafista käyttöliittymää sekä "
 "alkuperäistä tallennus/latausvalikkoa."
 
-#: engines/scumm/dialogs.cpp:946
+#: engines/scumm/dialogs.cpp:1006
 msgid "Overture Timing:"
 msgstr "Alkusoiton ajoitus:"
 
-#: engines/scumm/dialogs.cpp:950
+#: engines/scumm/dialogs.cpp:1010
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -7018,11 +7016,11 @@ msgstr ""
 "Vaihtoehtoista musiikkia käytettäessä tämä säätää alkusoiton vaihtumista "
 "Lucasfilm:in ja Loom:in logotyypeiksi."
 
-#: engines/scumm/dialogs.cpp:1034
+#: engines/scumm/dialogs.cpp:1093
 msgid "Playback Adjust:"
 msgstr "Äänentoiston hienosäätö:"
 
-#: engines/scumm/dialogs.cpp:1038
+#: engines/scumm/dialogs.cpp:1097
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -7030,11 +7028,11 @@ msgstr ""
 "Säätää äänen alkukohtaa CD:ltä toistettaessa tämän verran. Käytä tätä jos "
 "kuulet usein osia vääristä äänistä."
 
-#: engines/scumm/dialogs.cpp:1117
+#: engines/scumm/dialogs.cpp:1176
 msgid "Intro Adjust:"
 msgstr "Intron äänentoiston hienosäätö:"
 
-#: engines/scumm/dialogs.cpp:1121
+#: engines/scumm/dialogs.cpp:1180
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -7044,11 +7042,11 @@ msgstr ""
 "tätä jos musiikki lakkaa ennen aikojaan, tai jos et ole tyytyväinen intron "
 "ja sen musiikin synkronisaatioon."
 
-#: engines/scumm/dialogs.cpp:1130
+#: engines/scumm/dialogs.cpp:1189
 msgid "Outlook Adjust:"
 msgstr "Outlook-musiikin äänentoiston hienosäätö:"
 
-#: engines/scumm/dialogs.cpp:1134
+#: engines/scumm/dialogs.cpp:1193
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7391,15 +7389,13 @@ msgstr "Potkaise"
 
 #. I18N: The name of the 'Shift' key on a PC keyboard
 #: engines/scumm/help.cpp:238
-#, fuzzy
-#| msgid "Shift key"
 msgid "Shift"
-msgstr "Shift-näppäin"
+msgstr "Shift"
 
 #. I18N: Lets one skip the bike/car fight sequences in Full Throttle
 #: engines/scumm/help.cpp:240
 msgid "Win the bike fight cheat"
-msgstr ""
+msgstr "Voita moottoripyörätaistelu-huijaus"
 
 #: engines/scumm/help.cpp:245
 msgid "Regular cursor"
@@ -7579,19 +7575,19 @@ msgstr "Lennä oikealle"
 msgid "Fly to lower right"
 msgstr "Lennä alas oikealle"
 
-#: engines/scumm/input.cpp:1102
+#: engines/scumm/input.cpp:1240
 msgid "Snap scroll on"
 msgstr "Snap scroll päälle"
 
-#: engines/scumm/input.cpp:1104
+#: engines/scumm/input.cpp:1242
 msgid "Snap scroll off"
 msgstr "Snap scroll pois päältä"
 
-#: engines/scumm/input.cpp:1117
+#: engines/scumm/input.cpp:1255
 msgid "Music volume: "
 msgstr "Musiikin äänenvoimakkuus: "
 
-#: engines/scumm/input.cpp:1134
+#: engines/scumm/input.cpp:1272
 msgid "Subtitle speed: "
 msgstr "Tekstien nopeus: "
 
@@ -7695,7 +7691,7 @@ msgstr ""
 "Kuvasuhteen korjaus saadaan mahdolliseksi trimmaamalla resoluution 320x200:"
 "aan 'Pelimoottori'-välilehdellä."
 
-#: engines/scumm/scumm.cpp:1099
+#: engines/scumm/scumm.cpp:1093
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7703,7 +7699,7 @@ msgstr ""
 "\"Indy\":n Macintosh ohjelmatiedostoa ei löydetty. Korkearesoluutioiset\n"
 "versiot fontista eivät ole tuettuina."
 
-#: engines/scumm/scumm.cpp:1125
+#: engines/scumm/scumm.cpp:1119
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7712,7 +7708,7 @@ msgstr ""
 "korkearesoluutioiset\n"
 "versiot fontista ja osoittimesta eivät ole tuettuina."
 
-#: engines/scumm/scumm.cpp:1147
+#: engines/scumm/scumm.cpp:1141
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7720,7 +7716,7 @@ msgstr ""
 "\"Monkey Island\":in Macintosh ohjelmatiedostoa ei löydetty\n"
 "instrumenttien lukemiseksi. Emme soita musiikkia."
 
-#: engines/scumm/scumm.cpp:1443
+#: engines/scumm/scumm.cpp:1437
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7730,7 +7726,7 @@ msgstr ""
 "pakkaukset eivät enää ole tuettuja tässä pelissä, joten äänet eivät kuulu.\n"
 "Ole hyvä ja asenna peli uudelleen sopivien äänitiedostojen kera."
 
-#: engines/scumm/scumm.cpp:1917
+#: engines/scumm/scumm.cpp:1907
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7739,7 +7735,7 @@ msgstr ""
 "Suora MIDI tuki vaatii Roland päivityksen LucasArtsilta, mutta\n"
 "%s puuttuu. Käytetään AdLibia sen sijaan."
 
-#: engines/scumm/scumm.cpp:1933
+#: engines/scumm/scumm.cpp:1923
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -7748,7 +7744,7 @@ msgstr ""
 "vaadittuja käytön mahdollistavia osasia MT-32:lle. Otetaan sen sijasta "
 "käyttöön AdLib."
 
-#: engines/scumm/scumm.cpp:3240
+#: engines/scumm/scumm.cpp:3237
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7971,24 +7967,19 @@ msgstr ""
 "Poistaa jotakin toistuvia toimintoja, lisää mahdollisuuden vaihtaa verbiä "
 "näppäimistöltä"
 
-#: engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:529
 #, c-format
 msgid "PSX stream cutscene '%s' cannot be played in paletted mode"
 msgstr "PSX stream videota '%s' ei voi toistaa paletisoidussa tilassa"
 
-#: engines/sword1/animation.cpp:552 engines/sword2/animation.cpp:448
-msgid "DXA cutscenes found but ScummVM has been built without zlib"
-msgstr ""
-"DXA videotiedostoja löydettiin mutta ScummVM on käännetty ilman zlib-tukea"
-
-#: engines/sword1/animation.cpp:568 engines/sword2/animation.cpp:464
+#: engines/sword1/animation.cpp:560 engines/sword2/animation.cpp:456
 msgid ""
 "MPEG-2 cutscenes found but ScummVM has been built without MPEG-2 support"
 msgstr ""
 "MPEG-2 videotiedostoja löydettiin mutta ScummVM on käännetty ilman MPEG-2-"
 "tukea"
 
-#: engines/sword1/animation.cpp:575 engines/sword2/animation.cpp:473
+#: engines/sword1/animation.cpp:567 engines/sword2/animation.cpp:465
 #, c-format
 msgid "Cutscene '%s' not found"
 msgstr "Videotiedosto '%s' ei löytynyt"
@@ -8032,7 +8023,7 @@ msgstr "Säilytä uusi tallennus"
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Broken Sword 1:n demo päättyy tähän"
 
-#: engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:426
 msgid ""
 "PSX cutscenes found but ScummVM has been built without RGB color support"
 msgstr "PSX videoita löydetty, mutta ScummVM on käännetty ilman RGB tukea"
@@ -8989,10 +8980,8 @@ msgid "Toggle subtitles"
 msgstr "Tekstitys päälle / pois"
 
 #: engines/wintermute/keymapper_tables.h:1409
-#, fuzzy
-#| msgid "Hide Others"
 msgid "Hide hints"
-msgstr "Piilota muut"
+msgstr "Piilota vihjeet"
 
 #. I18N: At one of the puzzles game asks to press Up key / Shift key / Down key
 #: engines/wintermute/keymapper_tables.h:1464
@@ -9230,6 +9219,10 @@ msgstr ""
 "ladata Liberation Fonts -paketin tai GNU FreeFont -paketin. Tarvitset kaikki "
 "fontit paketista jonka valitset, i.e. LiberationMono, LiberationSans ja "
 "LiberationSerif, tai FreeMono, FreeSans ja FreeSerif riippuen valinnastasi."
+
+#~ msgid "DXA cutscenes found but ScummVM has been built without zlib"
+#~ msgstr ""
+#~ "DXA videotiedostoja löydettiin mutta ScummVM on käännetty ilman zlib-tukea"
 
 #~ msgid "Override global shader settings"
 #~ msgstr "Ohita globaalit sävytinasetukset"

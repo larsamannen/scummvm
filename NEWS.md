@@ -17,7 +17,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Updated the Roland MT-32 emulation code to Munt mt32emu 2.7.0.
    - Added support for shader-based scalers.
    - Added option for mono sound output (via --output-channels=CHANNELS command
-     line option)
+     line option).
+   - Improved cursor scaling in OpenGL mode.
 
  AGI:
    - Improved support for French translations.
@@ -25,6 +26,10 @@ For a more comprehensive changelog of the latest experimental code, see:
  AGOS:
    - Added option to disable the fade-out effects on room transition for
      Simon1 and 2.
+
+ AGS:
+   - Added support for the original installer files for Maniac Mansion Deluxe and
+     The New Adventures of Zak McKracken.
 
  Kyra:
    - Added support for the Korean version of Legend of Kyrandia 1.
@@ -43,6 +48,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Chinese Inherit the Earth.
    - Added support for Chinese I Have no Mouth and I Must Scream.
    - Added support for Korean I Have no Mouth and I Must Scream.
+   - Added support for playing directly from floppy installer for ITE.
 
  SCI:
    - Improved text rendering for Macintosh titles.
@@ -62,7 +68,6 @@ For a more comprehensive changelog of the latest experimental code, see:
      Guybrush back to Scabb Island, at the end of Part II.
    - Fixed various original game bugs, oversights and continuity errors (only
      when using the "Enable game-specific enhancements" setting).
-   - Added support for original GUI dialogs to v4-v8 LucasArts games.
    - Improved the decoding of some Western European game strings when they're
      displayed through ScummVM's interface, such as when pausing a game.
    - Fixed the navigator head not pointing to some directions in Monkey
@@ -80,19 +85,27 @@ For a more comprehensive changelog of the latest experimental code, see:
      other languages).
    - Improved support for Hebrew HE game localizations.
    - Fixed Roland MT-32 support in Sam & Max.
+   - Implemented original GUI and save menus for LucasArts games (DOS, Windows,
+     Amiga, Macintosh, FM-Towns, Atari ST and Commodore 64 versions).
+
+ Sherlock:
+   - Added support for Chinese Rose Tattoo.
+
+ Sky:
+   - Added support for Chinese Beneath a Steel Sky.
 
  Toon:
    - Made game menus behave like in the original.
 
  TwinE:
-   - Fixed rendering issue with doors
-   - Fixed invalid music pause in behaviour and inventory menu
-   - Fixed giving kashes instead of hearts as fallback
-   - Fixed item flashing when they drop
-   - Fixed meca penguin angle at spawn
-   - Fixed background redraw when watching cutscenes at the television
-   - Fixed recenter the screen on activating an inventory item
-   - Fixed pressing W to talk to people also makes you jump
+   - Fixed rendering issue with doors.
+   - Fixed invalid music pause in behaviour and inventory menu.
+   - Fixed giving kashes instead of hearts as fallback.
+   - Fixed item flashing when they drop.
+   - Fixed meca penguin angle at spawn.
+   - Fixed background redraw when watching cutscenes at the television.
+   - Fixed recenter the screen on activating an inventory item.
+   - Fixed pressing W to talk to people also makes you jump.
 
 #### 2.6.1 "Incremental Escapism" (2022-10-31)
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.1.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-11-25 04:01+0000\n"
+"POT-Creation-Date: 2022-11-28 23:21+0000\n"
 "PO-Revision-Date: 2022-10-27 02:33+0000\n"
 "Last-Translator: Niv Baehr <bloop93@gmail.com>\n"
 "Language-Team: Hebrew <https://translations.scummvm.org/projects/scummvm/"
@@ -176,15 +176,14 @@ msgstr "לא ניתן ליצור תיקיה להורדה - קובץ באותו �
 #: engines/groovie/script.cpp:650 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:926
-#: engines/scumm/scumm.cpp:1100 engines/scumm/scumm.cpp:1126
-#: engines/scumm/scumm.cpp:1148 engines/scumm/scumm.cpp:1446
-#: engines/scumm/scumm.cpp:1919 engines/scumm/scumm.cpp:1935
-#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:531
-#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
-#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
-#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
-#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
+#: engines/scumm/scumm.cpp:1094 engines/scumm/scumm.cpp:1120
+#: engines/scumm/scumm.cpp:1142 engines/scumm/scumm.cpp:1440
+#: engines/scumm/scumm.cpp:1909 engines/scumm/scumm.cpp:1925
+#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:529
+#: engines/sword1/animation.cpp:560 engines/sword1/animation.cpp:568
+#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
+#: engines/sword2/animation.cpp:426 engines/sword2/animation.cpp:456
+#: engines/sword2/animation.cpp:466 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "אישור"
 
@@ -783,7 +782,7 @@ msgstr "בחירת קריטריון לקיבוץ הרשומות על פיו"
 msgid "~Q~uit"
 msgstr "~י~ציאה"
 
-#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:234
+#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:252
 msgid "Quit ScummVM"
 msgstr "סגירת ScummVM"
 
@@ -791,7 +790,7 @@ msgstr "סגירת ScummVM"
 msgid "A~b~out"
 msgstr "על ~א~ודות"
 
-#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:228
+#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:246
 msgid "About ScummVM"
 msgstr "על אודות ScummVM"
 
@@ -2162,7 +2161,7 @@ msgstr "GFX כבוי"
 msgid "Standard renderer"
 msgstr "מסירה סטנדרטית"
 
-#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:887
+#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:947
 msgid "Standard"
 msgstr "סטנדרטי"
 
@@ -2862,7 +2861,7 @@ msgstr "ללא מוזיקה"
 msgid "Apple II GS emulator (NOT IMPLEMENTED)"
 msgstr "Apple II GS אמולטור (לא מיושם)"
 
-#: audio/softsynth/cms.cpp:354
+#: audio/softsynth/cms.cpp:355
 msgid "Creative Music System emulator"
 msgstr "אמולטור Creative Music System"
 
@@ -3514,7 +3513,7 @@ msgstr "לא עבר אף קובץ!"
 msgid "Uploaded successfully!"
 msgstr "הועלה בהצלחה!"
 
-#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:276
+#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:277
 msgid "~C~lose"
 msgstr "~ס~גירה"
 
@@ -3767,23 +3766,23 @@ msgstr "מצב משטח מגע כבוי."
 msgid "Click Mode"
 msgstr "מצב לחיצה"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:230
+#: backends/platform/sdl/macosx/appmenu_osx.mm:248
 msgid "Hide ScummVM"
 msgstr "הסתרת ScummVM"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:231
+#: backends/platform/sdl/macosx/appmenu_osx.mm:249
 msgid "Hide Others"
 msgstr "הסתרת אחרים"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:232
+#: backends/platform/sdl/macosx/appmenu_osx.mm:250
 msgid "Show All"
 msgstr "הצגת הכל"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:237
+#: backends/platform/sdl/macosx/appmenu_osx.mm:255
 msgid "Window"
 msgstr "חלון"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:239
+#: backends/platform/sdl/macosx/appmenu_osx.mm:257
 msgid "Minimize"
 msgstr "מזעור"
 
@@ -3791,44 +3790,44 @@ msgstr "מזעור"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
-#: backends/platform/sdl/macosx/appmenu_osx.mm:244
+#: backends/platform/sdl/macosx/appmenu_osx.mm:262
 #: engines/bladerunner/metaengine.cpp:321 engines/zvision/metaengine.cpp:226
 msgid "Help"
 msgstr "עזרה"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:249
+#: backends/platform/sdl/macosx/appmenu_osx.mm:267
 msgid "User Manual"
 msgstr "הוראות משתמש"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:251
+#: backends/platform/sdl/macosx/appmenu_osx.mm:269
 msgid "General Information"
 msgstr "מידע כללי"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:252
+#: backends/platform/sdl/macosx/appmenu_osx.mm:270
 msgid "What's New in ScummVM"
 msgstr "מה חדש בScummVM"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:254
+#: backends/platform/sdl/macosx/appmenu_osx.mm:272
 msgid "Credits"
 msgstr "קרדיטים"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:255
+#: backends/platform/sdl/macosx/appmenu_osx.mm:273
 msgid "GPL License"
 msgstr "רישיון GPL"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:256
+#: backends/platform/sdl/macosx/appmenu_osx.mm:274
 msgid "LGPL License"
 msgstr "רישיון LGPL"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:257
+#: backends/platform/sdl/macosx/appmenu_osx.mm:275
 msgid "Freefont License"
 msgstr "רישיון Freefont"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:258
+#: backends/platform/sdl/macosx/appmenu_osx.mm:276
 msgid "OFL License"
 msgstr "רישיון OFL"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:259
+#: backends/platform/sdl/macosx/appmenu_osx.mm:277
 msgid "BSD License"
 msgstr "רישיון BSD"
 
@@ -4198,7 +4197,7 @@ msgstr "שחזור"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "שמירת המשחק או טעינה מהירה לא נתמכות במיקום זה"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2696
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2687
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4209,7 +4208,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2683
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2674
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4220,7 +4219,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2712
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2703
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4733,15 +4732,15 @@ msgid ""
 msgstr ""
 "שימוש בתיבות דו-שיח שקופות במסכים עם 16 צבעים אפילו אם המשחק אינו תומך בהן"
 
-#: engines/cine/metaengine.cpp:164
+#: engines/cine/metaengine.cpp:158
 msgid "Unnamed autosave"
 msgstr "שמירה אומטית ללא שם"
 
-#: engines/cine/metaengine.cpp:166 engines/cine/metaengine.cpp:238
+#: engines/cine/metaengine.cpp:160 engines/cine/metaengine.cpp:232
 msgid "Unnamed savegame"
 msgstr "משחק שמור ללא שם"
 
-#: engines/cine/metaengine.cpp:183 engines/cine/metaengine.cpp:246
+#: engines/cine/metaengine.cpp:177 engines/cine/metaengine.cpp:240
 msgid "Empty autosave"
 msgstr "שמירה אוטומטית ריקה"
 
@@ -4860,20 +4859,28 @@ msgid "Use high-quality pre-recorded sounds instead of pc speaker emulation"
 msgstr ""
 
 #: engines/freescape/metaengine.cpp:42
-msgid "Automatic drilling"
+msgid "Extended timer"
 msgstr ""
 
 #: engines/freescape/metaengine.cpp:43
-msgid "Allow to succefully drill in any part of the area in Driller"
+msgid "Start the game timer at 99:59:59"
 msgstr ""
 
 #: engines/freescape/metaengine.cpp:53
+msgid "Automatic drilling"
+msgstr ""
+
+#: engines/freescape/metaengine.cpp:54
+msgid "Allow to succefully drill in any part of the area in Driller"
+msgstr ""
+
+#: engines/freescape/metaengine.cpp:64
 #, fuzzy
 #| msgid "Enable debug mode"
 msgid "Disable demo mode"
 msgstr "הפעלת מצב ניפוי תקלים"
 
-#: engines/freescape/metaengine.cpp:54
+#: engines/freescape/metaengine.cpp:65
 msgid "Never activate demo mode"
 msgstr ""
 
@@ -6052,13 +6059,13 @@ msgstr "הפעלה עם ניפוי תקלים"
 msgid "Starts with the debugger dashboard active."
 msgstr "התחלה עם לוח ניפוי תקלים פעיל."
 
-#: engines/mtropolis/metaengine.cpp:172
+#: engines/mtropolis/metaengine.cpp:160
 #, fuzzy
 #| msgid "Toggle Clue Privacy"
 msgid "Toggle debug overlay"
 msgstr "מיתוג פרטיות רמזים"
 
-#: engines/mtropolis/metaengine.cpp:177
+#: engines/mtropolis/metaengine.cpp:165
 msgid "Force any playing movies to end"
 msgstr ""
 
@@ -6442,21 +6449,21 @@ msgid "Use an easier to read custom font"
 msgstr "שימוש בגופן מותאם להקלת הקריאה"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:673
+#: engines/saga/detection_tables.h:697
 msgid "Windows Trial version is not supported"
 msgstr "גרסת הניסיון עבור חלונות אינה נתמכת"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:699
+#: engines/saga/detection_tables.h:724
 msgid "macOS Trial version is not supported"
 msgstr "גרסת הניסיון עבור macOS אינה נתמכת"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:724
+#: engines/saga/detection_tables.h:750
 msgid "Pocket PC Trial version is not supported"
 msgstr "גרסת הניסיון עבור Pocket PC אינה נתמכת"
 
-#: engines/saga/metaengine.cpp:108
+#: engines/saga/metaengine.cpp:114
 msgid "I Have No Mouth support not compiled in"
 msgstr "תמיכה במשחק I Have No Mouth לא נבנתה"
 
@@ -6471,7 +6478,7 @@ msgstr ""
 "%s וגם %s. ללא קבצים אלה,\n"
 "המוזיקה לא תהיה זהה לזו שמשחק המקורי."
 
-#: engines/saga/saga.cpp:375
+#: engines/saga/saga.cpp:387
 msgid "Error loading game resources."
 msgstr "שגיאה בקריאת שמירת הקובץ."
 
@@ -6800,53 +6807,53 @@ msgstr ""
 "סיפקו גם כן."
 
 #. I18N: Previous page button
-#: engines/scumm/dialogs.cpp:273
+#: engines/scumm/dialogs.cpp:274
 msgid "~P~revious"
 msgstr "~ P ~ נלהב"
 
 #. I18N: Next page button
-#: engines/scumm/dialogs.cpp:275
+#: engines/scumm/dialogs.cpp:276
 msgid "~N~ext"
 msgstr "~ N ~ שלוחה"
 
-#: engines/scumm/dialogs.cpp:826
+#: engines/scumm/dialogs.cpp:886
 msgid "Speech Only"
 msgstr "דיבור בלבד"
 
-#: engines/scumm/dialogs.cpp:827
+#: engines/scumm/dialogs.cpp:887
 msgid "Speech and Subtitles"
 msgstr "דיבור וכתוביות"
 
-#: engines/scumm/dialogs.cpp:828
+#: engines/scumm/dialogs.cpp:888
 msgid "Subtitles Only"
 msgstr "כתוביות בלבד"
 
-#: engines/scumm/dialogs.cpp:836
+#: engines/scumm/dialogs.cpp:896
 msgctxt "lowres"
 msgid "Speech & Subs"
 msgstr "דיבור ומנויים"
 
-#: engines/scumm/dialogs.cpp:882
+#: engines/scumm/dialogs.cpp:942
 msgid "Select a Proficiency Level."
 msgstr "בחר רמת מיומנות."
 
-#: engines/scumm/dialogs.cpp:884
+#: engines/scumm/dialogs.cpp:944
 msgid "Refer to your Loom(TM) manual for help."
 msgstr "עיין במדריך הנול שלך (TM) לקבלת עזרה."
 
-#: engines/scumm/dialogs.cpp:888
+#: engines/scumm/dialogs.cpp:948
 msgid "Practice"
 msgstr "תרגול"
 
-#: engines/scumm/dialogs.cpp:889
+#: engines/scumm/dialogs.cpp:949
 msgid "Expert"
 msgstr "מומחה"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:647
 msgid "Enable game-specific enhancements"
 msgstr "הפעלת שיפורים תלויי-משחק"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:648
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6854,21 +6861,21 @@ msgstr ""
 "ScummVM יבצע שיפורים קטנים במשחק, המבוססים בדרך כלל על גרסאות אחרות של אותו "
 "המשחק."
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:665
 msgid "Enable the original GUI and Menu"
 msgstr "הפעלת ממשק ותפריטים מקוריים"
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:666
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
 "save/load menu."
 msgstr "המשחק ישתמש בממשק גרפי פנימי של המנוע ובתפריט שמירה/טעינה המקורי."
 
-#: engines/scumm/dialogs.cpp:946
+#: engines/scumm/dialogs.cpp:1006
 msgid "Overture Timing:"
 msgstr "תזמון אוברטורה:"
 
-#: engines/scumm/dialogs.cpp:950
+#: engines/scumm/dialogs.cpp:1010
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -6876,11 +6883,11 @@ msgstr ""
 "כאשר משתמשים במוזיקה חלופית, זה מתאים את הזמן עד שהאוברטורה עוברת למסך עם "
 "הסמלים של האורגים ושל Lucasfilm."
 
-#: engines/scumm/dialogs.cpp:1034
+#: engines/scumm/dialogs.cpp:1093
 msgid "Playback Adjust:"
 msgstr "תיקון שמע:"
 
-#: engines/scumm/dialogs.cpp:1038
+#: engines/scumm/dialogs.cpp:1097
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -6888,11 +6895,11 @@ msgstr ""
 "כוונון זמן ההתחלה של הצליל על פי הנתון כאשר מנגנים אותו מרצועת השמע של "
 "התקליטור. מומלץ להשתמש אם שומעים קטעים של צליל לא נכון לעתים קרובות."
 
-#: engines/scumm/dialogs.cpp:1117
+#: engines/scumm/dialogs.cpp:1176
 msgid "Intro Adjust:"
 msgstr "התאמת הקדמה:"
 
-#: engines/scumm/dialogs.cpp:1121
+#: engines/scumm/dialogs.cpp:1180
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -6901,11 +6908,11 @@ msgstr ""
 "להתחיל בנקודה הזו כאשר מנגנים את רצועת ההקדמה. מומלץ להשתמש אם המוזיקה נחתכת "
 "מוקדם מדי, או אם סנכרון המוזיקה עם הפתיח אינו לטעמכם."
 
-#: engines/scumm/dialogs.cpp:1130
+#: engines/scumm/dialogs.cpp:1189
 msgid "Outlook Adjust:"
 msgstr "התאמת תצפית:"
 
-#: engines/scumm/dialogs.cpp:1134
+#: engines/scumm/dialogs.cpp:1193
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7435,19 +7442,19 @@ msgstr "טוס לימין"
 msgid "Fly to lower right"
 msgstr "טוס לימין תחתון"
 
-#: engines/scumm/input.cpp:1102
+#: engines/scumm/input.cpp:1240
 msgid "Snap scroll on"
 msgstr "גלול הצמד על"
 
-#: engines/scumm/input.cpp:1104
+#: engines/scumm/input.cpp:1242
 msgid "Snap scroll off"
 msgstr "גלול את הצמד"
 
-#: engines/scumm/input.cpp:1117
+#: engines/scumm/input.cpp:1255
 msgid "Music volume: "
 msgstr "עוצמת שמע: "
 
-#: engines/scumm/input.cpp:1134
+#: engines/scumm/input.cpp:1272
 msgid "Subtitle speed: "
 msgstr "מהירות כתוביות: "
 
@@ -7547,7 +7554,7 @@ msgstr ""
 "שאינה מאפשרת תיקון יחס ממדים.\n"
 "ניתן להשיג תיקון יחס ממדים על ידי חיתוך הרזולוציה ל-320x200, בלשונית 'מנוע'."
 
-#: engines/scumm/scumm.cpp:1099
+#: engines/scumm/scumm.cpp:1093
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7555,7 +7562,7 @@ msgstr ""
 "לא ניתן למצוא את קובץ הריצה 'Indy' עבור מקינטוש. גופנים בהפרדה גבוהה\n"
 "כבויים."
 
-#: engines/scumm/scumm.cpp:1125
+#: engines/scumm/scumm.cpp:1119
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7563,7 +7570,7 @@ msgstr ""
 "לא ניתן למצוא את קובץ הריצה 'Loom' עבור מקינטוש. מוזיקה וגרסת הפרדה גבוהה\n"
 "עבור גופנים וסמן העכבר כבויים."
 
-#: engines/scumm/scumm.cpp:1147
+#: engines/scumm/scumm.cpp:1141
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7571,7 +7578,7 @@ msgstr ""
 "לא ניתן למצוא את ההפעלה מקינטוש 'אי הקופים' כדי לקרוא את\n"
 "מכשירים מ. המוסיקה תושבת."
 
-#: engines/scumm/scumm.cpp:1443
+#: engines/scumm/scumm.cpp:1437
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7581,7 +7588,7 @@ msgstr ""
 "הדחיסה עבור משחק זה כבר אינה נתמכת, השמע ינוטרל.\n"
 "נא להעתיק את המשחק מהמדיה המקורית ללא הדחיסה."
 
-#: engines/scumm/scumm.cpp:1917
+#: engines/scumm/scumm.cpp:1907
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7590,7 +7597,7 @@ msgstr ""
 "תמיכת MIDI מקומית דורשת את שדרוג הרולנד מ- LucasArts,\n"
 "אבל %s חסר. במקום זאת משתמשים ב- AdLib."
 
-#: engines/scumm/scumm.cpp:1933
+#: engines/scumm/scumm.cpp:1923
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -7598,7 +7605,7 @@ msgstr ""
 "גרסה זו של אי הקופים 1 ידועה כחסרה\n"
 "משאבים מסוים שנדרשים עבור MT-32. משתמשים ב-AdLib במקום."
 
-#: engines/scumm/scumm.cpp:3240
+#: engines/scumm/scumm.cpp:3237
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7805,21 +7812,17 @@ msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr "מסיר כמה פעולות שחוזרות על עצמן, מוסיף אפשרות לשנות פעלים לפי מקלדת"
 
-#: engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:529
 #, c-format
 msgid "PSX stream cutscene '%s' cannot be played in paletted mode"
 msgstr "אין אפשרות לנגן זרם PSX '%s' במצב ערכת צבעים"
 
-#: engines/sword1/animation.cpp:552 engines/sword2/animation.cpp:448
-msgid "DXA cutscenes found but ScummVM has been built without zlib"
-msgstr "נמצאו סרטוני DXA אך ScummVM נבנה ללא zlib"
-
-#: engines/sword1/animation.cpp:568 engines/sword2/animation.cpp:464
+#: engines/sword1/animation.cpp:560 engines/sword2/animation.cpp:456
 msgid ""
 "MPEG-2 cutscenes found but ScummVM has been built without MPEG-2 support"
 msgstr "נמצאו סרטוני MPEG-2 אך ScummVM נבנה ללא תמיכה ב- MPEG-2"
 
-#: engines/sword1/animation.cpp:575 engines/sword2/animation.cpp:473
+#: engines/sword1/animation.cpp:567 engines/sword2/animation.cpp:465
 #, c-format
 msgid "Cutscene '%s' not found"
 msgstr "הסרטון '%s' לא נמצא"
@@ -7861,7 +7864,7 @@ msgstr "שמור על החדש"
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "זה סוף הדגמת שבור חרב 1"
 
-#: engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:426
 msgid ""
 "PSX cutscenes found but ScummVM has been built without RGB color support"
 msgstr "סרטוני PSX נמצאו אך ScummVM נבנה ללא תמיכה בצבע RGB"
@@ -9035,6 +9038,9 @@ msgstr ""
 "New ו-Arial. לחלופין,ניתן להוריד את חבילת GNU FreeFont או גופני Liberation. "
 "יש להעתיק את כל הגופנים מהחבילה שנבחרה, לדוגמה, FreeMono, FreeSans ו-"
 "FreeSerif או LiberationMono, LiberationSans ו-LiberationSerif בהתאמה."
+
+#~ msgid "DXA cutscenes found but ScummVM has been built without zlib"
+#~ msgstr "נמצאו סרטוני DXA אך ScummVM נבנה ללא zlib"
 
 #~ msgid "Override global shader settings"
 #~ msgstr "דרוס הגדרות shader גלובליות"

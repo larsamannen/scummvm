@@ -19,44 +19,41 @@
  *
  */
 
-#ifndef SKY_RNC_DECO_H
-#define SKY_RNC_DECO_H
+#ifndef QUEEN_VERSION_H
+#define QUEEN_VERSION_H
 
+#include "common/language.h"
+#include "common/platform.h"
 
+namespace Common {
+class File;
+}
 
-#define RNC_SIGNATURE   0x524E4301 // "RNC\001"
+namespace Queen {
 
-namespace Sky {
-
-class RncDecoder {
-
-protected:
-	uint16 _rawTable[64];
-	uint16 _posTable[64];
-	uint16 _lenTable[64];
-	uint16 _crcTable[256];
-
-	uint16 _bitBuffl;
-	uint16 _bitBuffh;
-	uint8 _bitCount;
-
-	const uint8 *_srcPtr;
-	uint8 *_dstPtr;
-
-public:
-	RncDecoder();
-	~RncDecoder();
-	int32 unpackM1(const void *input, void *output, uint16 key);
-
-protected:
-	void initCrc();
-	uint16 crcBlock(const uint8 *block, uint32 size);
-	uint16 inputBits(uint8 amount);
-	void makeHufftable(uint16 *table);
-	uint16 inputValue(uint16 *table);
-
+struct DetectedGameVersion {
+	Common::Platform platform;
+	Common::Language language;
+	uint8 features;
+	uint8 compression;
+	char str[6];
+	uint8 queenTblVersion;
+	uint32 queenTblOffset;
 };
 
-} // End of namespace Sky
+struct RetailGameVersion {
+	char str[6];
+	uint8 queenTblVersion;
+	uint32 queenTblOffset;
+	uint32 dataFileSize;
+};
+
+//! detect game version
+bool detectVersion(DetectedGameVersion *ver, Common::File *f);
+
+//! detect game version based on queen.1 datafile size
+const RetailGameVersion *detectGameVersionFromSize(uint32 size);
+
+} // End of namespace Queen
 
 #endif

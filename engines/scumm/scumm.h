@@ -111,7 +111,7 @@ enum {
 };
 
 /* SCUMM Debug Channels */
-void debugC(int level, const char *s, ...) GCC_PRINTF(2, 3);
+void debugC(int level, MSVC_PRINTF const char *s, ...) GCC_PRINTF(2, 3);
 
 enum {
 	DEBUG_GENERAL	=	1 << 0,		// General debug
@@ -429,7 +429,22 @@ enum GUIString {
 	gsTextSpeed = 37,
 	gsDisplayText = 38,
 	gsSpooledMusic = 39,
-	gsInsertSaveDisk = 40
+	gsInsertSaveDisk = 40,
+	gsSnapOn = 41,
+	gsSnapOff = 42,
+	gsRecalJoystick = 43,
+	gsMouseMode = 44,
+	gsMouseOn = 45,
+	gsMouseOff = 46,
+	gsJoystickOn = 47,
+	gsJoystickOff = 48,
+	gsSoundsOn = 49,
+	gsSoundsOff = 50,
+	gsVGAMode = 51,
+	gsEGAMode = 52,
+	gsCGAMode = 53,
+	gsHerculesMode = 54,
+	gsTandyMode = 55
 };
 
 struct InternalGUIControl {
@@ -604,6 +619,8 @@ protected:
 	int32 _bannerColors[50]; // Colors for the original GUI
 	byte *_bannerMem = nullptr;
 	uint32 _bannerMemSize = 0;
+	int _bannerSaveYStart = 0;
+
 	bool _messageBannerActive = false;
 	bool _comiQuitMenuIsOpen = false;
 	bool _closeBannerAndQueryQuitFlag = false;
@@ -636,7 +653,11 @@ protected:
 	int _saveScriptParam = 0;
 	int _guiCursorAnimCounter = 0;
 	int _v5VoiceMode = 0;
+
+	// Fake flags just for sub v5 GUIs
 	int _internalSpeakerSoundsAreOn = 1;
+	int _guiMouseFlag = 1;
+	int _guiJoystickFlag = 1;
 
 	Graphics::Surface _savegameThumbnail;
 	byte *_tempTextSurface = nullptr;
@@ -653,9 +674,13 @@ protected:
 	int _curCursorHotspotX = 0;
 	int _curCursorHotspotY = 0;
 
+	virtual void setSnailCursor() {}
+
 	void initBanners();
 	Common::KeyState showBannerAndPause(int bannerId, int32 waitTime, const char *msg, ...);
 	Common::KeyState showOldStyleBannerAndPause(const char *msg, int color, int32 waitTime);
+	Common::KeyState printMessageAndPause(const char *msg, int color, int32 waitTime, bool drawOnSentenceLine);
+
 	void clearBanner();
 	void setBannerColors(int bannerId, byte r, byte g, byte b);
 	virtual int getBannerColor(int bannerId);
@@ -702,7 +727,7 @@ protected:
 	void restoreSurfacesPostGUI();
 
 public:
-	char displayMessage(const char *altButton, const char *message, ...) GCC_PRINTF(3, 4);
+	char displayMessage(const char *altButton, MSVC_PRINTF const char *message, ...) GCC_PRINTF(3, 4);
 
 protected:
 	byte _fastMode = 0;
@@ -1201,6 +1226,8 @@ protected:
 	bool _doEffect = false;
 
 	bool _snapScroll = false;
+
+	virtual void setBuiltinCursor(int index) {}
 public:
 	bool isLightOn() const;
 
@@ -1290,12 +1317,16 @@ protected:
 	virtual void drawDirtyScreenParts();
 	void updateDirtyScreen(VirtScreenNumber slot);
 	void drawStripToScreen(VirtScreen *vs, int x, int width, int top, int bottom);
+
+	void mac_markScreenAsDirty(int x, int y, int w, int h);
 	void mac_drawStripToScreen(VirtScreen *vs, int top, int x, int y, int width, int height);
 	void mac_drawLoomPracticeMode();
 	void mac_createIndy3TextBox(Actor *a);
 	void mac_drawIndy3TextBox();
 	void mac_undrawIndy3TextBox();
 	void mac_undrawIndy3CreditsText();
+	void mac_drawBorder(int x, int y, int w, int h, byte color);
+	Common::KeyState mac_showOldStyleBannerAndPause(const char *msg, int32 waitTime);
 
 	const byte *postProcessDOSGraphics(VirtScreen *vs, int &pitch, int &x, int &y, int &width, int &height) const;
 	const byte *ditherVGAtoEGA(int &pitch, int &x, int &y, int &width, int &height) const;
@@ -1478,6 +1509,7 @@ protected:
 	virtual void printString(int m, const byte *msg);
 
 	virtual bool handleNextCharsetCode(Actor *a, int *c);
+	virtual void drawSentence() {}
 	virtual void CHARSET_1();
 	bool newLine();
 	void drawString(int a, const byte *msg);

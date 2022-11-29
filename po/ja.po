@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-11-25 04:01+0000\n"
-"PO-Revision-Date: 2022-11-22 10:30+0000\n"
+"POT-Creation-Date: 2022-11-28 23:21+0000\n"
+"PO-Revision-Date: 2022-11-28 09:34+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ja/>\n"
@@ -177,15 +177,14 @@ msgstr ""
 #: engines/groovie/script.cpp:650 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:926
-#: engines/scumm/scumm.cpp:1100 engines/scumm/scumm.cpp:1126
-#: engines/scumm/scumm.cpp:1148 engines/scumm/scumm.cpp:1446
-#: engines/scumm/scumm.cpp:1919 engines/scumm/scumm.cpp:1935
-#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:531
-#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
-#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
-#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
-#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
+#: engines/scumm/scumm.cpp:1094 engines/scumm/scumm.cpp:1120
+#: engines/scumm/scumm.cpp:1142 engines/scumm/scumm.cpp:1440
+#: engines/scumm/scumm.cpp:1909 engines/scumm/scumm.cpp:1925
+#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:529
+#: engines/sword1/animation.cpp:560 engines/sword1/animation.cpp:568
+#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
+#: engines/sword2/animation.cpp:426 engines/sword2/animation.cpp:456
+#: engines/sword2/animation.cpp:466 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "OK"
 
@@ -786,7 +785,7 @@ msgstr "エントリーのグループ化基準を選択"
 msgid "~Q~uit"
 msgstr "終了(~Q~)"
 
-#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:234
+#: gui/launcher.cpp:245 backends/platform/sdl/macosx/appmenu_osx.mm:252
 msgid "Quit ScummVM"
 msgstr "ScummVMを終了"
 
@@ -794,7 +793,7 @@ msgstr "ScummVMを終了"
 msgid "A~b~out"
 msgstr "ScummVMについて(~b~)"
 
-#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:228
+#: gui/launcher.cpp:247 backends/platform/sdl/macosx/appmenu_osx.mm:246
 msgid "About ScummVM"
 msgstr "ScummVMについて"
 
@@ -2183,7 +2182,7 @@ msgstr "レンダラー無効"
 msgid "Standard renderer"
 msgstr "標準レンダラー"
 
-#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:887
+#: gui/ThemeEngine.cpp:277 engines/scumm/dialogs.cpp:947
 msgid "Standard"
 msgstr "標準"
 
@@ -2887,7 +2886,7 @@ msgstr "音楽なし"
 msgid "Apple II GS emulator (NOT IMPLEMENTED)"
 msgstr "Apple II GSエミュレーター（未実装）"
 
-#: audio/softsynth/cms.cpp:354
+#: audio/softsynth/cms.cpp:355
 msgid "Creative Music System emulator"
 msgstr "Creative Music System エミュレーター"
 
@@ -3542,7 +3541,7 @@ msgstr "ファイルは転送されませんでした!"
 msgid "Uploaded successfully!"
 msgstr "アップロードに成功しました!"
 
-#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:276
+#: backends/platform/3ds/options-dialog.cpp:44 engines/scumm/dialogs.cpp:277
 msgid "~C~lose"
 msgstr "閉じる(~C~)"
 
@@ -3795,23 +3794,23 @@ msgstr "タッチパッド操作が無効になりました。"
 msgid "Click Mode"
 msgstr "クリックモード"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:230
+#: backends/platform/sdl/macosx/appmenu_osx.mm:248
 msgid "Hide ScummVM"
 msgstr "ScummVMを隠す"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:231
+#: backends/platform/sdl/macosx/appmenu_osx.mm:249
 msgid "Hide Others"
 msgstr "他を隠す"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:232
+#: backends/platform/sdl/macosx/appmenu_osx.mm:250
 msgid "Show All"
 msgstr "すべて表示"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:237
+#: backends/platform/sdl/macosx/appmenu_osx.mm:255
 msgid "Window"
 msgstr "ウインドウ"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:239
+#: backends/platform/sdl/macosx/appmenu_osx.mm:257
 msgid "Minimize"
 msgstr "最小化"
 
@@ -3819,44 +3818,44 @@ msgstr "最小化"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
-#: backends/platform/sdl/macosx/appmenu_osx.mm:244
+#: backends/platform/sdl/macosx/appmenu_osx.mm:262
 #: engines/bladerunner/metaengine.cpp:321 engines/zvision/metaengine.cpp:226
 msgid "Help"
 msgstr "ヘルプ"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:249
+#: backends/platform/sdl/macosx/appmenu_osx.mm:267
 msgid "User Manual"
 msgstr "ユーザーマニュアル"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:251
+#: backends/platform/sdl/macosx/appmenu_osx.mm:269
 msgid "General Information"
 msgstr "総合案内"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:252
+#: backends/platform/sdl/macosx/appmenu_osx.mm:270
 msgid "What's New in ScummVM"
 msgstr "ScummVMの新情報"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:254
+#: backends/platform/sdl/macosx/appmenu_osx.mm:272
 msgid "Credits"
 msgstr "クレジット"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:255
+#: backends/platform/sdl/macosx/appmenu_osx.mm:273
 msgid "GPL License"
 msgstr "GPLライセンス"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:256
+#: backends/platform/sdl/macosx/appmenu_osx.mm:274
 msgid "LGPL License"
 msgstr "LGPLライセンス"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:257
+#: backends/platform/sdl/macosx/appmenu_osx.mm:275
 msgid "Freefont License"
 msgstr "Freefontライセンス"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:258
+#: backends/platform/sdl/macosx/appmenu_osx.mm:276
 msgid "OFL License"
 msgstr "OFLライセンス"
 
-#: backends/platform/sdl/macosx/appmenu_osx.mm:259
+#: backends/platform/sdl/macosx/appmenu_osx.mm:277
 msgid "BSD License"
 msgstr "BSDライセンス"
 
@@ -4233,7 +4232,7 @@ msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 "このロケーションでは、セーブまたはクイックロードはサポートされていません"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2696
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2687
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4244,7 +4243,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2683
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2674
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4255,7 +4254,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2712
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2703
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4769,15 +4768,15 @@ msgstr ""
 "オリジナル版でサポートされていない場合でも、16色シーンで透明なダイアログボッ"
 "クスを使用する"
 
-#: engines/cine/metaengine.cpp:164
+#: engines/cine/metaengine.cpp:158
 msgid "Unnamed autosave"
 msgstr "無名のオートセーブ"
 
-#: engines/cine/metaengine.cpp:166 engines/cine/metaengine.cpp:238
+#: engines/cine/metaengine.cpp:160 engines/cine/metaengine.cpp:232
 msgid "Unnamed savegame"
 msgstr "無名のセーブ"
 
-#: engines/cine/metaengine.cpp:183 engines/cine/metaengine.cpp:246
+#: engines/cine/metaengine.cpp:177 engines/cine/metaengine.cpp:240
 msgid "Empty autosave"
 msgstr "オートセーブを初期化"
 
@@ -4898,18 +4897,26 @@ msgid "Use high-quality pre-recorded sounds instead of pc speaker emulation"
 msgstr "スピーカーエミュレーションの代わりに高品質なサウンドを使用"
 
 #: engines/freescape/metaengine.cpp:42
+msgid "Extended timer"
+msgstr "タイマー延長"
+
+#: engines/freescape/metaengine.cpp:43
+msgid "Start the game timer at 99:59:59"
+msgstr "99:59:59でゲームを開始"
+
+#: engines/freescape/metaengine.cpp:53
 msgid "Automatic drilling"
 msgstr "自動穿孔"
 
-#: engines/freescape/metaengine.cpp:43
+#: engines/freescape/metaengine.cpp:54
 msgid "Allow to succefully drill in any part of the area in Driller"
 msgstr "Drillerで任意の場所に穴を開けられるようにします"
 
-#: engines/freescape/metaengine.cpp:53
+#: engines/freescape/metaengine.cpp:64
 msgid "Disable demo mode"
 msgstr "デモを無効化"
 
-#: engines/freescape/metaengine.cpp:54
+#: engines/freescape/metaengine.cpp:65
 msgid "Never activate demo mode"
 msgstr "デモを起動させません"
 
@@ -6096,11 +6103,11 @@ msgstr "デバッグ起動"
 msgid "Starts with the debugger dashboard active."
 msgstr "デバッガーをダッシュボードありで起動します。"
 
-#: engines/mtropolis/metaengine.cpp:172
+#: engines/mtropolis/metaengine.cpp:160
 msgid "Toggle debug overlay"
 msgstr "デバッグオーバーレイの切替"
 
-#: engines/mtropolis/metaengine.cpp:177
+#: engines/mtropolis/metaengine.cpp:165
 msgid "Force any playing movies to end"
 msgstr "再生中のムービーを強制終了"
 
@@ -6487,21 +6494,21 @@ msgid "Use an easier to read custom font"
 msgstr "読みやすいカスタムフォントを使用"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:673
+#: engines/saga/detection_tables.h:697
 msgid "Windows Trial version is not supported"
 msgstr "Windows試用版はサポートされていません"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:699
+#: engines/saga/detection_tables.h:724
 msgid "macOS Trial version is not supported"
 msgstr "macOS用の体験版はサポートされていません"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:724
+#: engines/saga/detection_tables.h:750
 msgid "Pocket PC Trial version is not supported"
 msgstr "Pocket PC用の体験版はサポートされていません"
 
-#: engines/saga/metaengine.cpp:108
+#: engines/saga/metaengine.cpp:114
 msgid "I Have No Mouth support not compiled in"
 msgstr "I Have No Mouthのサポートはコンパイルされていません"
 
@@ -6516,7 +6523,7 @@ msgstr ""
 "見つかりません。これらが存在しない場合\n"
 "オリジナルと同様の音にならないかもしれません。"
 
-#: engines/saga/saga.cpp:375
+#: engines/saga/saga.cpp:387
 msgid "Error loading game resources."
 msgstr "リソースのロード中にエラーが発生しました。"
 
@@ -6844,53 +6851,53 @@ msgstr ""
 "ダンプから有効なファイルを抽出するガイドをオンラインで検索してください。"
 
 #. I18N: Previous page button
-#: engines/scumm/dialogs.cpp:273
+#: engines/scumm/dialogs.cpp:274
 msgid "~P~revious"
 msgstr "前(~P~)"
 
 #. I18N: Next page button
-#: engines/scumm/dialogs.cpp:275
+#: engines/scumm/dialogs.cpp:276
 msgid "~N~ext"
 msgstr "次(~N~)"
 
-#: engines/scumm/dialogs.cpp:826
+#: engines/scumm/dialogs.cpp:886
 msgid "Speech Only"
 msgstr "音声のみ"
 
-#: engines/scumm/dialogs.cpp:827
+#: engines/scumm/dialogs.cpp:887
 msgid "Speech and Subtitles"
 msgstr "音声と字幕"
 
-#: engines/scumm/dialogs.cpp:828
+#: engines/scumm/dialogs.cpp:888
 msgid "Subtitles Only"
 msgstr "字幕のみ"
 
-#: engines/scumm/dialogs.cpp:836
+#: engines/scumm/dialogs.cpp:896
 msgctxt "lowres"
 msgid "Speech & Subs"
 msgstr "喋り&字幕"
 
-#: engines/scumm/dialogs.cpp:882
+#: engines/scumm/dialogs.cpp:942
 msgid "Select a Proficiency Level."
 msgstr "習熟度を選択してください。"
 
-#: engines/scumm/dialogs.cpp:884
+#: engines/scumm/dialogs.cpp:944
 msgid "Refer to your Loom(TM) manual for help."
 msgstr "ヘルプについては、Loom(TM)のマニュアルを参照してください。"
 
-#: engines/scumm/dialogs.cpp:888
+#: engines/scumm/dialogs.cpp:948
 msgid "Practice"
 msgstr "練習"
 
-#: engines/scumm/dialogs.cpp:889
+#: engines/scumm/dialogs.cpp:949
 msgid "Expert"
 msgstr "エキスパート"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:647
 msgid "Enable game-specific enhancements"
 msgstr "ゲーム固有の拡張機能を有効化"
 
-#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:981 engines/scumm/metaengine.cpp:648
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6898,21 +6905,21 @@ msgstr ""
 "Scumm VMがゲームに対し、他のバージョンに基づいた小さな拡張を行う事を許可しま"
 "す。"
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:665
 msgid "Enable the original GUI and Menu"
 msgstr "オリジナルGUIとメニューを有効化"
 
-#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:985 engines/scumm/metaengine.cpp:666
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
 "save/load menu."
 msgstr "エンジン内のGUIとオリジナルのセーブ/ロードメニューを使用可能にします。"
 
-#: engines/scumm/dialogs.cpp:946
+#: engines/scumm/dialogs.cpp:1006
 msgid "Overture Timing:"
 msgstr "Overtureのタイミング："
 
-#: engines/scumm/dialogs.cpp:950
+#: engines/scumm/dialogs.cpp:1010
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -6920,11 +6927,11 @@ msgstr ""
 "BGMを置き換える際、OvertureがLucasfilmとLoomのロゴに切り替わるタイミングを調"
 "整します。"
 
-#: engines/scumm/dialogs.cpp:1034
+#: engines/scumm/dialogs.cpp:1093
 msgid "Playback Adjust:"
 msgstr "再生アジャスト："
 
-#: engines/scumm/dialogs.cpp:1038
+#: engines/scumm/dialogs.cpp:1097
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -6932,11 +6939,11 @@ msgstr ""
 "CDオーディオトラックを再生する際、開始位置を調整します。サウンドに問題がある"
 "場合に使用して下さい。"
 
-#: engines/scumm/dialogs.cpp:1117
+#: engines/scumm/dialogs.cpp:1176
 msgid "Intro Adjust:"
 msgstr "イントロ調整："
 
-#: engines/scumm/dialogs.cpp:1121
+#: engines/scumm/dialogs.cpp:1180
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -6945,11 +6952,11 @@ msgstr ""
 "イントロトラックを、この位置から再生します。曲が途中で切れたり、同期が正しく"
 "ない場合に使用して下さい。"
 
-#: engines/scumm/dialogs.cpp:1130
+#: engines/scumm/dialogs.cpp:1189
 msgid "Outlook Adjust:"
 msgstr "アウトルック調整："
 
-#: engines/scumm/dialogs.cpp:1134
+#: engines/scumm/dialogs.cpp:1193
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7477,19 +7484,19 @@ msgstr "右へ飛ぶ"
 msgid "Fly to lower right"
 msgstr "右へ降下"
 
-#: engines/scumm/input.cpp:1102
+#: engines/scumm/input.cpp:1240
 msgid "Snap scroll on"
 msgstr "スナップスクロールをオン"
 
-#: engines/scumm/input.cpp:1104
+#: engines/scumm/input.cpp:1242
 msgid "Snap scroll off"
 msgstr "スナップスクロールをオフ"
 
-#: engines/scumm/input.cpp:1117
+#: engines/scumm/input.cpp:1255
 msgid "Music volume: "
 msgstr "音楽の音量： "
 
-#: engines/scumm/input.cpp:1134
+#: engines/scumm/input.cpp:1272
 msgid "Subtitle speed: "
 msgstr "字幕の速度： "
 
@@ -7593,7 +7600,7 @@ msgstr ""
 "アスペクト比の補正は、[エンジン]タブで解像度を320x200にトリミングすることで実"
 "現できます。"
 
-#: engines/scumm/scumm.cpp:1099
+#: engines/scumm/scumm.cpp:1093
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7601,7 +7608,7 @@ msgstr ""
 "「Indy」のMacintosh用実行ファイルが見つかりません。\n"
 "高解像度のフォントは使用できません。"
 
-#: engines/scumm/scumm.cpp:1125
+#: engines/scumm/scumm.cpp:1119
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7609,7 +7616,7 @@ msgstr ""
 "Macintosh用実行ファイル「Loom」が見つかりません。\n"
 "音楽、高解像度のフォントやカーソルは使えなくなります。"
 
-#: engines/scumm/scumm.cpp:1147
+#: engines/scumm/scumm.cpp:1141
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7618,7 +7625,7 @@ msgstr ""
 "ん。\n"
 "音楽は無効になります。"
 
-#: engines/scumm/scumm.cpp:1443
+#: engines/scumm/scumm.cpp:1437
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7628,7 +7635,7 @@ msgstr ""
 "このゲームではサポートされていないため、オーディオは無効になります。\n"
 "オリジナルのメディアから、圧縮せずにコピーしてください。"
 
-#: engines/scumm/scumm.cpp:1917
+#: engines/scumm/scumm.cpp:1907
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7637,7 +7644,7 @@ msgstr ""
 "ネイティブMIDIのサポートには、LucasArts提供のthe Roland Upgradeが必要です。\n"
 "しかし%sがありません。代わりにAdLibを使用します。"
 
-#: engines/scumm/scumm.cpp:1933
+#: engines/scumm/scumm.cpp:1923
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -7645,7 +7652,7 @@ msgstr ""
 "このMonkey Island 1の特定のバージョンは、MT-32に必要な\n"
 "リソースが欠落しています。AdLibを代用します。"
 
-#: engines/scumm/scumm.cpp:3240
+#: engines/scumm/scumm.cpp:3237
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7859,22 +7866,18 @@ msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr "いくつかの反復操作を削除し、キーボードで動詞を変更可能にする"
 
-#: engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:529
 #, c-format
 msgid "PSX stream cutscene '%s' cannot be played in paletted mode"
 msgstr "PSXストリーム形式のムービー'%s'は、パレットモードで再生できません"
 
-#: engines/sword1/animation.cpp:552 engines/sword2/animation.cpp:448
-msgid "DXA cutscenes found but ScummVM has been built without zlib"
-msgstr "DXA形式のムービーが見つかりましたが、ScummVMはzlibを同梱していません"
-
-#: engines/sword1/animation.cpp:568 engines/sword2/animation.cpp:464
+#: engines/sword1/animation.cpp:560 engines/sword2/animation.cpp:456
 msgid ""
 "MPEG-2 cutscenes found but ScummVM has been built without MPEG-2 support"
 msgstr ""
 "MPEG-2形式のムービーが見つかりましたが、ScummVMはMPEG-2をサポートしていません"
 
-#: engines/sword1/animation.cpp:575 engines/sword2/animation.cpp:473
+#: engines/sword1/animation.cpp:567 engines/sword2/animation.cpp:465
 #, c-format
 msgid "Cutscene '%s' not found"
 msgstr "ムービー'%s'が見つかりませんでした"
@@ -7916,7 +7919,7 @@ msgstr "新しいフォーマットのデータを残す"
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Broken Sword 1のデモはここで終了です"
 
-#: engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:426
 msgid ""
 "PSX cutscenes found but ScummVM has been built without RGB color support"
 msgstr ""
@@ -9099,6 +9102,10 @@ msgstr ""
 "Arialが必要です。LiberationFontsを使用する場合、LiberationMono、"
 "LiberationSans、LiberationSerifが必要です。GNUFreeFontを使用する場合、"
 "FreeMono、FreeSans、FreeSerifが必要です。"
+
+#~ msgid "DXA cutscenes found but ScummVM has been built without zlib"
+#~ msgstr ""
+#~ "DXA形式のムービーが見つかりましたが、ScummVMはzlibを同梱していません"
 
 #~ msgid "Fight cheat"
 #~ msgstr "戦闘チート"

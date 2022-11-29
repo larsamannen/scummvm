@@ -5,6 +5,7 @@ MODULE_OBJS := \
 	archive.o \
 	base-str.o \
 	clickteam.o \
+	concatstream.o \
 	config-manager.o \
 	coroutines.o \
 	dcl.o \
@@ -35,6 +36,7 @@ MODULE_OBJS := \
 	random.o \
 	rational.o \
 	rendermode.o \
+	rnc_deco.o \
 	str.o \
 	stream.o \
 	streamdebug.o \
