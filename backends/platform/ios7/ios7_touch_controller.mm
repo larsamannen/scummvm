@@ -28,6 +28,8 @@
 @implementation TouchController {
 	UITouch *_firstTouch;
 	UITouch *_secondTouch;
+	NSTimer *_touchTimer;
+	BOOL _touchEndedWhileTouchTimer;
 }
 
 @dynamic view;
@@ -38,6 +40,8 @@
 
 	_firstTouch = NULL;
 	_secondTouch = NULL;
+	_touchTimer = NULL;
+	_touchEndedWhileTouchTimer = NO;
 
 	// Touches should always be present in iOS view
 	[self setIsConnected:YES];
@@ -55,14 +59,26 @@
 	return nil;
 }
 
+- (void)handleTouchTimerTimeout {
+	_touchTimer = NULL;
+	[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[[self view] pointerPosition]];
+	if (_touchEndedWhileTouchTimer) {
+		[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:NO at:[[self view] pointerPosition]];
+		_touchEndedWhileTouchTimer = NO;
+	}
+}
+
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSSet *allTouches = [event allTouches];
 	if (allTouches.count == 1) {
 		_firstTouch = [allTouches anyObject];
 		if (_firstTouch.type == UITouchTypeDirect) {
 			if (iOS7_touchpadModeEnabled()) {
-				// In touchpad mode the action should occur on the current pointer position
-				[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[[self view] pointerPosition]];
+				if (_touchTimer != NULL && [_touchTimer isValid]) {
+					[_touchTimer invalidate];
+					_touchTimer = NULL;
+				}
+				_touchTimer = [NSTimer scheduledTimerWithTimeInterval:0.2 target:self selector:@selector(handleTouchTimerTimeout) userInfo:nil repeats:NO];
 			} else {
 				// Only move the pointer to the new position if not in touchpadMode else it's very hard to click on items
 				[self handlePointerMoveTo:[_firstTouch locationInView: [self view]]];
@@ -89,12 +105,16 @@
 			touch == _secondTouch) {
 			if (touch.type == UITouchTypeDirect) {
 				if (iOS7_touchpadModeEnabled()) {
+					if (_touchTimer != NULL && [_touchTimer isValid]) {
+						[_touchTimer invalidate];
+						_touchTimer = NULL;
+					}
 					// Calculate new position for the pointer based on delta of the current and previous location of the touch
 					CGPoint pointerLocation = [[self view] pointerPosition];
 					CGPoint touchLocation = [touch locationInView:[self view]];
 					CGPoint previousTouchLocation = [touch previousLocationInView:[self view]];
-					pointerLocation.y += touchLocation.y - previousTouchLocation.y;
-					pointerLocation.x += touchLocation.x - previousTouchLocation.x;
+					pointerLocation.y += (touchLocation.y - previousTouchLocation.y) / 2;
+					pointerLocation.x += (touchLocation.x - previousTouchLocation.x) / 2;
 					[self handlePointerMoveTo:pointerLocation];
 				} else {
 					[self handlePointerMoveTo:[touch locationInView: [self view]]];
@@ -109,12 +129,23 @@
 	if (allTouches.count == 1) {
 		UITouch *touch = [allTouches anyObject];
 		if (touch.type == UITouchTypeDirect) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:NO at:[touch locationInView:[self view]]];
+			if (iOS7_touchpadModeEnabled()) {
+				if (_touchTimer != NULL && [_touchTimer isValid]) {
+					_touchEndedWhileTouchTimer = YES;
+				} else {
+					[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:NO at:[[self view] pointerPosition]];
+					_touchEndedWhileTouchTimer = NO;
+				}
+			}
 		}
 	} else if (allTouches.count == 2) {
 		UITouch *touch = [[allTouches allObjects] objectAtIndex:1];
 		if (touch.type == UITouchTypeDirect) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:NO at:[touch locationInView:[self view]]];
+			if (iOS7_touchpadModeEnabled()) {
+				[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:NO at:[[self view] pointerPosition]];
+			} else {
+				[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:NO at:[touch locationInView:[self view]]];
+			}
 		}
 	}
 	_firstTouch = nil;
