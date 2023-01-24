@@ -42,6 +42,7 @@
 												 name:@"GCControllerDidConnectNotification"
 											   object:nil];
 
+	[self setControllerType:kGameControllerTypeGamepad];
 	return self;
 }
 

@@ -53,6 +53,7 @@
 
 - (void)handlePointerMoveTo:(CGPoint)point {
 	int x, y;
+	InputEvent event;
 
 	// Only set valid mouse coordinates in games
 	if (![view getMouseCoords:point eventX:&x eventY:&y]) {
@@ -61,17 +62,21 @@
 
 	[view setPointerPosition:point];
 
-	if (_firstButtonPressed) {
-		[view addEvent:InternalEvent(kInputTouchFirstDragged, x, y)];
-	} else if (_secondButtonPressed) {
-		[view addEvent:InternalEvent(kInputTouchSecondDragged, x, y)];
+	if (_controllerType == kGameControllerTypeTouch) {
+		event = _secondButtonPressed ? kInputTouchSecondDragged : kInputTouchFirstDragged;
+	} else if (_controllerType == kGameControllerTypeMouse) {
+		event = kInputMouseMoved;
 	} else {
-		[view addEvent:InternalEvent(kInputTouchFirstDragged, x, y)];
+		// Gamepads doesn't use this function
+		return;
 	}
+
+	[view addEvent:InternalEvent(event, x, y)];
 }
 
 - (void)handleMouseButtonAction:(GameControllerMouseButton)button isPressed:(bool)pressed at:(CGPoint)point{
 	int x, y;
+	InputEvent event;
 
 	// Only set valid mouse coordinates in games
 	if (![view getMouseCoords:[view pointerPosition] eventX:&x eventY:&y]) {
@@ -84,26 +89,29 @@
 	case kGameControllerMouseButtonLeft:
 		if (pressed) {
 			_firstButtonPressed = YES;
-			[view addEvent:InternalEvent(kInputTouchFirstDown, x, y)];
+			event = (_controllerType == kGameControllerTypeTouch ? kInputTouchFirstDown : kInputMouseLeftButtonDown);
 		} else {
 			_firstButtonPressed = NO;
-			[view addEvent:InternalEvent(kInputTouchFirstUp, x, y)];
+			event = (_controllerType == kGameControllerTypeTouch ? kInputTouchFirstUp : kInputMouseLeftButtonUp);
 		}
 		break;
 
 	case kGameControllerMouseButtonRight:
 		if (pressed) {
 			_secondButtonPressed = YES;
-			[view addEvent:InternalEvent(kInputTouchSecondDown, x, y)];
+			event = (_controllerType == kGameControllerTypeTouch ? kInputTouchSecondDown : kInputMouseRightButtonDown);
 		} else {
 			_secondButtonPressed = NO;
-			[view addEvent:InternalEvent(kInputTouchSecondUp, x, y)];
+			event = (_controllerType == kGameControllerTypeTouch ? kInputTouchSecondUp : kInputMouseRightButtonUp);
 		}
 		break;
 
 	default:
-		break;
+		// Gamepads doesn't use this function 
+		return;
 	}
+
+	[view addEvent:InternalEvent(event, x, y)];
 }
 
 - (void)handleJoystickAxisMotionX:(int)x andY:(int)y forJoystick:(GameControllerJoystick)joystick {

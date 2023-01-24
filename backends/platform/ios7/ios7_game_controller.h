@@ -39,9 +39,16 @@ typedef enum {
 	kGameControllerJoystickRight
 } GameControllerJoystick;
 
+typedef enum {
+	kGameControllerTypeTouch = 0,
+	kGameControllerTypeMouse,
+	kGameControllerTypeGamepad,
+} GameControllerType;
 
 @property (nonatomic, readwrite, retain) iPhoneView *view;
 @property (nonatomic, assign) BOOL isConnected;
+@property (nonatomic, assign) GameControllerType controllerType;
+
 
 - (id)initWithView:(iPhoneView *)v;
 

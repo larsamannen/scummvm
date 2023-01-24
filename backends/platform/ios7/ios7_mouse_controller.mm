@@ -45,6 +45,7 @@
 												   object:nil];
 	}
 
+	[self setControllerType:kGameControllerTypeMouse];
 	return self;
 }
 
@@ -65,7 +66,7 @@
 	};
 
 	_mouse.mouseInput.rightButton.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {
-		[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:pressed at:[[self view] pointerPosition]];
+		[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:pressed at:[[self view] pointerPosition]backends/platform/ios7/ios7_game_controller.mmbackends/platform/ios7/ios7_mouse_controller.mm ];
 	};
 #endif
 }

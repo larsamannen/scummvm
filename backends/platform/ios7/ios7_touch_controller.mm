@@ -41,6 +41,7 @@
 
 	// Touches should always be present in iOS view
 	[self setIsConnected:YES];
+	[self setControllerType:kGameControllerTypeTouch];
 
 	return self;
 }
