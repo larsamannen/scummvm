@@ -64,6 +64,37 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 				return false;
 			break;
 
+		case kInputMouseLeftButtonDown:
+			event.type = Common::EVENT_LBUTTONDOWN;
+			event.mouse.x = internalEvent.value1;
+			event.mouse.y = internalEvent.value2;
+			break;
+
+		case kInputMouseLeftButtonUp:
+			event.type = Common::EVENT_LBUTTONUP;
+			event.mouse.x = internalEvent.value1;
+			event.mouse.y = internalEvent.value2;
+			break;
+
+		case kInputMouseRightButtonDown:
+			event.type = Common::EVENT_RBUTTONDOWN;
+			event.mouse.x = internalEvent.value1;
+			event.mouse.y = internalEvent.value2;
+			break;
+
+		case kInputMouseRightButtonUp:
+			event.type = Common::EVENT_RBUTTONUP;
+			event.mouse.x = internalEvent.value1;
+			event.mouse.y = internalEvent.value2;
+			break;
+
+		case kInputMouseMoved:
+			event.type = Common::EVENT_MOUSEMOVE;
+			event.mouse.x = internalEvent.value1;
+			event.mouse.y = internalEvent.value2;
+			warpMouse(internalEvent.value1, internalEvent.value2);
+			break;
+
 		case kInputOrientationChanged:
 			handleEvent_orientationChanged(internalEvent.value1);
 			return false;
