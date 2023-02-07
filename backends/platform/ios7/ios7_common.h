@@ -37,6 +37,7 @@ enum InputEvent {
 	kInputMouseRightButtonDown,
 	kInputMouseRightButtonUp,
 	kInputMouseMoved,
+	kInputMouseRelativeOnly,
 	kInputOrientationChanged,
 	kInputKeyPressed,
 	kInputApplicationSuspended,

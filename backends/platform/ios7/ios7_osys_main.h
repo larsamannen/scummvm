@@ -91,6 +91,7 @@ protected:
 	long _lastSecondaryDown;
 	long _lastSecondaryTap;
 	int _gestureStartX, _gestureStartY;
+	int _relativeX, _relativeY;
 	bool _mouseClickAndDragEnabled;
 	bool _touchpadModeEnabled;
 	int _lastPadX;

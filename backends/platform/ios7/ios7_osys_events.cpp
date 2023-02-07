@@ -92,7 +92,17 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			event.type = Common::EVENT_MOUSEMOVE;
 			event.mouse.x = internalEvent.value1;
 			event.mouse.y = internalEvent.value2;
+			event.relMouse.x = _relativeX - event.mouse.x;
+			event.relMouse.y = _relativeY - event.mouse.y;
+			_relativeX = event.mouse.x;
+			_relativeY = event.mouse.y;
 			warpMouse(internalEvent.value1, internalEvent.value2);
+			break;
+
+		case kInputMouseRelativeOnly:
+			event.type = Common::EVENT_MOUSEMOVE;
+			event.relMouse.x = _relativeX - internalEvent.value1;
+			event.relMouse.y = _relativeY - internalEvent.value2;
 			break;
 
 		case kInputOrientationChanged:
@@ -188,6 +198,8 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y) {
 	//printf("Mouse down at (%u, %u)\n", x, y);
 
+	_relativeX = x;
+	_relativeY = y;
 	// Workaround: kInputMouseSecondToggled isn't always sent when the
 	// secondary finger is lifted. Need to make sure we get out of that mode.
 	_secondaryTapped = false;
@@ -336,6 +348,10 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 	event.type = Common::EVENT_MOUSEMOVE;
 	event.mouse.x = mouseNewPosX;
 	event.mouse.y = mouseNewPosY;
+	event.relMouse.x = _relativeX - event.mouse.x;
+	event.relMouse.y = _relativeY - event.mouse.y;
+	_relativeX = event.mouse.x;
+	_relativeY = event.mouse.y;
 	warpMouse(mouseNewPosX, mouseNewPosY);
 
 	return true;

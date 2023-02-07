@@ -57,6 +57,8 @@
 
 	// Only set valid mouse coordinates in games
 	if (![view getMouseCoords:point eventX:&x eventY:&y]) {
+		// Send relative mouse event
+		[view addEvent:InternalEvent(kInputMouseRelativeOnly, x, y)];
 		return;
 	}
 

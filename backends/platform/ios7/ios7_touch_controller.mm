@@ -65,8 +65,9 @@
 			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[[self view] pointerPosition]];
 		} else if (_firstTouch.type == UITouchTypeDirect) {
 			// Only move the pointer to the new position if not in touchpadMode else it's very hard to click on items
-			[self handlePointerMoveTo:[_firstTouch locationInView: [self view]]];
+			[[self view] setPointerPosition:[_firstTouch locationInView: [self view]]];
 			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[_firstTouch locationInView:[self view]]];
+			[self handlePointerMoveTo:[_firstTouch locationInView: [self view]]];
 		}
 	} else if (allTouches.count == 2) {
 		_secondTouch = [self secondTouchOtherTouchThan:_firstTouch in:allTouches];
