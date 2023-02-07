@@ -92,6 +92,13 @@
 			[self handleJoystickAxisMotionX:x andY:0-y forJoystick:kGameControllerJoystickRight];
 		};
 
+		_controller.extendedGamepad.dpad.valueChangedHandler = ^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue) {
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_LEFT isPressed:(xValue < 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_RIGHT isPressed:(xValue > 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_UP isPressed:(yValue > 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_DOWN isPressed:(yValue < 0)];
+		};
+
 		_controller.extendedGamepad.buttonA.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {
 			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_A isPressed:pressed];
 		};
