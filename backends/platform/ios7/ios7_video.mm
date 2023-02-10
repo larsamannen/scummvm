@@ -30,8 +30,6 @@
 
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
-#include "graphics/opengl/context.h"
-
 static int g_needsScreenUpdate = 0;
 
 #if 0
@@ -132,7 +130,6 @@ uint getSizeNextPOT(uint size) {
 	}
 
 	if ([EAGLContext setCurrentContext:_renderContext]) {
-		OpenGLContext.initialize(OpenGL::kContextGLES2);
 		[self setupRenderBuffer];
 	}
 }

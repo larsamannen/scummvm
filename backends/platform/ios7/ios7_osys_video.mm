@@ -28,6 +28,9 @@
 #include "graphics/blit.h"
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
+#include "graphics/opengl/context.h"
+
+
 #define UIViewParentController(__view) ({ \
 	UIResponder *__responder = __view; \
 	while ([__responder isKindOfClass:[UIView class]]) \
@@ -184,6 +187,8 @@ void OSystem_iOS7::initSize(uint width, uint height, const Graphics::PixelFormat
 		_framebuffer.w = width;
 		_framebuffer.h = height;
 	}
+	
+	OpenGLContext.initialize(OpenGL::kContextGLES2);
 
 	[[iOS7AppDelegate iPhoneView] setupOpenGL];
 
