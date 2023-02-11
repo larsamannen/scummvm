@@ -489,10 +489,12 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 		DEF_LOCALLIB_STATIC("libfluidsynth");
 		DEF_LOCALLIB_STATIC("libffi");
 		DEF_LOCALLIB_STATIC("libglib-2.0");
+		DEF_LOCALLIB_STATIC("libintl");
 		DEF_SYSTBD("libffi");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FREETYPE2")) {
 		DEF_LOCALLIB_STATIC("libfreetype");
+		DEF_LOCALLIB_STATIC("libbz2");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_JPEG")) {
 		DEF_LOCALLIB_STATIC("libjpeg");
@@ -595,6 +597,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FREETYPE2")) {
 		frameworks_iOS.push_back("libfreetype.a");
+		frameworks_iOS.push_back("libbz2.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_JPEG")) {
 		frameworks_iOS.push_back("libjpeg.a");
@@ -634,6 +637,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 		frameworks_iOS.push_back("libffi.a");
 		frameworks_iOS.push_back("CoreMIDI.framework");
 		frameworks_iOS.push_back("libiconv.tbd");
+		frameworks_iOS.push_back("libintl.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		frameworks_iOS.push_back("libz.tbd");
