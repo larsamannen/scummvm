@@ -112,6 +112,31 @@ uint getSizeNextPOT(uint size) {
 	return &_videoContext;
 }
 
+-(int16) get_renderBufferWidth {
+	int screenWidth, screenHeight;
+	BOOL isLandscape = (self.bounds.size.width > self.bounds.size.height);
+	if (isLandscape) {
+		screenWidth = MAX(_renderBufferWidth, _renderBufferHeight);
+		screenHeight = MIN(_renderBufferWidth, _renderBufferHeight);
+	} else {
+		screenWidth = MIN(_renderBufferWidth, _renderBufferHeight);
+		screenHeight = MAX(_renderBufferWidth, _renderBufferHeight);
+	}
+	return screenWidth;
+}
+-(int16) get_renderBufferHeight {
+	int screenWidth, screenHeight;
+	BOOL isLandscape = (self.bounds.size.width > self.bounds.size.height);
+	if (isLandscape) {
+		screenWidth = MAX(_renderBufferWidth, _renderBufferHeight);
+		screenHeight = MIN(_renderBufferWidth, _renderBufferHeight);
+	} else {
+		screenWidth = MIN(_renderBufferWidth, _renderBufferHeight);
+		screenHeight = MAX(_renderBufferWidth, _renderBufferHeight);
+	}
+	return screenHeight;
+}
+
 - (void)createContext {
 	CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
 
@@ -160,6 +185,10 @@ uint getSizeNextPOT(uint size) {
 
 - (void)set3dMode:(BOOL)mode {
 	_render3d = mode;
+}
+
+- (bool)is_render3d {
+	return _render3d;
 }
 
 - (void)finishGLSetup {

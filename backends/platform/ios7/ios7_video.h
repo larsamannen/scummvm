@@ -112,9 +112,13 @@ uint getSizeNextPOT(uint size);
 - (void)setViewTransformation;
 - (void)setupOpenGL;
 
+-(int16) get_renderBufferWidth;
+-(int16) get_renderBufferHeight;
+
 - (void)setGraphicsMode;
 
 - (void)set3dMode:(BOOL)mode;
+- (bool)is_render3d;
 
 - (void)updateSurface;
 - (void)updateMainSurface;

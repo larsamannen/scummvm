@@ -1317,6 +1317,8 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_DEFINE(scummvmIOS_defines, "IPHONE_SANDBOXED");
 	if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET"))
 		ADD_DEFINE(scummvmIOS_defines, "WITHOUT_SDL");
+	if (CONTAINS_DEFINE(setup.defines, "USE_OPENGL_GAME"))
+		ADD_DEFINE(scummvmIOS_defines, "USE_OPENGL_GAME");
 	ADD_DEFINE(scummvmIOS_defines, "USE_OPENGL_SHADERS");
 	ADD_SETTING_LIST(iPhone_Debug, "GCC_PREPROCESSOR_DEFINITIONS", scummvmIOS_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING(iPhone_Debug, "ASSETCATALOG_COMPILER_APPICON_NAME", "AppIcon");

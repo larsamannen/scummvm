@@ -229,11 +229,11 @@ void OSystem_iOS7::updateOutputSurface() {
 }
 
 int16 OSystem_iOS7::getHeight() {
-	return _videoContext->screenHeight;
+	return [[iOS7AppDelegate iPhoneView] get_renderBufferHeight];//_videoContext->screenHeight;
 }
 
 int16 OSystem_iOS7::getWidth() {
-	return _videoContext->screenWidth;
+	return [[iOS7AppDelegate iPhoneView] get_renderBufferWidth];//_videoContext->screenWidth;
 }
 
 void OSystem_iOS7::setPalette(const byte *colors, uint start, uint num) {
@@ -310,7 +310,7 @@ void OSystem_iOS7::copyRectToScreen(const void *buf, int pitch, int x, int y, in
 }
 
 void OSystem_iOS7::updateScreen() {
-	if (_dirtyRects.size() == 0 && _dirtyOverlayRects.size() == 0 && !_mouseDirty)
+	if (![[iOS7AppDelegate iPhoneView] is_render3d] && _dirtyRects.size() == 0 && _dirtyOverlayRects.size() == 0 && !_mouseDirty)
 		return;
 
 	//printf("updateScreen(): %i dirty rects.\n", _dirtyRects.size());
