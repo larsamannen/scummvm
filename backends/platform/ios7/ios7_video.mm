@@ -424,9 +424,11 @@ uint getSizeNextPOT(uint size) {
 
 	[self setupGestureRecognizers];
 
+	if (@available (iOS 7.0, *)) {
+		_controllers.push_back([[GamepadController alloc] initWithView:self]);
+	}
 	if (@available(iOS 14.0, *)) {
 		_controllers.push_back([[MouseController alloc] initWithView:self]);
-		_controllers.push_back([[GamepadController alloc] initWithView:self]);
 	}
 	_controllers.push_back([[TouchController alloc] initWithView:self]);
 
