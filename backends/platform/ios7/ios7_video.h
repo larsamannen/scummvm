@@ -27,6 +27,8 @@
 #include <QuartzCore/QuartzCore.h>
 #include <Accelerate/Accelerate.h>
 
+#include <Metal/Metal.h>
+
 #include <OpenGLES/EAGL.h>
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
@@ -95,6 +97,11 @@ uint getSizeNextPOT(uint size);
 
 @property (nonatomic, assign) CGPoint pointerPosition;
 @property (nonatomic, assign) BOOL isInGame;
+
+@property (nonatomic, assign) CAMetalLayer *metalLayer;
+/* A device is an abstraction of the GPU. It provides methods for creating
+   objects like command queues, render states, and libraries. */
+@property (nonatomic, assign) id<MTLDevice> device;
 
 - (id)initWithFrame:(struct CGRect)frame;
 

@@ -106,36 +106,19 @@ uint getSizeNextPOT(uint size) {
 
 @synthesize pointerPosition;
 
+/* CAMetalLayer is the glue that binds UIKit and Metal together.
+   CAMetalLayer is provided not by the Metal framework, but by
+   Core Animation.*/
 + (Class)layerClass {
-	return [CAEAGLLayer class];
+	return [CAMetalLayer class];
+}
+
+- (CAMetalLayer *)metalLayer {
+	return (CAMetalLayer *)self.layer;
 }
 
 - (VideoContext *)getVideoContext {
 	return &_videoContext;
-}
-
-- (void)createContext {
-	CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
-
-	eaglLayer.opaque = YES;
-	eaglLayer.drawableProperties = @{
-	                                 kEAGLDrawablePropertyRetainedBacking: @NO,
-	                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
-	                                };
-
-	_context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-
-	// In case creating the OpenGL ES context failed, we will error out here.
-	if (_context == nil) {
-		printError("Could not create OpenGL ES context.");
-		abort();
-	}
-
-	if ([EAGLContext setCurrentContext:_context]) {
-		// glEnableClientState(GL_TEXTURE_COORD_ARRAY); printOpenGLError();
-		// glEnableClientState(GL_VERTEX_ARRAY); printOpenGLError();
-		[self setupOpenGL];
-	}
 }
 
 - (void)setupOpenGL {
@@ -149,20 +132,24 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)finishGLSetup {
+#if 0
 	glViewport(0, 0, _renderBufferWidth, _renderBufferHeight); printOpenGLError();
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); printOpenGLError();
-
+	
 	glUniform2f(_screenSizeSlot, _renderBufferWidth, _renderBufferHeight);
-
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
 }
 
 - (void)freeOpenGL {
+#if 0
 	[self deleteTextures];
 	[self deleteVBOs];
 	[self deleteShaders];
 	[self deleteFramebuffer];
+#endif
 }
 
 - (void)rebuildFrameBuffer {
@@ -172,6 +159,11 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)setupFramebuffer {
+	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
+	id<MTLTexture> texture = drawable.texture;
+	_renderBufferWidth = texture.width;
+	_renderBufferHeight = texture.height;
+#if 0
 	glGenRenderbuffers(1, &_viewRenderbuffer);
 	printOpenGLError();
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
@@ -196,6 +188,7 @@ uint getSizeNextPOT(uint size) {
 		NSLog(@"Failed to make complete framebuffer object %x.", glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		return;
 	}
+#endif
 }
 
 - (void)createOverlaySurface {
@@ -211,31 +204,39 @@ uint getSizeNextPOT(uint size) {
 	// Since the overlay size won't change the whole run, we can
 	// precalculate the texture coordinates for the overlay texture here
 	// and just use it later on.
+	/*
 	GLfloat u = _videoContext.overlayWidth / (GLfloat) overlayTextureWidthPOT;
 	GLfloat v = _videoContext.overlayHeight / (GLfloat) overlayTextureHeightPOT;
 	_overlayCoords[0].x = 0; _overlayCoords[0].y = 0; _overlayCoords[0].u = 0; _overlayCoords[0].v = 0;
 	_overlayCoords[1].x = 0; _overlayCoords[1].y = 0; _overlayCoords[1].u = u; _overlayCoords[1].v = 0;
 	_overlayCoords[2].x = 0; _overlayCoords[2].y = 0; _overlayCoords[2].u = 0; _overlayCoords[2].v = v;
 	_overlayCoords[3].x = 0; _overlayCoords[3].y = 0; _overlayCoords[3].u = u; _overlayCoords[3].v = v;
-
+*/
 	_videoContext.overlayTexture.create((uint16) overlayTextureWidthPOT, (uint16) overlayTextureHeightPOT, Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 }
 
 - (void)deleteFramebuffer {
+#if 0
 	glDeleteRenderbuffers(1, &_viewRenderbuffer);
 	glDeleteFramebuffers(1, &_viewFramebuffer);
+#endif
 }
 
 - (void)setupVBOs {
+#if 0
 	glGenBuffers(1, &_vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+#endif
 }
 
 - (void)deleteVBOs {
+#if 0
 	glDeleteBuffers(1, &_vertexBuffer);
+#endif
 }
 
 - (GLuint)compileShader:(const char*)shaderPrg withType:(GLenum)shaderType {
+#if 0
 	GLuint shaderHandle = glCreateShader(shaderType);
 
 	int shaderPrgLength = strlen(shaderPrg);
@@ -253,9 +254,12 @@ uint getSizeNextPOT(uint size) {
 	}
 
 	return shaderHandle;
+#endif
+	return 0;
 }
 
 - (void)compileShaders {
+#if 0
 	const char *vertexPrg =
 			"uniform vec2 ScreenSize;"
 			"uniform float ShakeX;"
@@ -312,22 +316,28 @@ uint getSizeNextPOT(uint size) {
 	glEnableVertexAttribArray(_textureCoordSlot);
 
 	glUniform1i(_textureSlot, 0); printOpenGLError();
+#endif
 }
 
 - (void)deleteShaders {
+#if 0
 	glDeleteShader(_vertexShader);
 	glDeleteShader(_fragmentShader);
+#endif
 }
 
 - (void)setupTextures {
+#if 0
 	glGenTextures(1, &_screenTexture); printOpenGLError();
 	glGenTextures(1, &_overlayTexture); printOpenGLError();
 	glGenTextures(1, &_mouseCursorTexture); printOpenGLError();
 
 	[self setGraphicsMode];
+#endif
 }
 
 - (void)deleteTextures {
+#if 0
 	if (_screenTexture) {
 		glDeleteTextures(1, &_screenTexture); printOpenGLError();
 		_screenTexture = 0;
@@ -340,6 +350,7 @@ uint getSizeNextPOT(uint size) {
 		glDeleteTextures(1, &_mouseCursorTexture); printOpenGLError();
 		_mouseCursorTexture = 0;
 	}
+#endif
 }
 
 - (void)setupGestureRecognizers {
@@ -477,12 +488,19 @@ uint getSizeNextPOT(uint size) {
 
 	_eventLock = [[NSLock alloc] init];
 
+	/*
 	memset(_gameScreenCoords, 0, sizeof(GLVertex) * 4);
 	memset(_overlayCoords, 0, sizeof(GLVertex) * 4);
 	memset(_mouseCoords, 0, sizeof(GLVertex) * 4);
-
-	// Initialize the OpenGL ES context
-	[self createContext];
+	 */
+	_metalLayer = (CAMetalLayer *)[self layer];
+	_device = MTLCreateSystemDefaultDevice();
+	_metalLayer.device = _device;
+	_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+	// this allows us to render into the view's drawable
+	_metalLayer.framebufferOnly = NO;
+	
+	[self setupOpenGL];
 
 	return self;
 }
@@ -626,8 +644,80 @@ uint getSizeNextPOT(uint size) {
 
 	return pixelBuffer;
 }
-
+- (MTLTextureUsage)readAndWrite {
+	return MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsageShaderWrite;
+}
 - (void)updateMainSurface {
+	/* Textures in Metal are containers for images. You might be used to thinking of a texture as a single
+	   image, but textures in Metal are a little more abstract. Metal also permits a single texture object
+	   to represent an array of images, each of which is called a slice. */
+	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
+	id<MTLTexture> texture = drawable.texture;
+	MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+
+	// Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+	// an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+	//textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+
+	// Set the pixel dimensions of the texture
+	//textureDescriptor.width = _videoContext.screenTexture.w;
+	//textureDescriptor.height =_videoContext.screenTexture.h;
+
+	// Create the texture from the device by using the descriptor
+	//id<MTLTexture> texture = [_device newTextureWithDescriptor:textureDescriptor];
+	
+	//MTLRegion region = {
+	//	{ 0, 0, 0 },                   // MTLOrigin
+	//	{textureDescriptor.width, textureDescriptor.height, 1} // MTLSize
+	//};
+	
+	//NSUInteger bytesPerRow = 4 * textureDescriptor.width;
+	
+	//[texture replaceRegion:region
+	//			mipmapLevel:0
+	//			  withBytes:_videoContext.screenTexture.getPixels()
+	//			bytesPerRow:bytesPerRow];
+	
+	/* A render pass descriptor tells Metal what actions to take while an image is being rendered. At the
+	   beginning of the render pass, the loadAction determines whether the previous contents of the texture
+	   are cleared or retained. The storeAction determines what effect the rendering has on the texture:
+	   the results may either be stored or discarded. Since we want our pixels to wind up on the screen, we
+	   select our store action to be MTLStoreActionStore.
+	   The pass descriptor is also where we choose which color the screen will be cleared to before we draw
+	   any geometry. In the case below, we choose an opaque red color (red = 1, green = 0, blue = 0, alpha = 1).
+	 */
+	MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+	passDescriptor.colorAttachments[0].texture = texture;
+	passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+	passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 0, 0, 1);
+	
+	/* A command queue is an object that keeps a list of render command buffers to be executed. We get one by
+	   simply asking the device. Typically, a command queue is a long-lived object, so in more advanced
+	   scenarios, we would hold onto the queue we create for more than one frame.
+	 */
+	id<MTLCommandQueue> commandQueue = [self.device newCommandQueue];
+	/* A command buffer represents a collection of render commands to be executed as a unit. Each command
+	   buffer is associated with a queue:
+	 */
+	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+	
+	/* A command encoder is an object that is used to tell Metal what drawing we actually want to do. It is
+	   responsible for translating these high-level commands (set these shader parameters, draw these triangles,
+	   etc.) into low-level instructions that are then written into its corresponding command buffer.
+	 */
+	id <MTLRenderCommandEncoder> commandEncoder =
+	[commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+	[commandEncoder endEncoding];
+	
+	/* As its last action, the command buffer will signal that its drawable will be ready to be shown on-screen
+	   once all preceding commands are complete. Then, we call commit to indicate that this command buffer is
+	   complete and ready to be placed in command queue for execution on the GPU. This, in turn, will cause our
+	   framebuffer to be filled with our selected clear color, red.
+	 */
+	[commandBuffer presentDrawable:drawable];
+	[commandBuffer commit];
+#if 0
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLVertex) * 4, _gameScreenCoords, GL_STATIC_DRAW);
 	glVertexAttribPointer(_positionSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), 0);
 	glVertexAttribPointer(_textureCoordSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (GLvoid *) (sizeof(GLfloat) * 2));
@@ -650,6 +740,7 @@ uint getSizeNextPOT(uint size) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _videoContext.screenTexture.w, _videoContext.screenTexture.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, _videoContext.screenTexture.getPixels()); printOpenGLError();
 	}
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); printOpenGLError();
+#endif
 }
 
 - (void)updateOverlaySurface {
