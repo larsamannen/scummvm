@@ -28,6 +28,7 @@
 #include <Accelerate/Accelerate.h>
 
 #include <Metal/Metal.h>
+#include <simd/simd.h>
 
 #include <OpenGLES/EAGL.h>
 #include <OpenGLES/ES2/gl.h>
@@ -43,6 +44,12 @@ typedef struct {
 	GLfloat x, y;
 	GLfloat u,v;
 } GLVertex;
+
+typedef struct
+{
+	vector_float4 position;
+	vector_float4 color;
+} MBEVertex;
 
 uint getSizeNextPOT(uint size);
 
@@ -97,11 +104,6 @@ uint getSizeNextPOT(uint size);
 
 @property (nonatomic, assign) CGPoint pointerPosition;
 @property (nonatomic, assign) BOOL isInGame;
-
-@property (nonatomic, assign) CAMetalLayer *metalLayer;
-/* A device is an abstraction of the GPU. It provides methods for creating
-   objects like command queues, render states, and libraries. */
-@property (nonatomic, assign) id<MTLDevice> device;
 
 - (id)initWithFrame:(struct CGRect)frame;
 

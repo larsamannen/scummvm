@@ -102,6 +102,14 @@ uint getSizeNextPOT(uint size) {
 	return size;
 }
 
+@interface iPhoneView ()
+@property (nonatomic, strong) CADisplayLink *displayLink;
+@property (nonatomic, strong) id<MTLDevice> device;
+@property (nonatomic, strong) id<MTLRenderPipelineState> pipeline;
+@property (nonatomic, strong) id<MTLCommandQueue> commandQueue;
+@property (nonatomic, strong) id<MTLBuffer> mtlVertexBuffer;
+@end
+
 @implementation iPhoneView
 
 @synthesize pointerPosition;
@@ -129,6 +137,12 @@ uint getSizeNextPOT(uint size) {
 	[self setupTextures];
 
 	[self finishGLSetup];
+}
+
+- (void)setupMetal {
+	[self makeDevice];
+	[self makeBuffers];
+	[self makePipeline];
 }
 
 - (void)finishGLSetup {
@@ -159,10 +173,6 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)setupFramebuffer {
-	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
-	id<MTLTexture> texture = drawable.texture;
-	_renderBufferWidth = texture.width;
-	_renderBufferHeight = texture.height;
 #if 0
 	glGenRenderbuffers(1, &_viewRenderbuffer);
 	printOpenGLError();
@@ -493,16 +503,99 @@ uint getSizeNextPOT(uint size) {
 	memset(_overlayCoords, 0, sizeof(GLVertex) * 4);
 	memset(_mouseCoords, 0, sizeof(GLVertex) * 4);
 	 */
-	_metalLayer = (CAMetalLayer *)[self layer];
-	_device = MTLCreateSystemDefaultDevice();
-	_metalLayer.device = _device;
-	_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-	// this allows us to render into the view's drawable
-	_metalLayer.framebufferOnly = NO;
+	
+	CGFloat scale = [UIScreen mainScreen].scale;
+	CGSize drawableSize = self.bounds.size;
+	
+	// Since drawable size is in pixels, we need to multiply by the scale to move from points to pixels
+	drawableSize.width *= scale;
+	drawableSize.height *= scale;
+	
+	self.metalLayer.drawableSize = drawableSize;
+	
+	self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayLinkDidFire:)];
+	[self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 	
 	[self setupOpenGL];
+	[self setupMetal];
 
 	return self;
+}
+
+- (void)makeDevice
+{
+	_device = MTLCreateSystemDefaultDevice();
+	self.metalLayer.device = _device;
+	self.metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+}
+
+- (void)makePipeline
+{
+	id<MTLLibrary> library = [_device newDefaultLibrary];
+	
+	id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex_main"];
+	id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment_main"];
+
+	MTLRenderPipelineDescriptor *pipelineDescriptor = [MTLRenderPipelineDescriptor new];
+	pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	pipelineDescriptor.vertexFunction = vertexFunc;
+	pipelineDescriptor.fragmentFunction = fragmentFunc;
+	
+	NSError *error = nil;
+	_pipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor
+													   error:&error];
+
+	if (!_pipeline)
+	{
+		NSLog(@"Error occurred when creating render pipeline state: %@", error);
+	}
+	
+	_commandQueue = [_device newCommandQueue];
+}
+
+- (void)makeBuffers
+{
+	static const MBEVertex vertices[] =
+	{
+		{ .position = {  0.0,  0.5, 0, 1 }, .color = { 1, 0, 0, 1 } },
+		{ .position = { -0.5, -0.5, 0, 1 }, .color = { 0, 1, 0, 1 } },
+		{ .position = {  0.5, -0.5, 0, 1 }, .color = { 0, 0, 1, 1 } }
+	};
+
+	_mtlVertexBuffer = [_device newBufferWithBytes:vertices
+										length:sizeof(vertices)
+									   options:MTLResourceOptionCPUCacheModeDefault];
+}
+
+- (void)redraw
+{
+	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
+	id<MTLTexture> framebufferTexture = drawable.texture;
+
+	if (drawable)
+	{
+		MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+		passDescriptor.colorAttachments[0].texture = framebufferTexture;
+		passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.85, 0.85, 0.85, 1);
+		passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+		passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+
+		id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+
+		id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+		[commandEncoder setRenderPipelineState:self.pipeline];
+		[commandEncoder setVertexBuffer:_mtlVertexBuffer offset:0 atIndex:0];
+		[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+		[commandEncoder endEncoding];
+		
+		[commandBuffer presentDrawable:drawable];
+		[commandBuffer commit];
+	}
+}
+
+- (void)displayLinkDidFire:(CADisplayLink *)displayLink
+{
+	[self redraw];
 }
 
 - (void)dealloc {
@@ -511,12 +604,15 @@ uint getSizeNextPOT(uint size) {
 	_videoContext.screenTexture.free();
 	_videoContext.overlayTexture.free();
 	_videoContext.mouseTexture.free();
+	
+	[_displayLink invalidate];
 
 	[_eventLock release];
 	[super dealloc];
 }
 
 - (void)setFilterModeForTexture:(GLuint)tex {
+#if 0
 	if (!tex)
 		return;
 
@@ -532,6 +628,7 @@ uint getSizeNextPOT(uint size) {
 	// have a line/border artifact on the right side of the covered rect.
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); printOpenGLError();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); printOpenGLError();
+#endif
 }
 
 - (void)setGraphicsMode {
@@ -541,6 +638,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)updateSurface {
+#if 0
 	if (!g_needsScreenUpdate) {
 		return;
 	}
@@ -558,6 +656,7 @@ uint getSizeNextPOT(uint size) {
 
 	[_context presentRenderbuffer:GL_RENDERBUFFER];
 	glFinish();
+#endif
 }
 
 - (void)notifyMouseMove {
@@ -612,6 +711,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)updateMouseCursor {
+#if 0
 	[self updateMouseCursorScaling];
 
 	_mouseCoords[1].u = _mouseCoords[3].u = (_videoContext.mouseWidth - 1) / (GLfloat)_videoContext.mouseTexture.w;
@@ -619,6 +719,7 @@ uint getSizeNextPOT(uint size) {
 
 	[self setFilterModeForTexture:_mouseCursorTexture];
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _videoContext.mouseTexture.w, _videoContext.mouseTexture.h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, _videoContext.mouseTexture.getPixels()); printOpenGLError();
+#endif
 }
 
 - (void *)getTextureInRGBA8888BE_AsRGBA8888LE {
@@ -644,16 +745,11 @@ uint getSizeNextPOT(uint size) {
 
 	return pixelBuffer;
 }
-- (MTLTextureUsage)readAndWrite {
-	return MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsageShaderWrite;
-}
+
 - (void)updateMainSurface {
 	/* Textures in Metal are containers for images. You might be used to thinking of a texture as a single
 	   image, but textures in Metal are a little more abstract. Metal also permits a single texture object
 	   to represent an array of images, each of which is called a slice. */
-	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
-	id<MTLTexture> texture = drawable.texture;
-	MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
 	// Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
 	// an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
@@ -686,37 +782,37 @@ uint getSizeNextPOT(uint size) {
 	   The pass descriptor is also where we choose which color the screen will be cleared to before we draw
 	   any geometry. In the case below, we choose an opaque red color (red = 1, green = 0, blue = 0, alpha = 1).
 	 */
-	MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-	passDescriptor.colorAttachments[0].texture = texture;
-	passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-	passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-	passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 0, 0, 1);
+	//MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+	//passDescriptor.colorAttachments[0].texture = texture;
+	//passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	//passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+	//passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 0, 0, 1);
 	
 	/* A command queue is an object that keeps a list of render command buffers to be executed. We get one by
 	   simply asking the device. Typically, a command queue is a long-lived object, so in more advanced
 	   scenarios, we would hold onto the queue we create for more than one frame.
 	 */
-	id<MTLCommandQueue> commandQueue = [self.device newCommandQueue];
+	//id<MTLCommandQueue> commandQueue = [self.device newCommandQueue];
 	/* A command buffer represents a collection of render commands to be executed as a unit. Each command
 	   buffer is associated with a queue:
 	 */
-	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+	//id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 	
 	/* A command encoder is an object that is used to tell Metal what drawing we actually want to do. It is
 	   responsible for translating these high-level commands (set these shader parameters, draw these triangles,
 	   etc.) into low-level instructions that are then written into its corresponding command buffer.
 	 */
-	id <MTLRenderCommandEncoder> commandEncoder =
-	[commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-	[commandEncoder endEncoding];
+	//id <MTLRenderCommandEncoder> commandEncoder =
+	//[commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+	//[commandEncoder endEncoding];
 	
 	/* As its last action, the command buffer will signal that its drawable will be ready to be shown on-screen
 	   once all preceding commands are complete. Then, we call commit to indicate that this command buffer is
 	   complete and ready to be placed in command queue for execution on the GPU. This, in turn, will cause our
 	   framebuffer to be filled with our selected clear color, red.
 	 */
-	[commandBuffer presentDrawable:drawable];
-	[commandBuffer commit];
+	//[commandBuffer presentDrawable:drawable];
+	//[commandBuffer commit];
 #if 0
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLVertex) * 4, _gameScreenCoords, GL_STATIC_DRAW);
 	glVertexAttribPointer(_positionSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), 0);
@@ -744,6 +840,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)updateOverlaySurface {
+#if 0
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLVertex) * 4, _overlayCoords, GL_STATIC_DRAW);
 	glVertexAttribPointer(_positionSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), 0);
 	glVertexAttribPointer(_textureCoordSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (GLvoid *) (sizeof(GLfloat) * 2));
@@ -752,9 +849,11 @@ uint getSizeNextPOT(uint size) {
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _videoContext.overlayTexture.w, _videoContext.overlayTexture.h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, _videoContext.overlayTexture.getPixels()); printOpenGLError();
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); printOpenGLError();
+#endif
 }
 
 - (void)updateMouseSurface {
+#if 0
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLVertex) * 4, _mouseCoords, GL_STATIC_DRAW);
 	glVertexAttribPointer(_positionSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), 0);
 	glVertexAttribPointer(_textureCoordSlot, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (GLvoid *) (sizeof(GLfloat) * 2));
@@ -762,6 +861,7 @@ uint getSizeNextPOT(uint size) {
 	glBindTexture(GL_TEXTURE_2D, _mouseCursorTexture); printOpenGLError();
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); printOpenGLError();
+#endif
 }
 
 - (void)setGameScreenCoords{
@@ -773,6 +873,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)initSurface {
+#if 0
 	if (_context) {
 		[self rebuildFrameBuffer];
 	}
@@ -863,6 +964,7 @@ uint getSizeNextPOT(uint size) {
 	[self setViewTransformation];
 	[self updateMouseCursorScaling];
 	[self adjustViewFrameForSafeArea];
+#endif
 }
 
 #ifndef __has_builtin
@@ -910,6 +1012,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)clearColorBuffer {
+#if 0
 	// The color buffer is triple-buffered, so we clear it multiple times right away to avid doing any glClears later.
 	int clearCount = 5;
 	while (clearCount-- > 0) {
@@ -917,6 +1020,7 @@ uint getSizeNextPOT(uint size) {
 		[_context presentRenderbuffer:GL_RENDERBUFFER];
 		glFinish();
 	}
+#endif
 }
 
 - (void)addEvent:(InternalEvent)event {
