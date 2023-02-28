@@ -202,8 +202,8 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)createOverlaySurface {
-	uint overlayWidth = (uint) MAX(_renderBufferWidth, _renderBufferHeight);
-	uint overlayHeight = (uint) MIN(_renderBufferWidth, _renderBufferHeight);
+	uint overlayWidth =(uint) MAX( [[self metalLayer] drawableSize].width ,  [[self metalLayer] drawableSize].height);
+	uint overlayHeight = (uint) MIN( [[self metalLayer] drawableSize].width,  [[self metalLayer] drawableSize].height);
 
 	_videoContext.overlayWidth = overlayWidth;
 	_videoContext.overlayHeight = overlayHeight;
@@ -214,14 +214,14 @@ uint getSizeNextPOT(uint size) {
 	// Since the overlay size won't change the whole run, we can
 	// precalculate the texture coordinates for the overlay texture here
 	// and just use it later on.
-	/*
+
 	GLfloat u = _videoContext.overlayWidth / (GLfloat) overlayTextureWidthPOT;
 	GLfloat v = _videoContext.overlayHeight / (GLfloat) overlayTextureHeightPOT;
 	_overlayCoords[0].x = 0; _overlayCoords[0].y = 0; _overlayCoords[0].u = 0; _overlayCoords[0].v = 0;
 	_overlayCoords[1].x = 0; _overlayCoords[1].y = 0; _overlayCoords[1].u = u; _overlayCoords[1].v = 0;
 	_overlayCoords[2].x = 0; _overlayCoords[2].y = 0; _overlayCoords[2].u = 0; _overlayCoords[2].v = v;
 	_overlayCoords[3].x = 0; _overlayCoords[3].y = 0; _overlayCoords[3].u = u; _overlayCoords[3].v = v;
-*/
+
 	_videoContext.overlayTexture.create((uint16) overlayTextureWidthPOT, (uint16) overlayTextureHeightPOT, Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 }
 
@@ -576,7 +576,7 @@ uint getSizeNextPOT(uint size) {
 	{
 		MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
 		passDescriptor.colorAttachments[0].texture = framebufferTexture;
-		passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.85, 0.85, 0.85, 1);
+		passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1);
 		passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 		passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
 
@@ -645,9 +645,9 @@ uint getSizeNextPOT(uint size) {
 	g_needsScreenUpdate = 0;
 
 	glClear(GL_COLOR_BUFFER_BIT); printOpenGLError();
-
+#endif
 	[self updateMainSurface];
-
+#if 0
 	if (_videoContext.overlayVisible)
 		[self updateOverlaySurface];
 
@@ -873,7 +873,6 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)initSurface {
-#if 0
 	if (_context) {
 		[self rebuildFrameBuffer];
 	}
@@ -897,11 +896,11 @@ uint getSizeNextPOT(uint size) {
 		[self addSubview: _keyboardView];
 		[self showKeyboard];
 	}
-
+#if 0
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer); printOpenGLError();
 
 	[self clearColorBuffer];
-
+#endif
 	GLfloat adjustedWidth = _videoContext.screenWidth;
 	GLfloat adjustedHeight = _videoContext.screenHeight;
 	if (_videoContext.asprectRatioCorrection) {
@@ -964,7 +963,6 @@ uint getSizeNextPOT(uint size) {
 	[self setViewTransformation];
 	[self updateMouseCursorScaling];
 	[self adjustViewFrameForSafeArea];
-#endif
 }
 
 #ifndef __has_builtin

@@ -42,8 +42,8 @@ static void displayAlert(void *ctx) {
 
 	UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
 	   handler:^(UIAlertAction * action) {
-//		OSystem_iOS7::sharedInstance()->quit();
-//		abort();
+		OSystem_iOS7::sharedInstance()->quit();
+		abort();
 	}];
 
 	[alert addAction:defaultAction];
