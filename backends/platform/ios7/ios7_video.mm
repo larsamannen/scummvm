@@ -110,7 +110,18 @@ uint getSizeNextPOT(uint size) {
 @property (nonatomic, strong) id<MTLBuffer> mtlVertexBuffer;
 @end
 
-@implementation iPhoneView
+@implementation iPhoneView {
+	// The Metal texture object
+	id<MTLTexture> _texture;
+
+	// The Metal buffer that holds the vertex data.
+	id<MTLBuffer> _vertices;
+	// The number of vertices in the vertex buffer.
+	NSUInteger _numVertices;
+
+	// The current size of the view.
+	vector_uint2 _viewportSize;
+}
 
 @synthesize pointerPosition;
 
@@ -533,8 +544,8 @@ uint getSizeNextPOT(uint size) {
 {
 	id<MTLLibrary> library = [_device newDefaultLibrary];
 	
-	id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex_main"];
-	id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment_main"];
+	id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertexShader"];
+	id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"samplingShader"];
 
 	MTLRenderPipelineDescriptor *pipelineDescriptor = [MTLRenderPipelineDescriptor new];
 	pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -555,23 +566,165 @@ uint getSizeNextPOT(uint size) {
 
 - (void)makeBuffers
 {
-	static const MBEVertex vertices[] =
-	{
-		{ .position = {  0.0,  0.5, 0, 1 }, .color = { 1, 0, 0, 1 } },
-		{ .position = { -0.5, -0.5, 0, 1 }, .color = { 0, 1, 0, 1 } },
-		{ .position = {  0.5, -0.5, 0, 1 }, .color = { 0, 0, 1, 1 } }
-	};
 
-	_mtlVertexBuffer = [_device newBufferWithBytes:vertices
-										length:sizeof(vertices)
-									   options:MTLResourceOptionCPUCacheModeDefault];
+	// Set up a simple MTLBuffer with vertices which include texture coordinates
+	static const AAPLVertex quadVertices[] =
+	{
+		// Pixel positions, Texture coordinates
+		{ {  250,  -250 },  { 1.f, 1.f } },
+		{ { -250,  -250 },  { 0.f, 1.f } },
+		{ { -250,   250 },  { 0.f, 0.f } },
+
+		{ {  250,  -250 },  { 1.f, 1.f } },
+		{ { -250,   250 },  { 0.f, 0.f } },
+		{ {  250,   250 },  { 1.f, 0.f } },
+	};
+	// Create a vertex buffer, and initialize it with the quadVertices array
+	_vertices = [_device newBufferWithBytes:quadVertices
+									 length:sizeof(quadVertices)
+									options:MTLResourceStorageModeShared];
+
+	// Calculate the number of vertices by dividing the byte length by the size of each vertex
+	_numVertices = sizeof(quadVertices) / sizeof(AAPLVertex);
 }
 
+- (NSMutableData *)convert {
+	NSUInteger height = _videoContext.screenTexture.h;
+	NSUInteger width = _videoContext.screenTexture.w;
+	// The image data is stored as 32-bits per pixel BGRA data.
+	NSUInteger dataSize = width * height * 4;
+
+	// Metal will not understand an image with 24-bit BGR format so the pixels
+	// are converted to a 32-bit BGRA format that Metal does understand
+	// (MTLPixelFormatBGRA8Unorm)
+
+	NSMutableData *mutableData = [[NSMutableData alloc] initWithLength:dataSize];
+
+	// TGA spec says the image data is immediately after the header and the ID so set
+	//   the pointer to file's start + size of the header + size of the ID
+	// Initialize a source pointer with the source image data that's in BGR form
+	uint8_t *srcImageData = (uint8_t *)_videoContext.screenTexture.getPixels();
+
+	// Initialize a destination pointer to which you'll store the converted BGRA
+	// image data
+	uint8_t *dstImageData = (uint8_t *) mutableData.mutableBytes;
+
+	// For every row of the image
+	for(NSUInteger y = 0; y < height; y++)
+	{
+		// For every column of the current row
+		for(NSUInteger x = 0; x < width; x++)
+		{
+			// Calculate the index for the first byte of the pixel you're
+			// converting in both the source and destination images
+			NSUInteger srcPixelIndex = 2 * (y * width + x);
+			NSUInteger dstPixelIndex = 4 * (y * width + x);
+
+			// Copy BGR channels from the source to the destination
+			// Set the alpha channel of the destination pixel to 255
+			dstImageData[dstPixelIndex + 0] = srcImageData[srcPixelIndex + 0];
+			dstImageData[dstPixelIndex + 1] = srcImageData[srcPixelIndex + 1];
+			dstImageData[dstPixelIndex + 2] = srcImageData[srcPixelIndex + 2];
+
+			dstImageData[dstPixelIndex + 3] = 255;
+		}
+	}
+	return mutableData;
+}
+- (id<MTLTexture>)loadTextureUsingAAPLImage: (NSURL *) url {
+	
+	NSMutableData * image = [self convert];
+	
+	NSAssert(image, @"Failed to create the image from %@", url.absoluteString);
+
+	MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+	
+	// Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+	// an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+	textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+	
+	// Set the pixel dimensions of the texture
+	textureDescriptor.width = _videoContext.screenTexture.w;
+	textureDescriptor.height = _videoContext.screenTexture.h;
+	
+	// Create the texture from the device by using the descriptor
+	id<MTLTexture> texture = [_device newTextureWithDescriptor:textureDescriptor];
+	
+	// Calculate the number of bytes per row in the image.
+	NSUInteger bytesPerRow = 4 * _videoContext.screenTexture.w;
+	NSUInteger width = _videoContext.screenTexture.w;
+	NSUInteger height = _videoContext.screenTexture.h;
+	
+	MTLRegion region = {
+		{ 0, 0, 0 },                   // MTLOrigin
+		{width, height, 1} // MTLSize
+	};
+	void *bytes = malloc(4 * _videoContext.screenTexture.w * _videoContext.screenTexture.h);
+	[image getBytes:bytes length:[image length]];
+	// Copy the bytes from the data object into the texture
+	[texture replaceRegion:region
+				mipmapLevel:0
+				  withBytes:bytes
+				bytesPerRow:bytesPerRow];
+	free(bytes);
+	return texture;
+}
 - (void)redraw
 {
+	if (!_videoContext.screenTexture.w)
+		return;
 	id<CAMetalDrawable> drawable = [self.metalLayer nextDrawable];
 	id<MTLTexture> framebufferTexture = drawable.texture;
 
+#if 0
+	CVMetalTextureCacheRef metalTextureCacheRef;
+	CVMetalTextureRef metalTextureRef;
+	CVMetalTextureCacheCreate(kCFAllocatorDefault,
+							  nil,
+							  _device,
+							  nil,
+							  &metalTextureCacheRef);
+	
+	CVPixelBufferRef _CVPixelBuffer;
+	/*NSDictionary *pixelBufferAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+		[NSDictionary dictionary], (id)kCVPixelBufferIOSurfacePropertiesKey, (id)kCVPixelBufferIOSurfaceOpenGLESFBOCompatibilityKey, (id)kCVPixelBufferIOSurfaceOpenGLESFBOCompatibilityKey, (id)kCVPixelBufferIOSurfaceCoreAnimationCompatibilityKey,
+		nil];*/
+	//NSDictionary *pixelBufferAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+	//	[NSDictionary dictionary], (id)kCVPixelBufferIOSurfacePropertiesKey, (id)kCVPixelBufferMetalCompatibilityKey,
+	//	nil];
+	NSDictionary *attributes = @{
+								 @"IOSurfaceCoreAnimationCompatibility": @YES,
+								 @"kCVPixelBufferIOSurfacePropertiesKey": @YES,
+								 @"kCVPixelBufferMetalCompatibilityKey": @YES
+								 };
+	CVPixelBufferCreateWithBytes(kCFAllocatorDefault, _videoContext.screenTexture.w, _videoContext.screenTexture.h, kCVPixelFormatType_32BGRA, _videoContext.screenTexture.getPixels(), _videoContext.screenTexture.pitch, nil, nil, (CFDictionaryRef)attributes, &_CVPixelBuffer);
+	
+	CVPixelBufferLockBaseAddress(_CVPixelBuffer, kCVPixelBufferLock_ReadOnly);
+	CVReturn ret = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+											  metalTextureCacheRef,
+											  _CVPixelBuffer, nil,
+											  MTLPixelFormatB5G6R5Unorm,
+											  _videoContext.screenTexture.w, _videoContext.screenTexture.h,
+											  0,
+											  &metalTextureRef);
+	CVPixelBufferUnlockBaseAddress(_CVPixelBuffer, kCVPixelBufferLock_ReadOnly);
+	
+	CIContext* ciContext = [CIContext contextWithMTLDevice:_device
+		options:[NSDictionary dictionaryWithObjectsAndKeys:@(NO),kCIContextUseSoftwareRenderer,nil]
+	];
+
+	id<MTLCommandBuffer> metalCommandBuffer=[_commandQueue commandBufferWithUnretainedReferences];
+
+	CIImage* ciImage = [[CIImage alloc] initWithCVPixelBuffer:_CVPixelBuffer];
+
+	[ciContext render:ciImage
+		toMTLTexture:framebufferTexture
+		commandBuffer:metalCommandBuffer
+		bounds:[ciImage extent]
+		colorSpace:[ciImage colorSpace]];
+#endif
+	_texture = [self loadTextureUsingAAPLImage: NULL];
+	
 	if (drawable)
 	{
 		MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
@@ -584,8 +737,25 @@ uint getSizeNextPOT(uint size) {
 
 		id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
 		[commandEncoder setRenderPipelineState:self.pipeline];
-		[commandEncoder setVertexBuffer:_mtlVertexBuffer offset:0 atIndex:0];
-		[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+		[commandEncoder setVertexBuffer:_vertices
+								offset:0
+							  atIndex:AAPLVertexInputIndexVertices];
+
+		[commandEncoder setVertexBytes:&_viewportSize
+							   length:sizeof(_viewportSize)
+							  atIndex:AAPLVertexInputIndexViewportSize];
+		
+		// Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
+		///  to the 'colorMap' argument in the 'samplingShader' function because its
+		//   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
+		[commandEncoder setFragmentTexture:_texture
+								  atIndex:AAPLTextureIndexBaseColor];
+
+		// Draw the triangles.
+		[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+						  vertexStart:0
+						  vertexCount:_numVertices];
+		
 		[commandEncoder endEncoding];
 		
 		[commandBuffer presentDrawable:drawable];
