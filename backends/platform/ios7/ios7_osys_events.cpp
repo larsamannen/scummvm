@@ -421,8 +421,8 @@ void OSystem_iOS7::handleEvent_mouseRightButtonUp(Common::Event &event, int x, i
 }
 
 void OSystem_iOS7::handleEvent_mouseDelta(Common::Event &event, int deltaX, int deltaY) {
-	int mouseNewPosX = (int)(_videoContext->mouseX - deltaX);
-	int mouseNewPosY = (int)(_videoContext->mouseY - deltaY);
+	int mouseNewPosX = (int)(_videoContext->mouseX - (int)((float)deltaX * getMouseSpeed()));
+	int mouseNewPosY = (int)(_videoContext->mouseY - (int)((float)deltaY * getMouseSpeed()));
 
 	int widthCap = _videoContext->overlayInGUI ? _videoContext->overlayWidth : _videoContext->screenWidth;
 	int heightCap = _videoContext->overlayInGUI ? _videoContext->overlayHeight : _videoContext->screenHeight;
