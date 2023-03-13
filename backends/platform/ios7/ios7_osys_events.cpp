@@ -57,11 +57,6 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			handleEvent_touchFirstUp(event, internalEvent.value1, internalEvent.value2);
 			break;
 
-		case kInputTouchFirstDragged:
-			if (!handleEvent_touchFirstDragged(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
-
 		case kInputMouseLeftButtonDown:
 			handleEvent_mouseLeftButtonDown(event, internalEvent.value1, internalEvent.value2);
 			break;
@@ -106,16 +101,10 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			handleEvent_applicationClearState();
 			return false;
 
-		case kInputTouchSecondDragged:
-			if (!handleEvent_touchSecondDragged(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
 		case kInputTouchSecondDown:
-			_secondaryTapped = true;
 			handleEvent_touchSecondDown(event, internalEvent.value1, internalEvent.value2);
 			break;
 		case kInputTouchSecondUp:
-			_secondaryTapped = false;
 			handleEvent_touchSecondUp(event, internalEvent.value1, internalEvent.value2);
 			break;
 
@@ -227,117 +216,6 @@ void OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y)
 		event.mouse.x = _videoContext->mouseX;
 		event.mouse.y = _videoContext->mouseY;
 	}
-}
-
-bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, int y) {
-	if (_lastDragPosX == x && _lastDragPosY == y)
-		return false;
-
-	_lastDragPosX = x;
-	_lastDragPosY = y;
-
-	//printf("Mouse dragged at (%u, %u)\n", x, y);
-	int mouseNewPosX;
-	int mouseNewPosY;
-	if (_touchpadModeEnabled) {
-		int deltaX = _lastPadX - x;
-		int deltaY = _lastPadY - y;
-		_lastPadX = x;
-		_lastPadY = y;
-
-		mouseNewPosX = (int)(_videoContext->mouseX - deltaX / 0.5f);
-		mouseNewPosY = (int)(_videoContext->mouseY - deltaY / 0.5f);
-
-		int widthCap = _videoContext->overlayInGUI ? _videoContext->overlayWidth : _videoContext->screenWidth;
-		int heightCap = _videoContext->overlayInGUI ? _videoContext->overlayHeight : _videoContext->screenHeight;
-
-		if (mouseNewPosX < 0)
-			mouseNewPosX = 0;
-		else if (mouseNewPosX > widthCap)
-			mouseNewPosX = widthCap;
-
-		if (mouseNewPosY < 0)
-			mouseNewPosY = 0;
-		else if (mouseNewPosY > heightCap)
-			mouseNewPosY = heightCap;
-
-	} else {
-		mouseNewPosX = x;
-		mouseNewPosY = y;
-	}
-
-	event.type = Common::EVENT_MOUSEMOVE;
-	event.mouse.x = mouseNewPosX;
-	event.mouse.y = mouseNewPosY;
-	warpMouse(mouseNewPosX, mouseNewPosY);
-
-	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchSecondDragged(Common::Event &event, int x, int y) {
-	if (_gestureStartX == -1 || _gestureStartY == -1) {
-		return false;
-	}
-
-	static const int kNeededLength = 100;
-	static const int kMaxDeviation = 20;
-
-	int vecX = (x - _gestureStartX);
-	int vecY = (y - _gestureStartY);
-
-	int absX = abs(vecX);
-	int absY = abs(vecY);
-
-	//printf("(%d, %d)\n", vecX, vecY);
-
-	if (absX >= kNeededLength || absY >= kNeededLength) { // Long enough gesture to react upon.
-		_gestureStartX = -1;
-		_gestureStartY = -1;
-
-		if (absX < kMaxDeviation && vecY >= kNeededLength) {
-			// Swipe down
-			event.type = Common::EVENT_MAINMENU;
-			_queuedInputEvent.type = Common::EVENT_INVALID;
-
-			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
-			return true;
-		}
-
-		if (absX < kMaxDeviation && -vecY >= kNeededLength) {
-			// Swipe up
-			_mouseClickAndDragEnabled = !_mouseClickAndDragEnabled;
-			Common::U32String dialogMsg;
-			if (_mouseClickAndDragEnabled) {
-				_touchpadModeEnabled = false;
-				dialogMsg = _("Mouse-click-and-drag mode enabled.");
-			} else
-				dialogMsg = _("Mouse-click-and-drag mode disabled.");
-			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
-			dialog.runModal();
-			return false;
-		}
-
-		if (absY < kMaxDeviation && vecX >= kNeededLength) {
-			// Swipe right
-			_touchpadModeEnabled = !_touchpadModeEnabled;
-			Common::U32String dialogMsg;
-			if (_touchpadModeEnabled)
-				dialogMsg = _("Touchpad mode enabled.");
-			else
-				dialogMsg = _("Touchpad mode disabled.");
-			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
-			dialog.runModal();
-			return false;
-
-		}
-
-		if (absY < kMaxDeviation && -vecX >= kNeededLength) {
-			// Swipe left
-			return false;
-		}
-	}
-
-	return false;
 }
 
 void OSystem_iOS7::handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y) {

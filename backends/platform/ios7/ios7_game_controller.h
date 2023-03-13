@@ -45,8 +45,6 @@ typedef enum {
 
 - (id)initWithView:(iPhoneView *)v;
 
-- (void)handlePointerMoveTo:(CGPoint)point;
-- (void)handleMouseButtonAction:(GameControllerMouseButton)button isPressed:(bool)pressed at:(CGPoint)point;
 - (void)handleJoystickAxisMotionX:(int)x andY:(int)y forJoystick:(GameControllerJoystick)joystick;
 - (void)handleJoystickButtonAction:(int)button isPressed:(bool)pressed;
 

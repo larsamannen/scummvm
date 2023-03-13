@@ -83,20 +83,11 @@ protected:
 	bool _mouseDirty;
 	bool _mouseNeedTextureUpdate;
 
-	long _lastMouseDown;
-	long _lastMouseTap;
 	long _queuedEventTime;
 	Common::Event _queuedInputEvent;
-	bool _secondaryTapped;
-	long _lastSecondaryDown;
-	long _lastSecondaryTap;
 	int _gestureStartX, _gestureStartY;
 	bool _mouseClickAndDragEnabled;
 	bool _touchpadModeEnabled;
-	int _lastPadX;
-	int _lastPadY;
-	int _lastDragPosX;
-	int _lastDragPosY;
 
 	int _timerCallbackNext;
 	int _timerCallbackTimer;
@@ -249,9 +240,6 @@ protected:
 
 	void handleEvent_touchSecondDown(Common::Event &event, int x, int y);
 	void handleEvent_touchSecondUp(Common::Event &event, int x, int y);
-
-	bool handleEvent_touchFirstDragged(Common::Event &event, int x, int y);
-	bool handleEvent_touchSecondDragged(Common::Event &event, int x, int y);
 
 	void handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y);
 	void handleEvent_mouseLeftButtonUp(Common::Event &event, int x, int y);

@@ -28,8 +28,6 @@
 enum InputEvent {
 	kInputTouchFirstDown,
 	kInputTouchFirstUp,
-	kInputTouchFirstDragged,
-	kInputTouchSecondDragged,
 	kInputTouchSecondDown,
 	kInputTouchSecondUp,
 	kInputMouseLeftButtonDown,

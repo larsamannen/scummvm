@@ -93,7 +93,6 @@ uint getSizeNextPOT(uint size);
 	int _scaledShakeYOffset;
 }
 
-@property (nonatomic, assign) CGPoint pointerPosition;
 @property (nonatomic, assign) BOOL isInGame;
 
 - (id)initWithFrame:(struct CGRect)frame;
