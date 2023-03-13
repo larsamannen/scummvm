@@ -55,75 +55,75 @@
 	return nil;
 }
 
+- (void)handleTouch:(NSSet *)allTouches didBegan:(BOOL)began {
+	if (allTouches.count) {
+		int x, y;
+		InputEvent inputEvent;
+		_firstTouch = [allTouches anyObject];
+
+		if (allTouches.count == 1) {
+			if (!_firstTouch || _firstTouch.type == UITouchTypeIndirect) {
+				return;
+			}
+#ifdef __IPHONE_13_4
+			if (@available(iOS 13.4, *)) {
+				// Touchpads are considered as UITouchTypeIndirectPointers. They are handled by the mouse controller class
+				if (_firstTouch.type == UITouchTypeIndirectPointer) {
+					return;
+				}
+			}
+#endif
+			inputEvent = (began ? kInputTouchFirstDown : kInputTouchFirstUp);
+		} else /* count > 1 */ {
+			_secondTouch = [self secondTouchOtherTouchThan:_firstTouch in:allTouches];
+			if (!_secondTouch) {
+				return;
+			}
+			inputEvent = (began ? kInputTouchSecondDown : kInputTouchSecondUp);
+		}
+		// Only set valid mouse coordinates in games
+		if (![[self view] getMouseCoords:[_firstTouch locationInView:[self view]] eventX:&x eventY:&y]) {
+			return;
+		}
+		[[self view] addEvent:InternalEvent(inputEvent, x, y)];
+	}
+}
+
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSSet *allTouches = [event allTouches];
-	if (allTouches.count == 1) {
-		_firstTouch = [allTouches anyObject];
-		if (iOS7_touchpadModeEnabled()) {
-			// In touchpad mode the action should occur on the current pointer position
-			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[[self view] pointerPosition]];
-		} else if (_firstTouch.type == UITouchTypeDirect) {
-			// Only move the pointer to the new position if not in touchpadMode else it's very hard to click on items
-			[self handlePointerMoveTo:[_firstTouch locationInView: [self view]]];
-			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:YES at:[_firstTouch locationInView:[self view]]];
-		}
-	} else if (allTouches.count == 2) {
-		_secondTouch = [self secondTouchOtherTouchThan:_firstTouch in:allTouches];
-		if (_secondTouch) {
-			if (iOS7_touchpadModeEnabled()) {
-				// In touchpad mode the action should occur on the current pointer position
-				[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:YES at:[[self view] pointerPosition]];
-			} else if (_secondTouch.type == UITouchTypeDirect) {
-				[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:YES at:[_secondTouch locationInView:[self view]]];
-			}
-		}
-	}
+	[self handleTouch:allTouches didBegan:YES];
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSSet *allTouches = [event allTouches];
 	for (UITouch *touch in allTouches) {
-		if (touch == _firstTouch ||
-			touch == _secondTouch) {
-			if (iOS7_touchpadModeEnabled() || _firstTouch.type == UITouchTypeIndirect) {
-				// Calculate new position for the pointer based on delta of the current and previous location of the touch
-				CGPoint pointerLocation = [[self view] pointerPosition];
-				CGPoint touchLocation = [touch locationInView:[self view]];
-				CGPoint previousTouchLocation = [touch previousLocationInView:[self view]];
-				pointerLocation.y += touchLocation.y - previousTouchLocation.y;
-				pointerLocation.x += touchLocation.x - previousTouchLocation.x;
-				[self handlePointerMoveTo:pointerLocation];
-			} else if (_firstTouch.type == UITouchTypeDirect) {
-				[self handlePointerMoveTo:[touch locationInView: [self view]]];
+		if (touch == _firstTouch || touch == _secondTouch) {
+			CGPoint touchLocation = [touch locationInView:[self view]];
+			CGPoint previousTouchLocation = [touch previousLocationInView:[self view]];
+			int previousX, previousY, currentX, currentY;
+			if (![[self view] getMouseCoords:previousTouchLocation eventX:&previousX eventY:&previousY]) {
+				return;
 			}
+			if (![[self view] getMouseCoords:touchLocation eventX:&currentX eventY:&currentY]) {
+				return;
+			}
+			int deltaX = previousX - currentX;
+			int deltaY = previousY - currentY;
+			[[self view] addEvent:InternalEvent(kInputMouseDelta, (int)deltaX, (int)deltaY)];
 		}
 	}
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSSet *allTouches = [event allTouches];
-	if (allTouches.count == 1) {
-		UITouch *touch = [allTouches anyObject];
-		if (iOS7_touchpadModeEnabled()) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:NO at:[[self view] pointerPosition]];
-		} else if (touch.type == UITouchTypeDirect) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonLeft isPressed:NO at:[touch locationInView:[self view]]];
-		}
-	} else if (allTouches.count == 2) {
-		UITouch *touch = [[allTouches allObjects] objectAtIndex:1];
-		if (iOS7_touchpadModeEnabled()) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:NO at:[[self view] pointerPosition]];
-		} else if (touch.type == UITouchTypeDirect) {
-			[self handleMouseButtonAction:kGameControllerMouseButtonRight isPressed:NO at:[touch locationInView:[self view]]];
-		}
-	}
-	_firstTouch = nil;
-	_secondTouch = nil;
+	[self handleTouch:allTouches didBegan:NO];
+	_firstTouch = NULL;
+	_secondTouch = NULL;
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-	_firstTouch = nil;
-	_secondTouch = nil;
+	_firstTouch = NULL;
+	_secondTouch = NULL;
 }
 
 @end

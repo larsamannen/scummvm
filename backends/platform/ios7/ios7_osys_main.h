@@ -244,11 +244,11 @@ protected:
 	void handleEvent_applicationRestoreState();
 	void handleEvent_applicationClearState();
 
-	bool handleEvent_touchFirstDown(Common::Event &event, int x, int y);
-	bool handleEvent_touchFirstUp(Common::Event &event, int x, int y);
+	void handleEvent_touchFirstDown(Common::Event &event, int x, int y);
+	void handleEvent_touchFirstUp(Common::Event &event, int x, int y);
 
-	bool handleEvent_touchSecondDown(Common::Event &event, int x, int y);
-	bool handleEvent_touchSecondUp(Common::Event &event, int x, int y);
+	void handleEvent_touchSecondDown(Common::Event &event, int x, int y);
+	void handleEvent_touchSecondUp(Common::Event &event, int x, int y);
 
 	bool handleEvent_touchFirstDragged(Common::Event &event, int x, int y);
 	bool handleEvent_touchSecondDragged(Common::Event &event, int x, int y);

@@ -50,13 +50,11 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 	if (iOS7_fetchEvent(&internalEvent)) {
 		switch (internalEvent.type) {
 		case kInputTouchFirstDown:
-			if (!handleEvent_touchFirstDown(event, internalEvent.value1, internalEvent.value2))
-				return false;
+			handleEvent_touchFirstDown(event, internalEvent.value1, internalEvent.value2);
 			break;
 
 		case kInputTouchFirstUp:
-			if (!handleEvent_touchFirstUp(event, internalEvent.value1, internalEvent.value2))
-				return false;
+			handleEvent_touchFirstUp(event, internalEvent.value1, internalEvent.value2);
 			break;
 
 		case kInputTouchFirstDragged:
@@ -114,13 +112,11 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			break;
 		case kInputTouchSecondDown:
 			_secondaryTapped = true;
-			if (!handleEvent_touchSecondDown(event, internalEvent.value1, internalEvent.value2))
-				return false;
+			handleEvent_touchSecondDown(event, internalEvent.value1, internalEvent.value2);
 			break;
 		case kInputTouchSecondUp:
 			_secondaryTapped = false;
-			if (!handleEvent_touchSecondUp(event, internalEvent.value1, internalEvent.value2))
-				return false;
+			handleEvent_touchSecondUp(event, internalEvent.value1, internalEvent.value2);
 			break;
 
 		case kInputKeyPressed:
@@ -174,115 +170,63 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 	return false;
 }
 
-bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y) {
-	//printf("Mouse down at (%u, %u)\n", x, y);
-
-	// Workaround: kInputMouseSecondToggled isn't always sent when the
-	// secondary finger is lifted. Need to make sure we get out of that mode.
-	_secondaryTapped = false;
-
-	if (_touchpadModeEnabled) {
-		_lastPadX = x;
-		_lastPadY = y;
-	} else
+void OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y) {
+	if (!_touchpadModeEnabled && _videoContext->mouseX != (uint)x && _videoContext->mouseY != (uint)y) {
+		event.type = Common::EVENT_MOUSEMOVE;
+		event.mouse.x = x;
+		event.mouse.y = y;
 		warpMouse(x, y);
+	}
+	_queuedInputEvent.type = Common::EVENT_LBUTTONDOWN;
+	_queuedInputEvent.mouse.x = _videoContext->mouseX;
+	_queuedInputEvent.mouse.y = _videoContext->mouseY;
+	_queuedEventTime = getMillis() + kQueuedInputEventDelay * 2;
+}
 
-	if (_mouseClickAndDragEnabled) {
+void OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) {
+	if (_queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
 		event.type = Common::EVENT_LBUTTONDOWN;
-		event.mouse.x = _videoContext->mouseX;
-		event.mouse.y = _videoContext->mouseY;
-		return true;
-	} else {
-		_lastMouseDown = getMillis();
-	}
-	return false;
-}
+		event.mouse.x = _queuedInputEvent.mouse.x;
+		event.mouse.y = _queuedInputEvent.mouse.y;
 
-bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) {
-	//printf("Mouse up at (%u, %u)\n", x, y);
-
-	if (_secondaryTapped) {
-		_secondaryTapped = false;
-		if (!handleEvent_touchSecondUp(event, x, y))
-			return false;
-	} else if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONUP;
-		event.mouse.x = _videoContext->mouseX;
-		event.mouse.y = _videoContext->mouseY;
-	} else {
-		if (getMillis() - _lastMouseDown < 250) {
-			event.type = Common::EVENT_LBUTTONDOWN;
-			event.mouse.x = _videoContext->mouseX;
-			event.mouse.y = _videoContext->mouseY;
-
-			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
-			_queuedInputEvent.mouse.x = _videoContext->mouseX;
-			_queuedInputEvent.mouse.y = _videoContext->mouseY;
-			_lastMouseTap = getMillis();
-			_queuedEventTime = _lastMouseTap + kQueuedInputEventDelay;
-		} else
-			return false;
-	}
-
-	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchSecondDown(Common::Event &event, int x, int y) {
-	_lastSecondaryDown = getMillis();
-	_gestureStartX = x;
-	_gestureStartY = y;
-
-	if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONUP;
-		event.mouse.x = _videoContext->mouseX;
-		event.mouse.y = _videoContext->mouseY;
-
-		_queuedInputEvent.type = Common::EVENT_RBUTTONDOWN;
+		_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
 		_queuedInputEvent.mouse.x = _videoContext->mouseX;
 		_queuedInputEvent.mouse.y = _videoContext->mouseY;
-	} else
-		return false;
-
-	return true;
+		_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+	} else {
+		event.type = Common::EVENT_LBUTTONUP;
+		event.mouse.x = _videoContext->mouseX;
+		event.mouse.y = _videoContext->mouseY;
+	}
 }
 
-bool OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y) {
-	int curTime = getMillis();
-
-	if (curTime - _lastSecondaryDown < 400) {
-		//printf("Right tap!\n");
-		if (curTime - _lastSecondaryTap < 400 && !_videoContext->overlayInGUI) {
-			//printf("Right escape!\n");
-			event.type = Common::EVENT_KEYDOWN;
-			_queuedInputEvent.type = Common::EVENT_KEYUP;
-
-			event.kbd.flags = _queuedInputEvent.kbd.flags = 0;
-			event.kbd.keycode = _queuedInputEvent.kbd.keycode = Common::KEYCODE_ESCAPE;
-			event.kbd.ascii = _queuedInputEvent.kbd.ascii = Common::ASCII_ESCAPE;
-			_queuedEventTime = curTime + kQueuedInputEventDelay;
-			_lastSecondaryTap = 0;
-		} else if (!_mouseClickAndDragEnabled) {
-			//printf("Rightclick!\n");
-			event.type = Common::EVENT_RBUTTONDOWN;
-			event.mouse.x = _videoContext->mouseX;
-			event.mouse.y = _videoContext->mouseY;
-			_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
-			_queuedInputEvent.mouse.x = _videoContext->mouseX;
-			_queuedInputEvent.mouse.y = _videoContext->mouseY;
-			_lastSecondaryTap = curTime;
-			_queuedEventTime = curTime + kQueuedInputEventDelay;
-		} else {
-			//printf("Right nothing!\n");
-			return false;
-		}
+void OSystem_iOS7::handleEvent_touchSecondDown(Common::Event &event, int x, int y) {
+	if (_queuedInputEvent.type != Common::EVENT_INVALID) {
+		event.type = _queuedInputEvent.type;
+		event.mouse.x = _queuedInputEvent.mouse.x;
+		event.mouse.y = _queuedInputEvent.mouse.y;
 	}
-	if (_mouseClickAndDragEnabled) {
+	_queuedInputEvent.type = Common::EVENT_RBUTTONDOWN;
+	_queuedInputEvent.mouse.x = _videoContext->mouseX;
+	_queuedInputEvent.mouse.y = _videoContext->mouseY;
+	_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+}
+
+void OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y) {
+	if (_queuedInputEvent.type == Common::EVENT_RBUTTONDOWN) {
+		event.type = Common::EVENT_RBUTTONDOWN;
+		event.mouse.x = _queuedInputEvent.mouse.x;
+		event.mouse.y = _queuedInputEvent.mouse.y;
+
+		_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
+		_queuedInputEvent.mouse.x = _videoContext->mouseX;
+		_queuedInputEvent.mouse.y = _videoContext->mouseY;
+		_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+	} else {
 		event.type = Common::EVENT_RBUTTONUP;
 		event.mouse.x = _videoContext->mouseX;
 		event.mouse.y = _videoContext->mouseY;
 	}
-
-	return true;
 }
 
 bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, int y) {
@@ -436,6 +380,11 @@ void OSystem_iOS7::handleEvent_mouseDelta(Common::Event &event, int deltaX, int 
 		mouseNewPosY = 0;
 	else if (mouseNewPosY > heightCap)
 		mouseNewPosY = heightCap;
+
+	if (!_mouseClickAndDragEnabled) {
+		// Cancel any queued events when moving the mouse
+		_queuedInputEvent.type = Common::EVENT_INVALID;
+	}
 
 	event.type = Common::EVENT_MOUSEMOVE;
 	event.relMouse.x = deltaX;
