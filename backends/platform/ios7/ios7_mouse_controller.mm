@@ -79,6 +79,14 @@
 	_mouse.mouseInput.rightButton.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {
 		[[self view] addEvent:InternalEvent(pressed ? kInputMouseRightButtonDown : kInputMouseRightButtonUp, 0, 0)];
 	};
+
+	_mouse.mouseInput.scroll.valueChangedHandler = ^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue) {
+		if (xValue < 0) {
+			[[self view] addEvent:InternalEvent(kInputScrollDown, 0, 0)];
+		} else if (xValue > 0) {
+			[[self view] addEvent:InternalEvent(kInputScrollUp, 0, 0)];
+		}
+	};
 #endif
 }
 

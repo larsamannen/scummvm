@@ -89,6 +89,14 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			handleEvent_mouseDelta(event, internalEvent.value1, internalEvent.value2);
 			break;
 
+		case kInputScrollDown:
+			event.type = Common::EVENT_WHEELDOWN;
+			break;
+
+		case kInputScrollUp:
+			event.type = Common::EVENT_WHEELUP;
+			break;
+
 		case kInputOrientationChanged:
 			handleEvent_orientationChanged(internalEvent.value1);
 			return false;
