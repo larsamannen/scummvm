@@ -29,7 +29,16 @@
 
 @implementation GamepadController {
 	GCController *_controller;
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	API_AVAILABLE(ios(15.0))
+	GCVirtualController *_virtualController;
+	API_AVAILABLE(ios(15.0))
+	NSArray<GCVirtualControllerConfiguration*> *_virtualConfigurations;
+	int currentConfigIndex;
+#endif
 }
+
+#define MAX_NBR_VIRTUAL_CONFIGURATIONS 2
 
 @dynamic view;
 @dynamic isConnected;
@@ -42,7 +51,39 @@
 												 name:@"GCControllerDidConnectNotification"
 											   object:nil];
 
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	if (@available(iOS 15.0, *)) {
+		// Map up the different virtual controller configurations we should toggle between
+		GCVirtualControllerConfiguration *config1 = [[GCVirtualControllerConfiguration alloc] init];
+		config1.elements = [[NSSet alloc] initWithObjects:GCInputLeftThumbstick, GCInputButtonA, GCInputButtonB, nil];
+		GCVirtualControllerConfiguration *config2 = [[GCVirtualControllerConfiguration alloc] init];
+		config2.elements = [[NSSet alloc] initWithObjects:GCInputDirectionPad, GCInputRightThumbstick, GCInputButtonA, GCInputButtonB, nil];
+		_virtualConfigurations = [[NSArray alloc] initWithObjects:config1, config2, nil];
+		currentConfigIndex = 0;
+	}
+#endif
 	return self;
+}
+
+- (void)toggleVirtualController {
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	if (@available(iOS 15.0, *)) {
+		if (currentConfigIndex >= MAX_NBR_VIRTUAL_CONFIGURATIONS) {
+			currentConfigIndex = 0;
+			[_virtualController disconnect];
+			[_virtualController release];
+			[self setIsConnected:NO];
+		} else {
+			if ([self isConnected]) {
+				[_virtualController disconnect];
+				[_virtualController release];
+			}
+			_virtualController = [[GCVirtualController alloc] initWithConfiguration:[_virtualConfigurations objectAtIndex:currentConfigIndex++]];
+
+			[_virtualController connectWithReplyHandler:^(NSError * _Nullable error) { }];
+		}
+	}
+#endif
 }
 
 - (void)controllerDidConnect:(NSNotification *)notification {

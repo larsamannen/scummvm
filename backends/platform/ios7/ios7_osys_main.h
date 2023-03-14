@@ -217,6 +217,7 @@ public:
 	Common::String getSystemLanguage() const override;
 
 	bool isConnectionLimited() override;
+	void toggleVirtualController();
 
 	virtual Common::String getDefaultLogFileName() { return Common::String("/var/mobile/.scummvm.log"); }
 
