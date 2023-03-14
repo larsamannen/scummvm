@@ -505,6 +505,12 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 			return false;
 		}
 
+		case kUIViewSwipeLeft: {
+			// Sipe left
+			toggleVirtualController();
+			return false;
+		}
+
 		default:
 			break;
 		}

@@ -29,7 +29,17 @@
 
 @implementation GamepadController {
 	GCController *_controller;
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	API_AVAILABLE(ios(15.0))
+	GCVirtualController *_virtualController;
+	API_AVAILABLE(ios(15.0))
+	NSArray<GCVirtualControllerConfiguration*> *_virtualConfigurations;
+	int currentConfigIndex;
+#endif
 }
+
+// Increase this value for every new virtual controller configration added
+#define MAX_NBR_VIRTUAL_CONFIGURATIONS 2
 
 @dynamic view;
 @dynamic isConnected;
@@ -42,7 +52,44 @@
 												 name:@"GCControllerDidConnectNotification"
 											   object:nil];
 
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	if (@available(iOS 15.0, *)) {
+		// Map up the different virtual controller configurations we should toggle between
+		GCVirtualControllerConfiguration *config1 = [[GCVirtualControllerConfiguration alloc] init];
+		// Config 1: Left thumbstick, A and B buttons
+		config1.elements = [[NSSet alloc] initWithObjects:GCInputLeftThumbstick, GCInputButtonA, GCInputButtonB, nil];
+		GCVirtualControllerConfiguration *config2 = [[GCVirtualControllerConfiguration alloc] init];
+		// Config 2: Left dpad, A and B buttons
+		config2.elements = [[NSSet alloc] initWithObjects:GCInputDirectionPad, GCInputButtonA, GCInputButtonB, nil];
+		_virtualConfigurations = [[NSArray alloc] initWithObjects:config1, config2, nil];
+		currentConfigIndex = 0;
+	}
+#endif
 	return self;
+}
+
+- (void)toggleVirtualController {
+#if defined(TARGET_OS_IOS) && defined(__IPHONE_15_0)
+	if (@available(iOS 15.0, *)) {
+		if (currentConfigIndex >= MAX_NBR_VIRTUAL_CONFIGURATIONS) {
+			// Disconnect the virtual controller
+			currentConfigIndex = 0;
+			[_virtualController disconnect];
+			[_virtualController release];
+			[self setIsConnected:NO];
+		} else {
+			// Disconnect any existing virtual controller before connecting any new
+			if ([self isConnected]) {
+				[_virtualController disconnect];
+				[_virtualController release];
+			}
+			// Initiate a new virtual controller based on the config index. Note that the index is increased after init
+			_virtualController = [[GCVirtualController alloc] initWithConfiguration:[_virtualConfigurations objectAtIndex:currentConfigIndex++]];
+			// Connect the virtual controller
+			[_virtualController connectWithReplyHandler:^(NSError * _Nullable error) { }];
+		}
+	}
+#endif
 }
 
 - (void)controllerDidConnect:(NSNotification *)notification {

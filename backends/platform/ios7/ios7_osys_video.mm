@@ -486,6 +486,12 @@ void OSystem_iOS7::warpMouse(int x, int y) {
 	_mouseDirty = true;
 }
 
+void OSystem_iOS7::toggleVirtualController() {
+	execute_on_main_thread(^ {
+		[[iOS7AppDelegate iPhoneView] toggleVirtualController];
+	});
+}
+
 void OSystem_iOS7::dirtyFullScreen() {
 	if (!_fullScreenIsDirty) {
 		_dirtyRects.clear();

@@ -215,6 +215,7 @@ public:
 	Common::String getSystemLanguage() const override;
 
 	bool isConnectionLimited() override;
+	void toggleVirtualController();
 
 protected:
 	void initVideoContext();
