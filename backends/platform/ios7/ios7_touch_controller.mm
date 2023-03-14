@@ -109,7 +109,7 @@
 			}
 			int deltaX = previousX - currentX;
 			int deltaY = previousY - currentY;
-			[[self view] addEvent:InternalEvent(kInputMouseDelta, (int)deltaX, (int)deltaY)];
+			[[self view] addEvent:InternalEvent(kInputTouchDelta, (int)deltaX, (int)deltaY)];
 		}
 	}
 }

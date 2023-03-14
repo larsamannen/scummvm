@@ -240,6 +240,7 @@ protected:
 
 	void handleEvent_touchSecondDown(Common::Event &event, int x, int y);
 	void handleEvent_touchSecondUp(Common::Event &event, int x, int y);
+	void handleEvent_touchDelta(Common::Event &event, int deltaX, int deltaY);
 
 	void handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y);
 	void handleEvent_mouseLeftButtonUp(Common::Event &event, int x, int y);
@@ -247,6 +248,7 @@ protected:
 	void handleEvent_mouseRightButtonUp(Common::Event &event, int x, int y);
 	void handleEvent_mouseDelta(Common::Event &event, int deltaX, int deltaY);
 
+	void handleDelta(Common::Event &event, int deltaX, int deltaY, bool applyMouseSpeed);
 	void rebuildSurface();
 	float getMouseSpeed();
 };
