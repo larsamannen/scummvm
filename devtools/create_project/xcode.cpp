@@ -434,6 +434,8 @@ void XcodeProvider::setupCopyFilesBuildPhase() {
 
 #define DEF_LOCALLIB_STATIC(lib) DEF_LOCALLIB_STATIC_PATH(lib ".a", lib, false)
 
+#define DEF_LOCALXCFRAMEWORK(xcframework,path) { properties[xcframework".xcframework"] = FileProperty("wrapper.xcframework", xcframework".xcframework", path + "/frameworks/" + xcframework ".xcframework", "\"<group>\""); \
+	ADD_SETTING_ORDER_NOVALUE(children, getHash(xcframework".xcframework"), xcframework".xcframework", fwOrder++); }
 
 /**
  * Sets up the frameworks build phase.
@@ -449,6 +451,13 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	Property children;
 	children._hasOrder = true;
 	children._flags = kSettingsAsList;
+
+	std::string projectOutputDirectory;
+#ifdef POSIX
+	char tmpbuf[PATH_MAX];
+	char *rp = realpath(setup.outputDir.c_str(), tmpbuf);
+	projectOutputDirectory = rp;
+#endif
 
 	// Setup framework file properties
 	std::map<std::string, FileProperty> properties;
@@ -477,61 +486,62 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 
 	// Local libraries
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
-		DEF_LOCALLIB_STATIC("libfaad");
+		DEF_LOCALXCFRAMEWORK("faad", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FLAC")) {
-		DEF_LOCALLIB_STATIC("libFLAC");
+		DEF_LOCALXCFRAMEWORK("FLAC", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDLITE")) {
 		DEF_LOCALLIB_STATIC("libfluidlite");
 	} else if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDSYNTH")) {
-		DEF_LOCALLIB_STATIC("libfluidsynth");
-		DEF_LOCALLIB_STATIC("libffi");
-		DEF_LOCALLIB_STATIC("libglib-2.0");
-		DEF_SYSTBD("libffi");
+		DEF_LOCALXCFRAMEWORK("fluidsynth", projectOutputDirectory);
+		DEF_LOCALXCFRAMEWORK("ffi", projectOutputDirectory);
+		DEF_LOCALXCFRAMEWORK("intl", projectOutputDirectory);
+		DEF_LOCALXCFRAMEWORK("bz2", projectOutputDirectory);
+		DEF_LOCALXCFRAMEWORK("glib-2.0", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FREETYPE2")) {
-		DEF_LOCALLIB_STATIC("libfreetype");
+		DEF_LOCALXCFRAMEWORK("freetype", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_JPEG")) {
-		DEF_LOCALLIB_STATIC("libjpeg");
+		DEF_LOCALXCFRAMEWORK("jpeg", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_LIBCURL")) {
-		DEF_LOCALLIB_STATIC("libcurl");
+		DEF_LOCALXCFRAMEWORK("curl", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
-		DEF_LOCALLIB_STATIC("libmad");
+		DEF_LOCALXCFRAMEWORK("mad", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MPEG2")) {
-		DEF_LOCALLIB_STATIC("libmpeg2");
+		DEF_LOCALXCFRAMEWORK("mpeg2", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FRIBIDI")) {
-		DEF_LOCALLIB_STATIC("libfribidi");
+		DEF_LOCALXCFRAMEWORK("fribidi", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_PNG")) {
-		DEF_LOCALLIB_STATIC("libpng");
+		DEF_LOCALXCFRAMEWORK("png", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_GIF")) {
-		DEF_LOCALLIB_STATIC("libgif");
+		DEF_LOCALXCFRAMEWORK("gif", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_OGG")) {
-		DEF_LOCALLIB_STATIC("libogg");
+		DEF_LOCALXCFRAMEWORK("ogg", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_VORBIS")) {
-		DEF_LOCALLIB_STATIC("libvorbis");
-		DEF_LOCALLIB_STATIC("libvorbisfile");
+		DEF_LOCALXCFRAMEWORK("vorbis", projectOutputDirectory);
+		DEF_LOCALXCFRAMEWORK("vorbisfile", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_TREMOR")) {
 		DEF_LOCALLIB_STATIC("libvorbisidec");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_THEORADEC")) {
-		DEF_LOCALLIB_STATIC("libtheoradec");
+		DEF_LOCALXCFRAMEWORK("theoradec", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_RETROWAVE")) {
 		DEF_LOCALLIB_STATIC("libretrowave");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_VPX")) {
-		DEF_LOCALLIB_STATIC("libvpx");
+		DEF_LOCALXCFRAMEWORK("vpx", projectOutputDirectory);
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		DEF_SYSTBD("libz");
@@ -544,7 +554,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 		DEF_LOCALLIB_STATIC("libSDL2main");
 		DEF_LOCALLIB_STATIC("libSDL2");
 		if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET")) {
-			DEF_LOCALLIB_STATIC("libSDL2_net");
+			DEF_LOCALXCFRAMEWORK("SDL2_net", projectOutputDirectory);
 		}
 	} else {
 		DEF_LOCALLIB_STATIC("libSDLmain");
@@ -589,53 +599,55 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_iOS.push_back("Accelerate.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
-		frameworks_iOS.push_back("libfaad.a");
+		frameworks_iOS.push_back("faad.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FLAC")) {
-		frameworks_iOS.push_back("libFLAC.a");
+		frameworks_iOS.push_back("FLAC.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FREETYPE2")) {
-		frameworks_iOS.push_back("libfreetype.a");
+		frameworks_iOS.push_back("freetype.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_JPEG")) {
-		frameworks_iOS.push_back("libjpeg.a");
+		frameworks_iOS.push_back("jpeg.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_PNG")) {
-		frameworks_iOS.push_back("libpng.a");
+		frameworks_iOS.push_back("png.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_GIF")) {
-		frameworks_iOS.push_back("libgif.a");
+		frameworks_iOS.push_back("gif.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_OGG")) {
-		frameworks_iOS.push_back("libogg.a");
+		frameworks_iOS.push_back("ogg.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_VORBIS")) {
-		frameworks_iOS.push_back("libvorbis.a");
-		frameworks_iOS.push_back("libvorbisfile.a");
+		frameworks_iOS.push_back("vorbis.xcframework");
+		frameworks_iOS.push_back("vorbisfile.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_TREMOR")) {
 		frameworks_iOS.push_back("libvorbisidec.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_THEORADEC")) {
-		frameworks_iOS.push_back("libtheoradec.a");
+		frameworks_iOS.push_back("theoradec.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_VPX")) {
-		frameworks_iOS.push_back("libvpx.a");
+		frameworks_iOS.push_back("vpx.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
-		frameworks_iOS.push_back("libmad.a");
+		frameworks_iOS.push_back("mad.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MPEG2")) {
-		frameworks_iOS.push_back("libmpeg2.a");
+		frameworks_iOS.push_back("mpeg2.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FRIBIDI")) {
-		frameworks_iOS.push_back("libfribidi.a");
+		frameworks_iOS.push_back("fribidi.xcframework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDSYNTH") &&
 		!CONTAINS_DEFINE(setup.defines, "USE_FLUIDLITE")) {
-		frameworks_iOS.push_back("libfluidsynth.a");
-		frameworks_iOS.push_back("libglib-2.0.a");
-		frameworks_iOS.push_back("libffi.a");
+		frameworks_iOS.push_back("fluidsynth.xcframework");
+		frameworks_iOS.push_back("ffi.xcframework");
+		frameworks_iOS.push_back("intl.xcframework");
+		frameworks_iOS.push_back("bz2.xcframework");
+		frameworks_iOS.push_back("glib-2.0.xcframework");
 		frameworks_iOS.push_back("CoreMIDI.framework");
 		frameworks_iOS.push_back("libiconv.tbd");
 	}
@@ -643,12 +655,12 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 		frameworks_iOS.push_back("libz.tbd");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_LIBCURL")) {
-		frameworks_iOS.push_back("libcurl.a");
+		frameworks_iOS.push_back("curl.xcframework");
 		frameworks_iOS.push_back("Security.framework");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET")) {
 		if (setup.useSDL2)
-			frameworks_iOS.push_back("libSDL2_net.a");
+			frameworks_iOS.push_back("SDL2_net.xcframework");
 		else
 			frameworks_iOS.push_back("libSDL_net.a");
 	}
@@ -1302,9 +1314,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	iPhone_HeaderSearchPaths.push_back("\"" + projectOutputDirectory + "\"");
 	iPhone_HeaderSearchPaths.push_back("\"" + projectOutputDirectory + "/include\"");
 	if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET")) {
-		if (setup.useSDL2)
-			iPhone_HeaderSearchPaths.push_back("\"" + projectOutputDirectory + "/include/SDL2\"");
-		else
+		if (!setup.useSDL2)
 			iPhone_HeaderSearchPaths.push_back("\"" + projectOutputDirectory + "include/SDL\"");
 	}
 	ADD_SETTING_LIST(iPhone_Debug, "HEADER_SEARCH_PATHS", iPhone_HeaderSearchPaths, kSettingsAsList | kSettingsQuoteVariable, 5);
