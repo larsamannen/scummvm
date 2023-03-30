@@ -74,7 +74,7 @@
 	int x, y;
 
 	// Only set valid mouse coordinates in games
-	if (![view getMouseCoords:[view pointerPosition] eventX:&x eventY:&y]) {
+	if (![view getMouseCoords:point eventX:&x eventY:&y]) {
 		return;
 	}
 

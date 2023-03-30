@@ -193,13 +193,18 @@ bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y
 	_lastPadY = y;
 
 	if (!_touchpadModeEnabled) {
+		event.type = Common::EVENT_MOUSEMOVE;
+		event.mouse.x = x;
+		event.mouse.y = y;
 		warpMouse(x, y);
 	}
 
 	if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONDOWN;
-		event.mouse.x = _videoContext->mouseX;
-		event.mouse.y = _videoContext->mouseY;
+		_queuedInputEvent.type = Common::EVENT_LBUTTONDOWN;
+		_queuedInputEvent.mouse.x = _videoContext->mouseX;
+		_queuedInputEvent.mouse.y = _videoContext->mouseY;
+		_queuedEventTime = getMillis() + 250;
+
 		return true;
 	} else {
 		_lastMouseDown = getMillis();
