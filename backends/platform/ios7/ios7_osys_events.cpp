@@ -347,68 +347,6 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 }
 
 bool OSystem_iOS7::handleEvent_touchSecondDragged(Common::Event &event, int x, int y) {
-	if (_gestureStartX == -1 || _gestureStartY == -1) {
-		return false;
-	}
-
-	static const int kNeededLength = 100;
-	static const int kMaxDeviation = 20;
-
-	int vecX = (x - _gestureStartX);
-	int vecY = (y - _gestureStartY);
-
-	int absX = abs(vecX);
-	int absY = abs(vecY);
-
-	//printf("(%d, %d)\n", vecX, vecY);
-
-	if (absX >= kNeededLength || absY >= kNeededLength) { // Long enough gesture to react upon.
-		_gestureStartX = -1;
-		_gestureStartY = -1;
-
-		if (absX < kMaxDeviation && vecY >= kNeededLength) {
-			// Swipe down
-			event.type = Common::EVENT_MAINMENU;
-			_queuedInputEvent.type = Common::EVENT_INVALID;
-
-			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
-			return true;
-		}
-
-		if (absX < kMaxDeviation && -vecY >= kNeededLength) {
-			// Swipe up
-			_mouseClickAndDragEnabled = !_mouseClickAndDragEnabled;
-			Common::U32String dialogMsg;
-			if (_mouseClickAndDragEnabled) {
-				_touchpadModeEnabled = false;
-				dialogMsg = _("Mouse-click-and-drag mode enabled.");
-			} else
-				dialogMsg = _("Mouse-click-and-drag mode disabled.");
-			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
-			dialog.runModal();
-			return false;
-		}
-
-		if (absY < kMaxDeviation && vecX >= kNeededLength) {
-			// Swipe right
-			_touchpadModeEnabled = !_touchpadModeEnabled;
-			Common::U32String dialogMsg;
-			if (_touchpadModeEnabled)
-				dialogMsg = _("Touchpad mode enabled.");
-			else
-				dialogMsg = _("Touchpad mode disabled.");
-			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
-			dialog.runModal();
-			return false;
-
-		}
-
-		if (absY < kMaxDeviation && -vecX >= kNeededLength) {
-			// Swipe left
-			return false;
-		}
-	}
-
 	return false;
 }
 
