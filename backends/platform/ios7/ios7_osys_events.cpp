@@ -315,8 +315,8 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 	_lastPadY = y;
 
 	if (_touchpadModeEnabled) {
-		mouseNewPosX = (int)(_videoContext->mouseX - deltaX / 0.5f);
-		mouseNewPosY = (int)(_videoContext->mouseY - deltaY / 0.5f);
+		mouseNewPosX = (int)(_videoContext->mouseX - (int)((float)deltaX * getMouseSpeed()));
+		mouseNewPosY = (int)(_videoContext->mouseY - (int)((float)deltaY * getMouseSpeed()));
 
 		int widthCap = _videoContext->overlayInGUI ? _videoContext->overlayWidth : _videoContext->screenWidth;
 		int heightCap = _videoContext->overlayInGUI ? _videoContext->overlayHeight : _videoContext->screenHeight;
