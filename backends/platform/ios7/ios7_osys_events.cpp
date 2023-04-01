@@ -220,9 +220,20 @@ bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) 
 		if (!handleEvent_touchSecondUp(event, x, y))
 			return false;
 	} else if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONUP;
-		event.mouse.x = _videoContext->mouseX;
-		event.mouse.y = _videoContext->mouseY;
+		if (_queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
+			event.type = Common::EVENT_LBUTTONDOWN;
+			event.mouse.x = _videoContext->mouseX;
+			event.mouse.y = _videoContext->mouseY;
+
+			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
+			_queuedInputEvent.mouse.x = _videoContext->mouseX;
+			_queuedInputEvent.mouse.y = _videoContext->mouseY;
+			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+		} else {
+			event.type = Common::EVENT_LBUTTONUP;
+			event.mouse.x = _videoContext->mouseX;
+			event.mouse.y = _videoContext->mouseY;
+		}
 	} else {
 		if (getMillis() - _lastMouseDown < 250) {
 			event.type = Common::EVENT_LBUTTONDOWN;
@@ -331,6 +342,14 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 		else if (mouseNewPosY > heightCap)
 			mouseNewPosY = heightCap;
 
+		if (_mouseClickAndDragEnabled) {
+			// If the left button down has not been sent yet (250 ms)
+			// then cancel it because most probably just wanted to
+			// move the mouse pointer
+			if (_queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
+				_queuedInputEvent.type = Common::EVENT_INVALID;
+			}
+		}
 	} else {
 		mouseNewPosX = x;
 		mouseNewPosY = y;
