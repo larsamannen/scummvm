@@ -847,14 +847,14 @@ uint getSizeNextPOT(uint size) {
 	return true;
 }
 
-- (void)getScaleFactorX:(CGFloat *)x andY:(CGFloat *)y {
+- (void)getMouseScaleFactorX:(CGFloat *)x andY:(CGFloat *)y {
 	if (_videoContext.overlayInGUI) {
 		// No scaling in overlay
-		*x = 1.0;
-		*y = 1.0;
+		*x = (CGFloat)_videoContext.overlayWidth / self.bounds.size.width;
+		*y = (CGFloat)_videoContext.overlayHeight / self.bounds.size.height;
 	} else {
-		*x = (CGFloat)_videoContext.screenWidth / (CGFloat)_videoContext.overlayWidth;
-		*y = (CGFloat)_videoContext.screenHeight / (CGFloat)_videoContext.overlayHeight;
+		*x = (CGFloat)_videoContext.screenWidth / self.bounds.size.width;
+		*y = (CGFloat)_videoContext.screenHeight / self.bounds.size.height;
 	}
 }
 

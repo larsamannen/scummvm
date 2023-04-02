@@ -59,7 +59,7 @@
 
 	_mouse.mouseInput.mouseMovedHandler = ^(GCMouseInput * _Nonnull mouse, float deltaX, float deltaY) {
 		CGFloat scaleX, scaleY;
-		[[self view] getScaleFactorX:&scaleX andY:&scaleY];
+		[[self view] getMouseScaleFactorX:&scaleX andY:&scaleY];
 		CGFloat scaledDeltaX = deltaX * scaleX + _dxReminder;
 		CGFloat scaledDeltaY = deltaY * scaleY + _dyReminder;
 		// Add any reminding delta values to be summed up and get the integer part of the delta
