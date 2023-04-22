@@ -304,6 +304,7 @@ private:
 	ObjectList _project;
 	ObjectList _resourcesBuildPhase;
 	ObjectList _sourcesBuildPhase;
+  	ObjectList _shellScriptBuildPhase;
 	ObjectList _buildConfiguration;
 	ObjectList _configurationList;
 
@@ -322,7 +323,8 @@ private:
 
 	// Misc
 	void setupDefines(const BuildSetup &setup); // Setup the list of defines to be used on build configurations
-
+	void setupShellScriptBuildPhase();
+  
 	// Retrieve information
 	ValueList& getResourceFiles(const BuildSetup &setup) const;
 	std::string getLibString(std::string libName, bool xcframework) const;

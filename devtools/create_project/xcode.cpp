@@ -331,6 +331,7 @@ void XcodeProvider::createWorkspace(const BuildSetup &setup) {
 // We are done with constructing all the object graph and we got through every project, output the main project file
 // (this is kind of a hack since other providers use separate project files)
 void XcodeProvider::createOtherBuildFiles(const BuildSetup &setup) {
+	setupShellScriptBuildPhase();
 	// This needs to be done at the end when all build files have been accounted for
 	setupSourcesBuildPhase();
 
@@ -383,6 +384,7 @@ void XcodeProvider::outputMainProjectFile(const BuildSetup &setup) {
 	project << _project.toString();
 	project << _resourcesBuildPhase.toString();
 	project << _sourcesBuildPhase.toString();
+	project << _shellScriptBuildPhase.toString();
 	project << _buildConfiguration.toString();
 	project << _configurationList.toString();
 
@@ -953,6 +955,7 @@ void XcodeProvider::setupNativeTarget() {
 		buildPhases._settings[getHash("PBXResourcesBuildPhase_" + _targets[i])] = Setting("", "Resources", kSettingsNoValue, 0, 0);
 		buildPhases._settings[getHash("PBXSourcesBuildPhase_" + _targets[i])] = Setting("", "Sources", kSettingsNoValue, 0, 1);
 		buildPhases._settings[getHash("PBXFrameworksBuildPhase_" + _targets[i])] = Setting("", "Frameworks", kSettingsNoValue, 0, 2);
+		buildPhases._settings[getHash("PBXShellScriptBuildPhase_" + _targets[i])] = Setting("", "Scripts", kSettingsNoValue, 0, 3);
 		target->_properties["buildPhases"] = buildPhases;
 
 		target->addProperty("buildRules", "", "", kSettingsNoValue | kSettingsAsList);
@@ -1054,6 +1057,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/wintermute.zip");
 		files.push_back("dists/ios7/LaunchScreen_ios.storyboard");
 		files.push_back("dists/tvos/LaunchScreen_tvos.storyboard");
+		files.push_back("dists/bundle_demos.sh");
 		files.push_back("dists/pred.dic");
 		files.push_back("dists/networking/wwwroot.zip");
 		if (CONTAINS_DEFINE(setup.defines, "ENABLE_GRIME")) {
@@ -1205,6 +1209,26 @@ void XcodeProvider::setupResourcesBuildPhase(const BuildSetup &setup) {
 		resource->addProperty("runOnlyForDeploymentPostprocessing", "0", "", kSettingsNoValue);
 
 		_resourcesBuildPhase.add(resource);
+	}
+}
+
+void XcodeProvider::setupShellScriptBuildPhase() {
+	_shellScriptBuildPhase._comment = "PBXShellScriptBuildPhase";
+	// Same as for containers: a rule for each native target
+	for (unsigned int i = 0; i < _targets.size(); i++) {
+		Object *script = new Object(this, "PBXShellScriptBuildPhase_" + _targets[i], "PBXShellScriptBuildPhase", "PBXShellScriptBuildPhase", "", "Scripts");
+
+		script->addProperty("buildActionMask", "2147483647", "", kSettingsNoValue);
+		script->addProperty("files", "(\n\t\t\t)", "", kSettingsNoValue);
+		script->addProperty("inputPaths", "(\n\t\t\t)", "", kSettingsNoValue);
+		script->addProperty("name", "\"Copy bundled demos\"", "", kSettingsNoValue);
+		script->addProperty("outputPaths", "(\n\t\t\t)", "", kSettingsNoValue);
+		script->addProperty("runOnlyForDeploymentPostprocessing", "1", "", kSettingsNoValue);
+		script->addProperty("shellPath", "/bin/sh", "", kSettingsNoValue);
+		script->addProperty("shellScript", "\"${SRCROOT}/dists/bundle_demos.sh\"", "", kSettingsNoValue);
+		script->addProperty("showEnvVarsInLog", "0", "", kSettingsNoValue);
+
+		_shellScriptBuildPhase.add(script);
 	}
 }
 
