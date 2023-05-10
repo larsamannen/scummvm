@@ -482,7 +482,8 @@ uint getSizeNextPOT(uint size) {
 	memset(_mouseCoords, 0, sizeof(GLVertex) * 4);
 
 	// Initialize the OpenGL ES context
-	[self createContext];
+	// Lars should not be done on main thread
+	// [self createContext];
 
 	return self;
 }

@@ -50,7 +50,7 @@ struct AQCallbackStruct {
 	AudioStreamBasicDescription dataFormat;
 };
 
-class OSystem_iOS7 : public EventsBaseBackend, public PaletteManager {
+class OSystem_iOS7 : public ModularGraphicsBackend, public EventsBaseBackend, public PaletteManager {
 protected:
 	static AQCallbackStruct s_AudioQueue;
 	static SoundProc s_soundCallback;
@@ -214,6 +214,7 @@ public:
 	virtual GUI::OptionsContainerWidget* buildBackendOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
 	virtual void applyBackendSettings() override;
 	virtual void registerDefaultSettings(const Common::String &target) const override;
+	virtual bool setGraphicsMode(int mode, uint flags) override;
 
 protected:
 	void initVideoContext();

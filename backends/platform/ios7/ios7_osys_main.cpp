@@ -51,6 +51,7 @@
 #include "backends/fs/posix/posix-fs.h"
 #include "audio/mixer.h"
 #include "audio/mixer_intern.h"
+#include "backends/graphics/ios/ios-graphics.h"
 
 #include "backends/platform/ios7/ios7_osys_main.h"
 
@@ -103,7 +104,8 @@ OSystem_iOS7::OSystem_iOS7() :
 	if (!appBubdlePath.empty())
 		chFsFactory->addVirtualDrive("appbundle:", appBubdlePath);
 
-	initVideoContext();
+	// Lars remove?
+	//initVideoContext();
 
 	memset(_gamePalette, 0, sizeof(_gamePalette));
 	memset(_gamePaletteRGBA5551, 0, sizeof(_gamePaletteRGBA5551));
@@ -120,6 +122,8 @@ OSystem_iOS7::~OSystem_iOS7() {
 	if (_framebuffer.getPixels() != _videoContext->screenTexture.getPixels())
 		_framebuffer.free();
 	_mouseBuffer.free();
+	
+	dynamic_cast<IOSGraphics *>(_graphicsManager)->deinitSurface();
 }
 
 bool OSystem_iOS7::touchpadModeEnabled() const {
@@ -146,6 +150,8 @@ void OSystem_iOS7::initBackend() {
 	_startTime = CACurrentMediaTime();
 
 	setupMixer();
+	
+	_graphicsManager = new IOSGraphicsManager();
 
 	setTimerCallback(&OSystem_iOS7::timerHandler, 10);
 

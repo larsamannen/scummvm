@@ -24,6 +24,7 @@
 
 #include "backends/platform/ios7/ios7_osys_main.h"
 #include "backends/platform/ios7/ios7_video.h"
+#include "backends/graphics/ios/ios-graphics.h"
 
 #include "graphics/blit.h"
 #include "backends/platform/ios7/ios7_app_delegate.h"
@@ -128,6 +129,28 @@ float OSystem_iOS7::getHiDPIScreenFactor() const {
 	return [UIScreen mainScreen].scale;
 }
 
+bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
+	bool render3d = flags & OSystem::kGfxModeRender3d;
+	
+	IOSGraphics *iosGraphicsManager = dynamic_cast<IOSGraphics *>(_graphicsManager);
+	IOSGraphics::State gfxManagerState = iosGraphicsManager->getState();
+	
+	//bool supports3D = _graphicsManager->hasFeature(kFeatureOpenGLForGame);
+	//bool switchedManager = false;
+
+	//delete _graphicsManager;
+	//_graphicsManager = new IOSGraphicsManager();
+	//iosGraphicsManager = _graphicsManager;
+	
+	_graphicsManager->beginGFXTransaction();
+	if (!_graphicsManager->setGraphicsMode(mode, flags)) {
+		return false;
+	}
+	_graphicsManager->initSize(gfxManagerState.screenWidth, <#uint height#>)
+
+	return mode == 0; // taken from system.h
+}
+
 void OSystem_iOS7::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	//printf("initSize(%u, %u, %p)\n", width, height, (const void *)format);
 
@@ -197,9 +220,9 @@ void OSystem_iOS7::beginGFXTransaction() {
 OSystem::TransactionError OSystem_iOS7::endGFXTransaction() {
 	_screenChangeCount++;
 	updateOutputSurface();
-	execute_on_main_thread(^ {
-		[[iOS7AppDelegate iPhoneView] setGraphicsMode];
-	});
+	//execute_on_main_thread(^ {
+	//	[[iOS7AppDelegate iPhoneView] setGraphicsMode];
+	//});
 
 	return _gfxTransactionError;
 }
