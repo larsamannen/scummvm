@@ -132,6 +132,12 @@ public:
 
 	bool touchpadModeEnabled() const;
 
+	void createOpenGLContext();
+	void refreshScreen() const;
+	int getScreenWidth() const;
+	int getScreenHeight() const;
+	float getSystemHiDPIScreenFactor() const;
+
 #ifdef USE_RGB_COLOR
 	Graphics::PixelFormat getScreenFormat() const override { return _framebuffer.format; }
 	Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
