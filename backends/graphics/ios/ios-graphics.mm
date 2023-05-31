@@ -1,0 +1,77 @@
+/* ScummVM - Graphic Adventure Engine
+ *
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
+ * file distributed with this source distribution.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+≈ *
+ */
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
+#include "backends/graphics/ios/ios-graphics.h"
+#include "backends/graphics/opengl/pipelines/pipeline.h"
+#include "backends/platform/ios7/ios7_osys_main.h"
+
+#include <Foundation/Foundation.h>
+
+iOSGraphicsManager::iOSGraphicsManager() {
+	initSurface();
+}
+
+iOSGraphicsManager::~iOSGraphicsManager() {
+	deinitSurface();
+}
+
+void iOSGraphicsManager::initSurface() {
+	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
+
+	// Create OpenGL context
+	sys->createOpenGLContext();
+
+	notifyContextCreate(OpenGL::kContextGLES2,
+	// Currently iOS runs the ARMs in little-endian mode. Add big endian
+	// format if that is changed in the future.
+#ifdef SCUMM_LITTLE_ENDIAN
+			Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24),
+			Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+#else
+			Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0),
+			Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+#endif
+	handleResize(sys->getScreenWidth(), sys->getScreenHeight());
+}
+
+void iOSGraphicsManager::deinitSurface() {
+	notifyContextDestroy();
+}
+
+bool iOSGraphicsManager::loadVideoMode(uint requestedWidth, uint requestedHeight, const Graphics::PixelFormat &format) {
+	/* The iOS and tvOS video modes are always full screen */
+	return true;
+}
+
+float iOSGraphicsManager::getHiDPIScreenFactor() const {
+	return dynamic_cast<OSystem_iOS7 *>(g_system)->getSystemHiDPIScreenFactor();
+}
+
+void iOSGraphicsManager::refreshScreen() {
+	dynamic_cast<OSystem_iOS7 *>(g_system)->refreshScreen();
+}
+
+void iOSGraphicsManager::convertToVirtualMousePosition(Common::Point &mouse) {
+	mouse.x = CLIP<int16>(mouse.x, _activeArea.drawRect.left, _activeArea.drawRect.right);
+	mouse.y = CLIP<int16>(mouse.y, _activeArea.drawRect.top, _activeArea.drawRect.bottom);
+	mouse = convertWindowToVirtual(mouse.x, mouse.y);
+}
