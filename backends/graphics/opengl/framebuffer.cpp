@@ -173,7 +173,7 @@ void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {
 void Backbuffer::activateInternal() {
 #if !USE_FORCED_GLES
 	if (OpenGLContext.framebufferObjectSupported) {
-		GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+		GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 1));
 	}
 #endif
 }
