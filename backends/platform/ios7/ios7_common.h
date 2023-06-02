@@ -116,7 +116,6 @@ struct InternalEvent {
 extern int iOS7_argc;
 extern char **iOS7_argv;
 
-void iOS7_updateScreen();
 bool iOS7_fetchEvent(InternalEvent *event);
 bool iOS7_isBigDevice();
 
