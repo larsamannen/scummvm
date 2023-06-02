@@ -138,7 +138,36 @@ uint getSizeNextPOT(uint size) {
 	}
 }
 
+- (void)createOpenGLContext {
+	// Create OpenGL context with the sharegroup from the context
+	// connected to the Apple Core Animation layer
+	if (!_openGLContext && _context) {
+		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_context.sharegroup];
+
+		if (_openGLContext == nil) {
+			printError("Could not create OpenGL ES context using sharegroup");
+			abort();
+		}
+		if ([EAGLContext setCurrentContext:_openGLContext]) {
+			[self setupOpenGL];
+		}
+	}
+}
+
+- (void)refreshScreen {
+	[_openGLContext presentRenderbuffer:GL_RENDERBUFFER];
+}
+
+- (int)getScreenWidth {
+	return _renderBufferWidth;
+}
+
+- (int)getScreenHeight {
+	return _renderBufferHeight;
+}
+
 - (void)setupOpenGL {
+	[self setupRenderBuffer];
 	[self setupFramebuffer];
 	[self createOverlaySurface];
 	[self compileShaders];
@@ -163,6 +192,7 @@ uint getSizeNextPOT(uint size) {
 	[self deleteVBOs];
 	[self deleteShaders];
 	[self deleteFramebuffer];
+	[self deleteRenderbuffer];
 }
 
 - (void)rebuildFrameBuffer {
@@ -172,30 +202,39 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)setupFramebuffer {
-	glGenRenderbuffers(1, &_viewRenderbuffer);
-	printOpenGLError();
-	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	printOpenGLError();
-	[_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer];
-
-	glGenFramebuffers(1, &_viewFramebuffer);
-	printOpenGLError();
+   if (!_viewFramebuffer) {
+	   glGenFramebuffers(1, &_viewFramebuffer);
+	   printOpenGLError();
+	}
 	glBindFramebuffer(GL_FRAMEBUFFER, _viewFramebuffer);
 	printOpenGLError();
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _viewRenderbuffer);
-	printOpenGLError();
-
-	// Retrieve the render buffer size. This *should* match the frame size,
-	// i.e. g_fullWidth and g_fullHeight.
-	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
-	printOpenGLError();
-	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
 	printOpenGLError();
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		NSLog(@"Failed to make complete framebuffer object %x.", glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		return;
 	}
+}
+
+- (void)setupRenderBuffer {
+	execute_on_main_thread(^{
+		if (!_viewRenderbuffer) {
+			glGenRenderbuffers(1, &_viewRenderbuffer);
+			printOpenGLError();
+		}
+		glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+		printOpenGLError();
+		if (![_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer]) {
+			printError("Failed renderbufferStorage");
+		}
+		// Retrieve the render buffer size. This *should* match the frame size,
+		// i.e. g_fullWidth and g_fullHeight.
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
+		printOpenGLError();
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
+		printOpenGLError();
+	});
 }
 
 - (void)createOverlaySurface {
@@ -221,8 +260,11 @@ uint getSizeNextPOT(uint size) {
 	_videoContext.overlayTexture.create((uint16) overlayTextureWidthPOT, (uint16) overlayTextureHeightPOT, Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 }
 
-- (void)deleteFramebuffer {
+- (void)deleteRenderbuffer {
 	glDeleteRenderbuffers(1, &_viewRenderbuffer);
+}
+
+- (void)deleteFramebuffer {
 	glDeleteFramebuffers(1, &_viewFramebuffer);
 }
 
@@ -682,8 +724,14 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)initSurface {
-	if (_context) {
-		[self rebuildFrameBuffer];
+	if ([EAGLContext setCurrentContext:_context] == NO) {
+		printError("Could not set OpenGL ES current context.");
+	}
+
+	[self setupRenderBuffer];
+
+	if ([EAGLContext setCurrentContext:_openGLContext] == NO) {
+		printError("Could not set OpenGL ES current context.");
 	}
 
 #if TARGET_OS_IOS
@@ -716,8 +764,6 @@ uint getSizeNextPOT(uint size) {
 	}
 
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer); printOpenGLError();
-
-	[self clearColorBuffer];
 
 	GLfloat adjustedWidth = _videoContext.screenWidth;
 	GLfloat adjustedHeight = _videoContext.screenHeight;

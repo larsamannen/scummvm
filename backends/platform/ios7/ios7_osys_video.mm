@@ -276,28 +276,22 @@ bool OSystem_iOS7::isKeyboardShown() const {
 }
 
 void OSystem_iOS7::createOpenGLContext() {
-	// TODO: Implement creation of OpenGL context
-	// The context will be used by scummvm system running on
-	// background thread.
+	[[iOS7AppDelegate iPhoneView] createOpenGLContext];
 }
 
 void OSystem_iOS7::refreshScreen() const {
-	// TODO: Implement presentation of the renderBuffer
-	// Present the renderBuffer on the openGLContext
+	[[iOS7AppDelegate iPhoneView] refreshScreen];
 }
 
 int OSystem_iOS7::getScreenWidth() const {
-	// TODO: Return width of screen buffer
-	return 0;
+	return [[iOS7AppDelegate iPhoneView] getScreenWidth];
 }
 
 int OSystem_iOS7::getScreenHeight() const {
-	// TODO: Return height of screen buffer
-	return 0;
+	return [[iOS7AppDelegate iPhoneView] getScreenHeight];
 }
 
 float OSystem_iOS7::getSystemHiDPIScreenFactor() const {
-	// TODO: Return HiDPI screen factor
-	return 0.0;
+	return [[UIScreen mainScreen] scale];
 }
 
