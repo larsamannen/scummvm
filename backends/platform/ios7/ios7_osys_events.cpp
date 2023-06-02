@@ -81,8 +81,7 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			break;
 
 		case kInputOrientationChanged:
-			handleEvent_orientationChanged(internalEvent.value1);
-			return false;
+			return handleEvent_orientationChanged(event, internalEvent.value1);
 
 		case kInputApplicationSuspended:
 			handleEvent_applicationSuspended();
@@ -344,7 +343,7 @@ void OSystem_iOS7::handleEvent_mouseEvent(Common::Event &event, int relX, int re
 }
 
 
-void  OSystem_iOS7::handleEvent_orientationChanged(int orientation) {
+bool OSystem_iOS7::handleEvent_orientationChanged(Common::Event &event, int orientation) {
 	//printf("Orientation: %i\n", orientation);
 
 	ScreenOrientation newOrientation;
@@ -362,23 +361,22 @@ void  OSystem_iOS7::handleEvent_orientationChanged(int orientation) {
 		newOrientation = kScreenOrientationFlippedLandscape;
 		break;
 	default:
-		return;
+		return false;
 	}
 
 	if (_screenOrientation != newOrientation) {
 		_screenOrientation = newOrientation;
 		rebuildSurface();
+		event.type = Common::EVENT_SCREEN_CHANGED;
+		return true;
 	}
+	return false;
 }
 
 void OSystem_iOS7::rebuildSurface() {
+	dynamic_cast<iOSGraphicsManager *>(_graphicsManager)->deinitSurface();
 	updateOutputSurface();
-
-	dirtyFullScreen();
-	if (_videoContext->overlayVisible) {
-			dirtyFullOverlayScreen();
-		}
-	updateScreen();
+	dynamic_cast<iOSGraphicsManager *>(_graphicsManager)->initSurface();
 }
 
 void OSystem_iOS7::handleEvent_applicationSuspended() {

@@ -199,7 +199,7 @@ protected:
 	bool handleEvent_swipe(Common::Event &event, int direction, int touches);
 	bool handleEvent_tap(Common::Event &event, UIViewTapDescription type, int touches);
 	void handleEvent_keyPressed(Common::Event &event, int keyPressed);
-	void handleEvent_orientationChanged(int orientation);
+	bool handleEvent_orientationChanged(Common::Event &event, int orientation);
 	void handleEvent_applicationSuspended();
 	void handleEvent_applicationResumed();
 	void handleEvent_applicationSaveState();
