@@ -36,7 +36,7 @@ public:
 	void initSurface();
 	void deinitSurface();
 
-	void convertToVirtualMousePosition(Common::Point &mouse);
+	bool notifyMousePosition(Common::Point &mouse);
 	Common::Point getMousePosition() { return Common::Point(_cursorX, _cursorY); }
 
 	float getHiDPIScreenFactor() const override;
