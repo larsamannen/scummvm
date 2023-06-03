@@ -273,12 +273,6 @@ bool OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y)
 }
 
 bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, int y) {
-	if (_lastDragPosX == x && _lastDragPosY == y)
-		return false;
-
-	_lastDragPosX = x;
-	_lastDragPosY = y;
-
 	//printf("Mouse dragged at (%u, %u)\n", x, y);
 	int deltaX = _lastPadX - x;
 	int deltaY = _lastPadY - y;

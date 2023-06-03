@@ -72,8 +72,6 @@ protected:
 	bool _touchpadModeEnabled;
 	int _lastPadX;
 	int _lastPadY;
-	int _lastDragPosX;
-	int _lastDragPosY;
 
 	ScreenOrientation _screenOrientation;
 
