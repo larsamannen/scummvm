@@ -29,12 +29,6 @@
 @interface GameController : NSObject
 
 typedef enum {
-	kGameControllerMouseButtonLeft = 0,
-	kGameControllerMouseButtonRight,
-	kGameControllerMouseButtonMiddle,
-} GameControllerMouseButton;
-
-typedef enum {
 	kGameControllerJoystickLeft = 0,
 	kGameControllerJoystickRight
 } GameControllerJoystick;
