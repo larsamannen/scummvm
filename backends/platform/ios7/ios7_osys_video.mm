@@ -112,6 +112,10 @@ static inline void execute_on_main_thread(void (^block)(void)) {
 void OSystem_iOS7::updateOutputSurface() {
 	execute_on_main_thread(^ {
 		[[iOS7AppDelegate iPhoneView] initSurface];
+		if (_screenOrientation == kScreenOrientationPortrait ||
+			_screenOrientation == kScreenOrientationFlippedPortrait) {
+			[[iOS7AppDelegate iPhoneView] showKeyboard];
+		}
 	});
 }
 

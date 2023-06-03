@@ -758,7 +758,6 @@ uint getSizeNextPOT(uint size) {
 		[_keyboardView setInputDelegate:self];
 		[self addSubview:[_keyboardView inputView]];
 		[self addSubview: _keyboardView];
-		[self showKeyboard];
 	}
 
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer); printOpenGLError();
