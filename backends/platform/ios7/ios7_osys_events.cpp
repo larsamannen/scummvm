@@ -185,8 +185,14 @@ bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y
 	}
 
 	if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONDOWN;
-		handleEvent_mouseEvent(event, 0, 0);
+		if (_touchpadModeEnabled) {
+			_queuedInputEvent.type = Common::EVENT_LBUTTONDOWN;
+			_queuedEventTime = getMillis() + 250;
+			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
+		} else {
+			event.type = Common::EVENT_LBUTTONDOWN;
+			handleEvent_mouseEvent(event, 0, 0);
+		}
 		return true;
 	} else {
 		_lastMouseDown = getMillis();
@@ -202,8 +208,16 @@ bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) 
 		if (!handleEvent_touchSecondUp(event, x, y))
 			return false;
 	} else if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONUP;
-		handleEvent_mouseEvent(event, 0, 0);
+		if (_touchpadModeEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
+			// This has not been sent yet, send it right away
+			event = _queuedInputEvent;
+			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
+			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
+		} else {
+			event.type = Common::EVENT_LBUTTONUP;
+			handleEvent_mouseEvent(event, 0, 0);
+		}
 	} else {
 		if (getMillis() - _lastMouseDown < 250) {
 			event.type = Common::EVENT_LBUTTONDOWN;
@@ -279,6 +293,10 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 	_lastPadY = y;
 
 	if (_touchpadModeEnabled) {
+		if (_mouseClickAndDragEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
+			// Cancel the button down event since this was a pure mouse move
+			_queuedInputEvent.type = Common::EVENT_INVALID;
+		}
 		handleEvent_mouseDelta(event, deltaX, deltaY);
 	} else {
 		// Update mouse position
