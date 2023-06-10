@@ -97,6 +97,8 @@ public:
 	void setFeatureState(Feature f, bool enable) override;
 	bool getFeatureState(Feature f) override;
 
+	bool setGraphicsMode(int mode, uint flags) override;
+
 	bool touchpadModeEnabled() const;
 
 	void createOpenGLContext();
