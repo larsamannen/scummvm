@@ -391,7 +391,8 @@ endif
 ifdef IPHONE
 MODULE_OBJS += \
 	mutex/pthread/pthread-mutex.o \
-	graphics/ios/ios-graphics.o
+	graphics/ios/ios-graphics.o \
+	graphics3d/ios/ios-graphics3d.o
 endif
 
 ifeq ($(BACKEND),maemo)
