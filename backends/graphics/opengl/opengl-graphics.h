@@ -147,6 +147,7 @@ protected:
 	 */
 	void notifyContextCreate(
 			ContextType type,
+			Framebuffer *target,
 			const Graphics::PixelFormat &defaultFormat,
 			const Graphics::PixelFormat &defaultFormatAlpha);
 
@@ -337,9 +338,9 @@ protected:
 	Graphics::PixelFormat _defaultFormatAlpha;
 
 	/**
-	 * Render back buffer.
+	 * Render target.
 	 */
-	Backbuffer _backBuffer;
+	Framebuffer *_targetBuffer;
 
 	/**
 	 * The rendering surface for the virtual game screen.

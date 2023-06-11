@@ -71,7 +71,7 @@ namespace OpenGL {
 OpenGLGraphicsManager::OpenGLGraphicsManager()
 	: _currentState(), _oldState(), _transactionMode(kTransactionNone), _screenChangeID(1 << (sizeof(int) * 8 - 2)),
 	  _pipeline(nullptr), _stretchMode(STRETCH_FIT),
-	  _defaultFormat(), _defaultFormatAlpha(),
+	  _defaultFormat(), _defaultFormatAlpha(), _targetBuffer(nullptr),
 	  _gameScreen(nullptr), _overlay(nullptr),
 	  _cursor(nullptr),
 	  _cursorHotspotX(0), _cursorHotspotY(0),
@@ -104,6 +104,7 @@ OpenGLGraphicsManager::~OpenGLGraphicsManager() {
 	ShaderManager::destroy();
 #endif
 	delete _pipeline;
+	delete _targetBuffer;
 }
 
 bool OpenGLGraphicsManager::hasFeature(OSystem::Feature f) const {
@@ -646,14 +647,14 @@ void OpenGLGraphicsManager::updateScreen() {
 		// The scissor test is enabled to:
 		// - Clip the cursor to the game screen
 		// - Clip the game screen when the shake offset is non-zero
-		_backBuffer.enableScissorTest(true);
+		_targetBuffer->enableScissorTest(true);
 	}
 
 	// Don't draw cursor if it's not visible or there is none
 	bool drawCursor = _cursorVisible && _cursor;
 
 	// Alpha blending is disabled when drawing the screen
-	_backBuffer.enableBlend(Framebuffer::kBlendModeDisabled);
+	_targetBuffer->enableBlend(Framebuffer::kBlendModeDisabled);
 
 	// First step: Draw the (virtual) game screen.
 	_pipeline->drawTexture(_gameScreen->getGLTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
@@ -674,7 +675,7 @@ void OpenGLGraphicsManager::updateScreen() {
 			drawCursor = false;
 
 			// Everything we need to clip has been clipped
-			_backBuffer.enableScissorTest(false);
+			_targetBuffer->enableScissorTest(false);
 		}
 
 		// Overlay must not be scaled and its cursor won't be either
@@ -686,7 +687,7 @@ void OpenGLGraphicsManager::updateScreen() {
 	if (_overlayVisible) {
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
-		_backBuffer.enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
+		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(_overlay->getGLTexture(), dstX, dstY, _overlayDrawRect.width(), _overlayDrawRect.height());
 	}
 
@@ -701,13 +702,13 @@ void OpenGLGraphicsManager::updateScreen() {
 	}
 
 	if (!_overlayVisible) {
-		_backBuffer.enableScissorTest(false);
+		_targetBuffer->enableScissorTest(false);
 	}
 
 #ifdef USE_OSD
 	// Fourth step: Draw the OSD.
 	if (_osdMessageSurface || _osdIconSurface) {
-		_backBuffer.enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
+		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 	}
 
 	if (_osdMessageSurface) {
@@ -1122,7 +1123,7 @@ void OpenGLGraphicsManager::grabPalette(byte *colors, uint start, uint num) cons
 
 void OpenGLGraphicsManager::handleResizeImpl(const int width, const int height) {
 	// Setup backbuffer size.
-	_backBuffer.setSize(width, height);
+	_targetBuffer->setSize(width, height);
 
 	uint overlayWidth = width;
 	uint overlayHeight = height;
@@ -1173,8 +1174,13 @@ void OpenGLGraphicsManager::handleResizeImpl(const int width, const int height) 
 }
 
 void OpenGLGraphicsManager::notifyContextCreate(ContextType type,
+	Framebuffer *target,
 	const Graphics::PixelFormat &defaultFormat,
 	const Graphics::PixelFormat &defaultFormatAlpha) {
+	// Set up the target: backbuffer usually
+	delete _targetBuffer;
+	_targetBuffer = target;
+
 	// Initialize pipeline.
 	delete _pipeline;
 	_pipeline = nullptr;
@@ -1222,9 +1228,9 @@ void OpenGLGraphicsManager::notifyContextCreate(ContextType type,
 	// Setup backbuffer state.
 
 	// Default to opaque black as clear color.
-	_backBuffer.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	_targetBuffer->setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	_pipeline->setFramebuffer(&_backBuffer);
+	_pipeline->setFramebuffer(_targetBuffer);
 
 	// We use a "pack" alignment (when reading from textures) to 4 here,
 	// since the only place where we really use it is the BMP screenshot
@@ -1302,6 +1308,10 @@ void OpenGLGraphicsManager::notifyContextDestroy() {
 	// _libretroPipeline has just been destroyed as the pipeline
 	_libretroPipeline = nullptr;
 #endif
+
+	// Destroy the target
+	delete _targetBuffer;
+	_targetBuffer = nullptr;
 
 	// Rest our context description since the context is gone soon.
 	OpenGLContext.reset();
@@ -1485,7 +1495,7 @@ void OpenGLGraphicsManager::recalculateDisplayAreas() {
 	// Setup drawing limitation for game graphics.
 	// This involves some trickery because OpenGL's viewport coordinate system
 	// is upside down compared to ours.
-	_backBuffer.setScissorBox(_gameDrawRect.left,
+	_targetBuffer->setScissorBox(_gameDrawRect.left,
 	                          _windowHeight - _gameDrawRect.height() - _gameDrawRect.top,
 	                          _gameDrawRect.width(),
 	                          _gameDrawRect.height());
