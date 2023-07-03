@@ -666,7 +666,7 @@ void OpenGLGraphicsManager::updateScreen() {
 		// This has the disadvantage of having overlay (subtitles) drawn above it
 		// but the cursor will look nicer
 		if (!_overlayInGUI && drawCursor) {
-			_backBuffer.enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
+			_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
 
 			_pipeline->drawTexture(_cursor->getGLTexture(),
 			                         _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
@@ -693,7 +693,7 @@ void OpenGLGraphicsManager::updateScreen() {
 
 	// Fourth step: Draw the cursor if we didn't before.
 	if (drawCursor) {
-		_backBuffer.enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
+		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
 
 		_pipeline->drawTexture(_cursor->getGLTexture(),
 		                         _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
