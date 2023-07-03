@@ -253,7 +253,7 @@ float iOSGraphics3dManager::getHiDPIScreenFactor() const {
 	return dynamic_cast<OSystem_iOS7 *>(g_system)->getSystemHiDPIScreenFactor();
 }
 
-void iOSGraphics3dManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+void iOSGraphics3dManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format) {
 
 	if (w == 0 || h == 0)
 		return;
