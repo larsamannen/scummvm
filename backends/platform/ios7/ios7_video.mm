@@ -105,7 +105,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
 	                                };
 
-	_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+	_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
 
 	// In case creating the OpenGL ES context failed, we will error out here.
 	if (_mainContext == nil) {
@@ -121,7 +121,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	// Create OpenGL context with the sharegroup from the context
 	// connected to the Apple Core Animation layer
 	if (!_openGLContext && _mainContext) {
-		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_mainContext.sharegroup];
+		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:_mainContext.sharegroup];
 
 		if (_openGLContext == nil) {
 			printError("Could not create OpenGL ES context using sharegroup");
