@@ -86,7 +86,7 @@
 			// to the safe area insets.
 			// Also set the frame alpha to the user specified value
 			// to make the virtual controller more transparent
-			view.alpha = ((float)ConfMan.getInt("onscreen_control_opacity") / 10.0);
+			view.alpha = ((float)ConfMan.getInt("gamepad_controller_opacity") / 10.0);
 			view.frame = [[UIScreen mainScreen] bounds];
 			stop = YES;
 		} else {
