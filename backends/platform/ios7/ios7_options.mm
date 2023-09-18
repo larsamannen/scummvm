@@ -53,6 +53,8 @@ private:
 	// OptionsContainerWidget API
 	void defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const override;
 	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+	uint32 loadMouseMode(const Common::String &setting, bool acceptDefault, uint32 defaultValue);
+	void saveMouseMode(const Common::String &setting, uint32 mode);
 #if TARGET_OS_IOS
 	uint32 loadOrientation(const Common::String &setting, bool acceptDefault, uint32 defaultValue);
 	void saveOrientation(const Common::String &setting, uint32 orientation);
@@ -62,7 +64,10 @@ private:
 	GUI::StaticTextWidget *_gamepadControllerOpacityDesc;
 	GUI::SliderWidget *_gamepadControllerOpacitySlider;
 	GUI::StaticTextWidget *_gamepadControllerOpacityLabel;
-	GUI::CheckboxWidget *_touchpadCheckbox;
+
+	GUI::StaticTextWidget *_mouseModeDesc;
+	GUI::PopUpWidget *_mouseModePopUp;
+
 	GUI::CheckboxWidget *_clickAndDragCheckbox;
 	GUI::CheckboxWidget *_keyboardFnBarCheckbox;
 #if TARGET_OS_IOS
@@ -86,7 +91,12 @@ IOS7OptionsWidget::IOS7OptionsWidget(GuiObject *boss, const Common::String &name
 	_gamepadControllerOpacityLabel = new GUI::StaticTextWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacityLabel", Common::U32String(" "), Common::U32String(), GUI::ThemeEngine::kFontStyleBold, Common::UNK_LANG, false);
 	_gamepadControllerOpacitySlider->setMinValue(1);
 	_gamepadControllerOpacitySlider->setMaxValue(10);
-	_touchpadCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "IOS7OptionsDialog.TouchpadMouseMode", _("Touchpad mouse mode"));
+
+	_mouseModeDesc = new GUI::StaticTextWidget(widgetsBoss(), "IOS7OptionsDialog.MouseModeText", _("Select mouse mode:"));
+	_mouseModePopUp = new GUI::PopUpWidget(widgetsBoss(), "IOS7OptionsDialog.MouseMode");
+	_mouseModePopUp->appendEntry(_("Direct"), kInputMouseModeDirect);
+	_mouseModePopUp->appendEntry(_("Touchpad"), kInputMouseModeTouchpad);
+
 	_clickAndDragCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "IOS7OptionsDialog.ClickAndDragMode", _("Mouse-click-and-drag mode"));
 	_keyboardFnBarCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "IOS7OptionsDialog.KeyboardFunctionBar", _("Show keyboard function bar"));
 
@@ -138,13 +148,18 @@ void IOS7OptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::Stri
 	            .addWidget("GamepadControllerOpacitySlider", "Slider")
 	            .addWidget("GamepadControllerOpacityLabel", "OptionsLabel")
 	        .closeLayout()
-	            .addWidget("TouchpadMouseMode", "Checkbox")
 	            .addWidget("ClickAndDragMode", "Checkbox")
 	            .addWidget("KeyboardFunctionBar", "Checkbox")
 	            .addPadding(0, 0, 0, 0)
 	            .addWidget("ControlsHelp", "WideButton");
 
 #if TARGET_OS_IOS
+	layouts.addWidget("MouseModeText", "", -1, layouts.getVar("Globals.Line.Height"));
+	layouts.addLayout(GUI::ThemeLayout::kLayoutHorizontal)
+			.addPadding(0, 0, 0, 0)
+			.addWidget("MouseMode", "PopUp")
+		.closeLayout();
+
 	layouts.addWidget("OrientationText", "", -1, layouts.getVar("Globals.Line.Height"));
 	if (inAppDomain) {
 		layouts.addLayout(GUI::ThemeLayout::kLayoutHorizontal)
@@ -210,6 +225,36 @@ void IOS7OptionsWidget::handleCommand(GUI::CommandSender *sender, uint32 cmd, ui
 	}
 }
 
+uint32 IOS7OptionsWidget::loadMouseMode(const Common::String &setting, bool acceptDefault, uint32 defaultValue) {
+	if (!acceptDefault || ConfMan.hasKey(setting, _domain)) {
+		Common::String mode = ConfMan.get(setting, _domain);
+		if (mode == "direct") {
+			return kInputMouseModeDirect;
+		} else if (mode == "touchpad") {
+			return kInputMouseModeTouchpad;
+		} else {
+			return defaultValue;
+		}
+	} else {
+		return iOS7_isBigDevice() ? kInputMouseModeDirect : kInputMouseModeTouchpad;
+	}
+}
+
+void IOS7OptionsWidget::saveMouseMode(const Common::String &setting, uint32 mode) {
+	switch (mode) {
+	case kInputMouseModeDirect:
+		ConfMan.set(setting, "direct", _domain);
+		break;
+	case kInputMouseModeTouchpad:
+		ConfMan.set(setting, "touchpad", _domain);
+		break;
+	default:
+		// default
+		ConfMan.removeKey(setting, _domain);
+		break;
+	}
+}
+
 #if TARGET_OS_IOS
 uint32 IOS7OptionsWidget::loadOrientation(const Common::String &setting, bool acceptDefault, uint32 defaultValue) {
 	if (!acceptDefault || ConfMan.hasKey(setting, _domain)) {
@@ -253,7 +298,7 @@ void IOS7OptionsWidget::load() {
 	_gamepadControllerCheckbox->setState(ConfMan.getBool("gamepad_controller", _domain));
 	_gamepadControllerOpacitySlider->setValue(ConfMan.getInt("gamepad_controller_opacity", _domain));
 	_gamepadControllerOpacityLabel->setValue(_gamepadControllerOpacitySlider->getValue());
-	_touchpadCheckbox->setState(ConfMan.getBool("touchpad_mode", _domain));
+	_mouseModePopUp->setSelectedTag(loadMouseMode("mouse_mode", !inAppDomain, iOS7_isBigDevice() ? kInputMouseModeDirect: kInputMouseModeTouchpad));
 	_clickAndDragCheckbox->setState(ConfMan.getBool("clickanddrag_mode", _domain));
 	_keyboardFnBarCheckbox->setState(ConfMan.getBool("keyboard_fn_bar", _domain));
 
@@ -271,7 +316,7 @@ bool IOS7OptionsWidget::save() {
 	if (_enabled) {
 		ConfMan.setBool("gamepad_controller", _gamepadControllerCheckbox->getState(), _domain);
 		ConfMan.setInt("gamepad_controller_opacity", _gamepadControllerOpacitySlider->getValue(), _domain);
-		ConfMan.setBool("touchpad_mode", _touchpadCheckbox->getState(), _domain);
+		saveMouseMode("mouse_mode", _mouseModePopUp->getSelectedTag());
 		ConfMan.setBool("clickanddrag_mode", _clickAndDragCheckbox->getState(), _domain);
 		ConfMan.setBool("keyboard_fn_bar", _keyboardFnBarCheckbox->getState(), _domain);
 
@@ -284,7 +329,7 @@ bool IOS7OptionsWidget::save() {
 	} else {
 		ConfMan.removeKey("gamepad_controller", _domain);
 		ConfMan.removeKey("gamepad_controller_opacity", _domain);
-		ConfMan.removeKey("touchpad_mode", _domain);
+		ConfMan.removeKey("mouse_mode", _domain);
 		ConfMan.removeKey("clickanddrag_mode", _domain);
 		ConfMan.removeKey("keyboard_fn_bar", _domain);
 
@@ -302,7 +347,7 @@ bool IOS7OptionsWidget::save() {
 bool IOS7OptionsWidget::hasKeys() {
 	bool hasKeys = ConfMan.hasKey("gamepad_controller", _domain) ||
 	ConfMan.hasKey("gamepad_controller_opacity", _domain) ||
-	ConfMan.hasKey("touchpad_mode", _domain) ||
+	ConfMan.hasKey("mouse_mode", _domain) ||
 	ConfMan.hasKey("clickanddrag_mode", _domain);
 
 #if TARGET_OS_IOS
@@ -311,7 +356,6 @@ bool IOS7OptionsWidget::hasKeys() {
 #endif
 
 	return hasKeys;
-	       
 }
 
 void IOS7OptionsWidget::setEnabled(bool e) {
@@ -338,9 +382,11 @@ void IOS7OptionsWidget::setEnabled(bool e) {
 	_gamepadControllerOpacityLabel->setEnabled(false);
 #endif
 #if TARGET_OS_IOS
-	_touchpadCheckbox->setEnabled(e);
+	_mouseModeDesc->setEnabled(e);
+	_mouseModePopUp->setEnabled(e);
 #else
-	_touchpadCheckbox->setEnabled(false);
+	_mouseModeDesc->setEnabled(false);
+	_mouseModePopUp->setEnabled(false);
 #endif
 	_clickAndDragCheckbox->setEnabled(e);
 	_keyboardFnBarCheckbox->setEnabled(e);
@@ -362,7 +408,7 @@ GUI::OptionsContainerWidget *OSystem_iOS7::buildBackendOptionsWidget(GUI::GuiObj
 void OSystem_iOS7::registerDefaultSettings(const Common::String &target) const {
 	ConfMan.registerDefault("gamepad_controller", false);
 	ConfMan.registerDefault("gamepad_controller_opacity", 6);
-	ConfMan.registerDefault("touchpad_mode", !iOS7_isBigDevice());
+	ConfMan.registerDefault("mouse_mode", iOS7_isBigDevice() ? kInputMouseModeDirect : kInputMouseModeTouchpad);
 	ConfMan.registerDefault("clickanddrag_mode", false);
 	ConfMan.registerDefault("keyboard_fn_bar", true);
 
@@ -374,7 +420,7 @@ void OSystem_iOS7::registerDefaultSettings(const Common::String &target) const {
 
 void OSystem_iOS7::applyBackendSettings() {
 	virtualController(ConfMan.getBool("gamepad_controller"));
-	_touchpadModeEnabled = ConfMan.getBool("touchpad_mode");
+	_touchpadModeEnabled = ConfMan.get("mouse_mode") == "touchpad";
 	_mouseClickAndDragEnabled = ConfMan.getBool("clickanddrag_mode");
 
 #if TARGET_OS_IOS
