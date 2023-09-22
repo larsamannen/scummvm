@@ -91,8 +91,8 @@ IOS7OptionsWidget::IOS7OptionsWidget(GuiObject *boss, const Common::String &name
 	const bool inAppDomain = domain.equalsIgnoreCase(Common::ConfigManager::kApplicationDomain);
 
 	_gamepadControllerCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadController", _("Show Gamepad Controller (iOS 15 and later)"));
-	_gamepadControllerOpacityDesc = new GUI::StaticTextWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacity", _("Gamepad controller opacity"));
-	_gamepadControllerOpacitySlider = new GUI::SliderWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacitySlider", _("Gamepad controller opacity"), kGamepadControllerOpacityChanged);
+	_gamepadControllerOpacityDesc = new GUI::StaticTextWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacity", _("Gamepad opacity"));
+	_gamepadControllerOpacitySlider = new GUI::SliderWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacitySlider", _("Gamepad opacity"), kGamepadControllerOpacityChanged);
 	_gamepadControllerOpacityLabel = new GUI::StaticTextWidget(widgetsBoss(), "IOS7OptionsDialog.GamepadControllerOpacityLabel", Common::U32String(" "), Common::U32String(), GUI::ThemeEngine::kFontStyleBold, Common::UNK_LANG, false);
 	_gamepadControllerOpacitySlider->setMinValue(1);
 	_gamepadControllerOpacitySlider->setMaxValue(10);
