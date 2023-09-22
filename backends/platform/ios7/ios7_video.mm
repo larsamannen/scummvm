@@ -78,7 +78,12 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return fetched;
 }
 
-@implementation iPhoneView
+@implementation iPhoneView {
+#if TARGET_OS_IOS
+    UIButton *_menuButton;
+    UIButton *_toggleInputModeButton;
+#endif
+}
 
 + (Class)layerClass {
 	return [CAEAGLLayer class];
@@ -311,8 +316,67 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	// Initialize the OpenGL ES context
 	[self createContext];
 
+#if TARGET_OS_IOS
+	UIImage *_menuBtnImage = [UIImage imageNamed:@"ic_action_menu"];
+	UIImage *_inputModeBtnImage;
+
+	switch (iOS7_getCurrentTouchMode()) {
+	case kTouchModeGamepad:
+		_inputModeBtnImage = [UIImage imageNamed:@"ic_action_gamepad"];
+		break;
+	case kTouchModeTouchpad:
+		_inputModeBtnImage = [UIImage imageNamed:@"ic_action_touchpad"];
+		break;
+	case kTouchModeMouse:
+	default:
+		_inputModeBtnImage = [UIImage imageNamed:@"ic_action_mouse"];
+		break;
+	}
+
+    _menuButton = [[UIButton alloc] initWithFrame:CGRectMake(self.frame.size.width - _menuBtnImage.size.width, 0, _menuBtnImage.size.width, _menuBtnImage.size.height)];
+    [_menuButton setImage:_menuBtnImage forState:UIControlStateNormal];
+    [_menuButton setAlpha:0.5];
+    [_menuButton addTarget:self action:@selector(handleMainMenuKey) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:_menuButton];
+
+
+    _toggleInputModeButton = [[UIButton alloc] initWithFrame:CGRectMake(self.frame.size.width - _menuBtnImage.size.width - _inputModeBtnImage.size.width, 0, _inputModeBtnImage.size.width, _inputModeBtnImage.size.height)];
+    [_toggleInputModeButton setImage:_inputModeBtnImage forState:UIControlStateNormal];
+    [_toggleInputModeButton setAlpha:0.5];
+    [_toggleInputModeButton addTarget:self action:@selector(triggerInputModeChanged) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:_toggleInputModeButton];
+#endif
+
 	return self;
 }
+
+#if TARGET_OS_IOS
+- (void)triggerInputModeChanged {
+	[self addEvent:InternalEvent(kInputTouchModeChanged, 0, 0)];
+}
+- (void)updateInputMode {
+	UIImage *btnImage;
+
+	switch (iOS7_getCurrentTouchMode()) {
+	case kTouchModeMouse:
+		btnImage = [UIImage imageNamed:@"ic_action_mouse"];
+		break;
+
+	case kTouchModeTouchpad:
+		btnImage = [UIImage imageNamed:@"ic_action_touchpad"];
+		break;
+
+	case kTouchModeGamepad:
+		btnImage = [UIImage imageNamed:@"ic_action_gamepad"];
+		break;
+			
+	default:
+		return;
+	}
+
+    [_toggleInputModeButton setImage: btnImage forState:UIControlStateNormal];
+}
+#endif
 
 - (void)dealloc {
 	[_keyboardView release];
@@ -390,6 +454,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		} else if ( orientation == UIInterfaceOrientationLandscapeRight ) {
 			newFrame = CGRectMake(screenSize.origin.x + inset.left, screenSize.origin.y, screenSize.size.width - inset.left, height);
 		}
+
+        // Move the buttons
+        [_menuButton setFrame:CGRectMake(newFrame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
+        [_toggleInputModeButton setFrame:CGRectMake(newFrame.size.width - _toggleInputModeButton.imageView.image.size.width - _toggleInputModeButton.imageView.image.size.width, 0, _toggleInputModeButton.imageView.image.size.width, _toggleInputModeButton.imageView.image.size.height)];
 #endif
 		self.frame = newFrame;
 	}
@@ -455,6 +523,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	} else { // UIInterfaceOrientationLandscapeLeft
 		screenOrientation = kScreenOrientationFlippedLandscape;
 	}
+
+    // Move the buttons
+    [_menuButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
+    [_toggleInputModeButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width - _toggleInputModeButton.imageView.image.size.width, 0, _toggleInputModeButton.imageView.image.size.width, _toggleInputModeButton.imageView.image.size.height)];
 
 	[self addEvent:InternalEvent(kInputOrientationChanged, screenOrientation, 0)];
 	if (UIInterfaceOrientationIsLandscape(orientation)) {

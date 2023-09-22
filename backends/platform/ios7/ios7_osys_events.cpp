@@ -161,6 +161,9 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			event.type = Common::EVENT_SCREEN_CHANGED;
 			break;
 
+        case kInputTouchModeChanged:
+			handleEvent_inputModeChanged();
+            break;
 		default:
 			break;
 		}
@@ -179,14 +182,18 @@ bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y
 
 	_lastPadX = x;
 	_lastPadY = y;
+	
+	if (_currentTouchMode == kTouchModeGamepad) {
+		return false;
+	}
 
-	if (!_touchpadModeEnabled) {
+	if (_currentTouchMode == kTouchModeMouse) {
 		Common::Point mouse(x, y);
 		dynamic_cast<iOSCommonGraphics *>(_graphicsManager)->notifyMousePosition(mouse);
 	}
 
 	if (_mouseClickAndDragEnabled) {
-		if (_touchpadModeEnabled) {
+		if (_currentTouchMode == kTouchModeTouchpad) {
 			_queuedInputEvent.type = Common::EVENT_LBUTTONDOWN;
 			_queuedEventTime = getMillis() + 250;
 			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
@@ -209,7 +216,8 @@ bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) 
 		if (!handleEvent_touchSecondUp(event, x, y))
 			return false;
 	} else if (_mouseClickAndDragEnabled) {
-		if (_touchpadModeEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
+		if (_currentTouchMode == kTouchModeTouchpad &&
+			_queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
 			// This has not been sent yet, send it right away
 			event = _queuedInputEvent;
 			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
@@ -280,7 +288,7 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 	_lastPadX = x;
 	_lastPadY = y;
 
-	if (_touchpadModeEnabled) {
+	if (_currentTouchMode == kTouchModeTouchpad) {
 		if (_mouseClickAndDragEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
 			// Cancel the button down event since this was a pure mouse move
 			_queuedInputEvent.type = Common::EVENT_INVALID;
@@ -351,6 +359,22 @@ void  OSystem_iOS7::handleEvent_orientationChanged(int orientation) {
 		_screenOrientation = newOrientation;
 		rebuildSurface();
 	}
+}
+
+void OSystem_iOS7::handleEvent_inputModeChanged() {
+	switch (_currentTouchMode) {
+	case kTouchModeMouse:
+		_currentTouchMode = kTouchModeTouchpad;
+		break;
+	case kTouchModeTouchpad:
+		_currentTouchMode = kTouchModeGamepad;
+		break;
+	case kTouchModeGamepad:
+	default:
+		_currentTouchMode = kTouchModeMouse;
+		break;
+	}
+	updateInputMode();
 }
 
 void OSystem_iOS7::rebuildSurface() {
@@ -439,6 +463,7 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 
 		case kUIViewSwipeRight: {
 			// Swipe right
+#if 0
 			_touchpadModeEnabled = !_touchpadModeEnabled;
 			ConfMan.setBool("touchpad_mode", _touchpadModeEnabled);
 			ConfMan.flushToDisk();
@@ -450,6 +475,8 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
 			dialog.runModal();
 			return false;
+#endif
+			break;
 		}
 
 		case kUIViewSwipeLeft: {

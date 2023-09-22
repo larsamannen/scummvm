@@ -68,7 +68,7 @@ protected:
 	Common::Event _queuedInputEvent;
 	bool _secondaryTapped;
 	bool _mouseClickAndDragEnabled;
-	bool _touchpadModeEnabled;
+	TouchMode _currentTouchMode;
 	int _lastPadX;
 	int _lastPadY;
 
@@ -107,6 +107,8 @@ public:
 	void applyOrientationSettings();
 	void applyTouchSettings(bool _3dMode, bool overlayShown);
 	void setSupportedScreenOrientation(ScreenOrientation screenOrientation);
+	void inputModeChanged();
+	TouchMode getCurrentTouchMode() { return _currentTouchMode; }
 #endif
 
 	uint createOpenGLContext();
@@ -168,6 +170,7 @@ public:
 
 protected:
 	void updateOutputSurface();
+	void updateInputMode();
 	void setShowKeyboard(bool);
 	bool isKeyboardShown() const;
 
@@ -182,6 +185,7 @@ protected:
 	bool handleEvent_tap(Common::Event &event, UIViewTapDescription type, int touches);
 	void handleEvent_keyPressed(Common::Event &event, int keyPressed);
 	void handleEvent_orientationChanged(int orientation);
+	void handleEvent_inputModeChanged();
 	void handleEvent_applicationSuspended();
 	void handleEvent_applicationResumed();
 	void handleEvent_applicationSaveState();

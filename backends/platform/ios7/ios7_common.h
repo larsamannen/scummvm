@@ -50,7 +50,8 @@ enum InputEvent {
 	kInputJoystickAxisMotion,
 	kInputJoystickButtonDown,
 	kInputJoystickButtonUp,
-	kInputScreenChanged
+	kInputScreenChanged,
+	kInputTouchModeChanged
 };
 
 enum TouchMode {
@@ -100,6 +101,6 @@ void iOS7_buildSharedOSystemInstance();
 void iOS7_main(int argc, char **argv);
 Common::String iOS7_getDocumentsDir();
 Common::String iOS7_getAppBundleDir();
-bool iOS7_touchpadModeEnabled();
+TouchMode iOS7_getCurrentTouchMode();
 
 #endif

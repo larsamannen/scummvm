@@ -504,6 +504,7 @@ void OSystem_iOS7::applyBackendSettings() {
 
 #if TARGET_OS_IOS
 	applyOrientationSettings();
+	updateInputMode();
 #endif
 }
 
@@ -548,11 +549,11 @@ void OSystem_iOS7::applyTouchSettings(bool _3dMode, bool overlayShown) {
 
 	 Common::String preferredTouchMode = ConfMan.get(setting);
 	 if (preferredTouchMode == "mouse") {
-		 _touchpadModeEnabled = false;
+		 _currentTouchMode = kTouchModeMouse;
 	 } else if (preferredTouchMode == "gamepad") {
-		 _touchpadModeEnabled = false;
+		 _currentTouchMode = kTouchModeGamepad;
 	 } else if (preferredTouchMode == "touchpad") {
-		 _touchpadModeEnabled = true;
+		 _currentTouchMode = kTouchModeTouchpad;
 	 } else {
 		 //JNI::setTouchMode(defaultMode);
 	 }
