@@ -105,6 +105,7 @@ public:
 
 #if TARGET_OS_IOS
 	void applyOrientationSettings();
+	void applyTouchSettings(bool _3dMode, bool overlayShown);
 	void setSupportedScreenOrientation(ScreenOrientation screenOrientation);
 #endif
 

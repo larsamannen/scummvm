@@ -53,6 +53,13 @@ enum InputEvent {
 	kInputScreenChanged
 };
 
+enum TouchMode {
+	kTouchModeDefault = -1,
+	kTouchModeTouchpad = 0,
+	kTouchModeMouse,
+	kTouchModeGamepad,
+};
+
 enum ScreenOrientation {
 	kScreenOrientationAuto,
 	kScreenOrientationPortrait,
