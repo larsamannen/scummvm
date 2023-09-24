@@ -58,7 +58,7 @@
 	if (@available(iOS 15.0, *)) {
 		// Configure a simple game controller with dPad and A and B buttons
 		_config = [[GCVirtualControllerConfiguration alloc] init];
-		_config.elements = [[NSSet alloc] initWithObjects:GCInputDirectionPad, GCInputButtonA, GCInputButtonB, GCInputButtonX, GCInputButtonY, nil];
+		_config.elements = [[NSSet alloc] initWithObjects:GCInputLeftThumbstick, GCInputButtonA, GCInputButtonB, GCInputButtonX, GCInputButtonY, nil];
 		_virtualController = [[GCVirtualController alloc] initWithConfiguration:_config];
 	}
 #endif
@@ -80,14 +80,22 @@
 	BOOL stop = NO;
 	for (UIView *view in subviews) {
 		if ([[view classForCoder] isEqual:NSClassFromString(@"GCControllerView")]) {
-			// Set the virtual controller frame to full screen.
+			// Manually adjust the width of the game controller view.
 			// Else buttons can be placed partly out of the frame
 			// due to the iPhoneView frame is adjusted according
 			// to the safe area insets.
 			// Also set the frame alpha to the user specified value
 			// to make the virtual controller more transparent
 			view.alpha = ((float)ConfMan.getInt("gamepad_controller_opacity") / 10.0);
-			view.frame = [[UIScreen mainScreen] bounds];
+			if (@available(iOS 11.0, *)) {
+				UIEdgeInsets inset = [[[UIApplication sharedApplication] keyWindow] safeAreaInsets];
+				CGRect newFrame = view.frame;
+				// When rotating a device with safe area left (sensor bar/dynamic island to the left)
+				// the left inset value will be greater that the right inset value.
+				newFrame.size.width -= inset.left - inset.right;
+				[view setFrame:newFrame];
+
+			}
 			stop = YES;
 		} else {
 			// Keep drilling

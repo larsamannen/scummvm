@@ -210,7 +210,9 @@ bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y
 
 bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) {
 	//printf("Mouse up at (%u, %u)\n", x, y);
-
+	if (_currentTouchMode == kTouchModeGamepad) {
+		return false;
+	}
 	if (_secondaryTapped) {
 		_secondaryTapped = false;
 		if (!handleEvent_touchSecondUp(event, x, y))
@@ -243,7 +245,9 @@ bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) 
 }
 
 bool OSystem_iOS7::handleEvent_touchSecondDown(Common::Event &event, int x, int y) {
-
+	if (_currentTouchMode == kTouchModeGamepad) {
+		return false;
+	}
 	if (_mouseClickAndDragEnabled) {
 		event.type = Common::EVENT_LBUTTONUP;
 		handleEvent_mouseEvent(event, 0, 0);
@@ -259,7 +263,9 @@ bool OSystem_iOS7::handleEvent_touchSecondDown(Common::Event &event, int x, int 
 
 bool OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y) {
 	int curTime = getMillis();
-
+	if (_currentTouchMode == kTouchModeGamepad) {
+		return false;
+	}
 	if (!_mouseClickAndDragEnabled) {
 		//printf("Rightclick!\n");
 		event.type = Common::EVENT_RBUTTONDOWN;
@@ -287,7 +293,9 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 	int deltaY = _lastPadY - y;
 	_lastPadX = x;
 	_lastPadY = y;
-
+	if (_currentTouchMode == kTouchModeGamepad) {
+		return false;
+	}
 	if (_currentTouchMode == kTouchModeTouchpad) {
 		if (_mouseClickAndDragEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
 			// Cancel the button down event since this was a pure mouse move

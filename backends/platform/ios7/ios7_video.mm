@@ -375,6 +375,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	}
 
     [_toggleInputModeButton setImage: btnImage forState:UIControlStateNormal];
+	[self virtualController:iOS7_getCurrentTouchMode() == kTouchModeGamepad];
 }
 #endif
 
@@ -405,7 +406,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		[self virtualController:false];
 	} else {
 		// Connect or disconnect the virtual controller
-		[self virtualController:ConfMan.getBool("gamepad_controller")];
+		[self virtualController:iOS7_getCurrentTouchMode() == kTouchModeGamepad];
 	}
 #endif
 }

@@ -557,5 +557,7 @@ void OSystem_iOS7::applyTouchSettings(bool _3dMode, bool overlayShown) {
 	 } else {
 		 //JNI::setTouchMode(defaultMode);
 	 }
+	
+	updateInputMode();
  }
 #endif
