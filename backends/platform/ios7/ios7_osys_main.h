@@ -58,8 +58,7 @@ protected:
 
 	Audio::MixerImpl *_mixer;
 
-	CFTimeInterval _startTime;
-	uint32 _timeSuspended;
+	CFAbsoluteTime _startTime;
 
 	int _runningTasks;
 
