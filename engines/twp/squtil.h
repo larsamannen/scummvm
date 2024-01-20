@@ -23,6 +23,7 @@
 #define TWP_SQUTIL_H
 
 #include "squirrel/squirrel.h"
+#include "common/util.h"
 #include "common/str.h"
 #include "common/util.h"
 #include "twp/twp.h"
