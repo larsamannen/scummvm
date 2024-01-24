@@ -163,6 +163,16 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_maxShield = 63;
 	_maxEnergy = 63;
 	_gameStateBits = 0;
+	_eventManager = new EventManagerWrapper(g_system->getEventManager());
+
+	// Workaround to make the game playable on iOS: remove when there
+	// is a better way to hint the best controls
+#ifdef IPHONE
+	const Common::String &gameDomain = ConfMan.getActiveDomainName();
+	ConfMan.setBool("gamepad_controller", true, gameDomain);
+	ConfMan.setBool("gamepad_controller_minimal_layout", true, gameDomain);
+	ConfMan.setInt("gamepad_controller_directional_input", 1 /* kDirectionalInputDpad */, gameDomain);
+#endif
 
 	g_freescape = this;
 }
@@ -284,11 +294,15 @@ void FreescapeEngine::takeDamageFromSensor() {
 	_gameStateVars[k8bitVariableShield]--;
 }
 
-void FreescapeEngine::drawBackground() {
+void FreescapeEngine::clearBackground() {
 	_gfx->clear(0, 0, 0, true);
 	_gfx->setViewport(_fullscreenViewArea);
 	_gfx->drawBackground(_currentArea->_usualBackgroundColor);
 	_gfx->setViewport(_viewArea);
+}
+
+void FreescapeEngine::drawBackground() {
+	clearBackground();
 	_gfx->drawBackground(_currentArea->_skyColor);
 }
 
@@ -346,8 +360,8 @@ void FreescapeEngine::resetInput() {
 	_shootMode = false;
 	centerCrossair();
 	g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
-	g_system->getEventManager()->purgeMouseEvents();
-	g_system->getEventManager()->purgeKeyboardEvents();
+	_eventManager->purgeMouseEvents();
+	_eventManager->purgeKeyboardEvents();
 	rotate(0, 0);
 }
 
@@ -360,13 +374,13 @@ void FreescapeEngine::processInput() {
 	Common::Point mousePos;
 
 	if (_demoMode && !_demoEvents.empty()) {
-		g_system->getEventManager()->purgeMouseEvents();
-		g_system->getEventManager()->purgeKeyboardEvents();
-		g_system->getEventManager()->pushEvent(_demoEvents.front());
+		_eventManager->purgeMouseEvents();
+		_eventManager->purgeKeyboardEvents();
+		_eventManager->pushEvent(_demoEvents.front());
 		_demoEvents.remove_at(0);
 	}
 
-	while (g_system->getEventManager()->pollEvent(event)) {
+	while (_eventManager->pollEvent(event)) {
 		if (_demoMode) {
 			if (event.type == Common::EVENT_SCREEN_CHANGED)
 				; // Allow event
@@ -464,8 +478,8 @@ void FreescapeEngine::processInput() {
 				} else {
 					g_system->lockMouse(false);
 					g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
-					g_system->getEventManager()->purgeMouseEvents();
-					g_system->getEventManager()->purgeKeyboardEvents();
+					_eventManager->purgeMouseEvents();
+					_eventManager->purgeKeyboardEvents();
 				}
 				break;
 			case Common::KEYCODE_i:
@@ -509,7 +523,7 @@ void FreescapeEngine::processInput() {
 					event.relMouse.y = -event.relMouse.y;
 
 				g_system->warpMouse(mousePos.x, mousePos.y);
-				g_system->getEventManager()->purgeMouseEvents();
+				_eventManager->purgeMouseEvents();
 			}
 
 			rotate(event.relMouse.x * _mouseSensitivity, event.relMouse.y * _mouseSensitivity);
@@ -635,6 +649,7 @@ Common::Error FreescapeEngine::run() {
 		endGame = checkIfGameEnded();
 	}
 
+	_eventManager->clearExitEvents();
 	return Common::kNoError;
 }
 

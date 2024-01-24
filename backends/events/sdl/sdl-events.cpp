@@ -46,25 +46,25 @@ static uint32 convUTF8ToUTF32(const char *src) {
 void SdlEventSource::loadGameControllerMappingFile() {
 	bool loaded = false;
 	if (ConfMan.hasKey("controller_map_db")) {
-		Common::FSNode file = Common::FSNode(ConfMan.get("controller_map_db"));
+		Common::FSNode file = Common::FSNode(ConfMan.getPath("controller_map_db"));
 		if (file.exists()) {
-			if (SDL_GameControllerAddMappingsFromFile(file.getPath().c_str()) < 0)
-				error("File %s not valid: %s", file.getPath().c_str(), SDL_GetError());
+			if (SDL_GameControllerAddMappingsFromFile(file.getPath().toString(Common::Path::kNativeSeparator).c_str()) < 0)
+				error("File %s not valid: %s", file.getPath().toString(Common::Path::kNativeSeparator).c_str(), SDL_GetError());
 			else {
 				loaded = true;
-				debug("Game controller DB file loaded: %s", file.getPath().c_str());
+				debug("Game controller DB file loaded: %s", file.getPath().toString(Common::Path::kNativeSeparator).c_str());
 			}
 		} else
-			warning("Game controller DB file not found: %s", file.getPath().c_str());
+			warning("Game controller DB file not found: %s", file.getPath().toString(Common::Path::kNativeSeparator).c_str());
 	}
 	if (!loaded && ConfMan.hasKey("extrapath")) {
-		Common::FSNode dir = Common::FSNode(ConfMan.get("extrapath"));
+		Common::FSNode dir = Common::FSNode(ConfMan.getPath("extrapath"));
 		Common::FSNode file = dir.getChild(GAMECONTROLLERDB_FILE);
 		if (file.exists()) {
-			if (SDL_GameControllerAddMappingsFromFile(file.getPath().c_str()) < 0)
-				error("File %s not valid: %s", file.getPath().c_str(), SDL_GetError());
+			if (SDL_GameControllerAddMappingsFromFile(file.getPath().toString(Common::Path::kNativeSeparator).c_str()) < 0)
+				error("File %s not valid: %s", file.getPath().toString(Common::Path::kNativeSeparator).c_str(), SDL_GetError());
 			else
-				debug("Game controller DB file loaded: %s", file.getPath().c_str());
+				debug("Game controller DB file loaded: %s", file.getPath().toString(Common::Path::kNativeSeparator).c_str());
 		}
 	}
 }
@@ -128,6 +128,10 @@ int SdlEventSource::mapKey(SDL_Keycode sdlKey, SDL_Keymod mod, Uint16 unicode) {
 			} else {
 				// We allow Hebrew characters
 				if (unicode >= 0x05D0 && unicode <= 0x05EA)
+					return unicode;
+				
+				// Cyrillic
+				if (unicode >= 0x0400 && unicode <= 0x045F)
 					return unicode;
 
 				// We must not restrict as much as when Ctrl/Alt-modifiers are active, otherwise
@@ -554,7 +558,7 @@ bool SdlEventSource::dispatchSDLEvent(SDL_Event &ev, Common::Event &event) {
 
 	case SDL_DROPFILE:
 		event.type = Common::EVENT_DROP_FILE;
-		event.path = Common::String(ev.drop.file);
+		event.path = Common::Path(ev.drop.file, Common::Path::kNativeSeparator);
 		SDL_free(ev.drop.file);
 		return true;
 

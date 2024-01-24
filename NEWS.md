@@ -1,7 +1,19 @@
 For a more comprehensive changelog of the latest experimental code, see:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2.8.0 (XXXX-XX-XX)
+#### 2.9.0 (XXXX-XX-XX)
+
+ New games:
+  - Added support for Orion Burger.
+
+ General:
+  - Fixed GLSL version parsing on some OpenGL ES2 platforms
+
+ TsAGE:
+   - Added support for Russian CD fan-translation for Ringworld.
+
+
+#### 2.8.0 "Mysteries, Mammoths, and Muppets" (2023-12-30)
 
  New games:
    - Added support for macOS versions of Syberia and Syberia II.
@@ -12,8 +24,15 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Might and Magic Book One.
    - Added support for Muppet Treasure Island.
    - Added support for Primordia, Shardlight and Technobabylon.
+   - Added support for The Excavation of Hob's Barrow, Strangeland and Whispers
+   of a Machine.
+   - Added support for Stranga and Cloak and Dagger's AGS games.
    - Added support for Adibou 1.
    - Added support for Dark Side.
+   - Added support for Kingdom: The Far Reaches.
+   - Added support for Escape From Hell.
+   - Added support for Wrath of the Gods, Gadget: Invention, Travel and Adventure,
+     The Dark Eye, and 4 other Director titles.
 
  New platforms:
    - Added libretro new shiny port.
@@ -27,7 +46,7 @@ For a more comprehensive changelog of the latest experimental code, see:
      Synthesis) sound driver.
    - Added YUV422 and YUV444 support to Theora decoder.
    - Implemented specialized CPU routines for graphics blitting for ManagedSurface.
-   - Changed default GM device to "auto" for better compatibility.
+   - General MIDI support is now enabled by default.
 
  AGS:
    - Synced with upstream AGS 3.6.0.53.
@@ -58,6 +77,10 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Improved game controls menu accuracy for all platforms.
    - Added support for Chinese EOB2.
    - Added support for the PC-98 version of EOB2.
+
+ Mohawk:
+   - Greatly improved the accuracy of the code generation for the Domes in
+     Riven: The Sequel to Myst to match the original game.
 
  Private:
    - Added support for the Japanese Windows release.
@@ -136,6 +159,10 @@ For a more comprehensive changelog of the latest experimental code, see:
  Xeen:
    - Renamed 'xeen' engine to 'mm' for Might & Magic.
    - Added custom engine option to replace the health gems with HP/SP bars.
+
+ RISC OS port:
+   - Double buffering is now used in full screen mode when V-sync is enabled.
+   - Added support for hardware palettes.
 
 
 #### 2.7.1 "Stan's previously broken swords" (2023-07-31)

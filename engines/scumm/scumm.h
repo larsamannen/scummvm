@@ -522,7 +522,7 @@ class ScummEngine : public Engine, public Common::Serializable {
 	friend class CharsetRendererClassic;
 	friend class CharsetRendererTownsClassic;
 	friend class ResourceManager;
-	friend class MacGui;
+	friend class MacGuiImpl;
 	friend class MacIndy3Gui;
 	friend class MacLoomGui;
 
@@ -589,27 +589,27 @@ public:
 	void syncSoundSettings() override;
 
 	Common::Error loadGameState(int slot) override;
-	bool canLoadGameStateCurrently() override;
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
-	bool canSaveGameStateCurrently() override;
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 
 	void pauseEngineIntern(bool pause) override;
 
 protected:
-	virtual void setupScumm(const Common::String &macResourceFile);
+	virtual void setupScumm(const Common::Path &macResourceFile);
 	virtual void resetScumm();
 
 	virtual void setupScummVars();
 	virtual void resetScummVars();
 	void setVideoModeVarToCurrentConfig();
 
-	void setupCharsetRenderer(const Common::String &macFontFile);
+	void setupCharsetRenderer(const Common::Path &macFontFile);
 	void setupCostumeRenderer();
 
 	virtual void loadLanguageBundle();
 	void loadCJKFont();
 	void loadKorFont();
-	void setupMusic(int midi, const Common::String &macInstrumentFile);
+	void setupMusic(int midi, const Common::Path &macInstrumentFile);
 	void setTalkSpeed(int talkspeed);
 	int getTalkSpeed();
 
@@ -884,7 +884,7 @@ public:
 
 	FilenamePattern _filenamePattern;
 
-	virtual Common::String generateFilename(const int room) const;
+	virtual Common::Path generateFilename(const int room) const;
 
 protected:
 	Common::KeyState _keyPressed;
@@ -1058,10 +1058,10 @@ protected:
 	uint32 _fileOffset = 0;
 public:
 	/** The name of the (macintosh/rescumm style) container file, if any. */
-	Common::String _containerFile;
-	Common::String _macCursorFile;
+	Common::Path _containerFile;
+	Common::Path _macCursorFile;
 
-	bool openFile(BaseScummFile &file, const Common::String &filename, bool resourceFile = false);
+	bool openFile(BaseScummFile &file, const Common::Path &filename, bool resourceFile = false);
 
 	/** Is this game a Mac m68k v5 game with iMuse? */
 	bool isMacM68kIMuse() const;
@@ -1077,8 +1077,8 @@ protected:
 	void closeRoom();
 	void deleteRoomOffsets();
 	virtual void readRoomsOffsets();
-	void askForDisk(const char *filename, int disknum);	// TODO: Use Common::String
-	bool openResourceFile(const Common::String &filename, byte encByte);	// TODO: Use Common::String
+	void askForDisk(const Common::Path &filename, int disknum);
+	bool openResourceFile(const Common::Path &filename, byte encByte);
 
 	void loadPtrToResource(ResType type, ResId idx, const byte *ptr);
 	virtual int readResTypeList(ResType type);
@@ -1276,6 +1276,18 @@ public:
 
 	int _screenStartStrip = 0, _screenEndStrip = 0;
 	int _screenTop = 0;
+
+	// For Mac versions of 320x200 games:
+	// these versions rendered at 640x480 without any aspect ratio correction;
+	// in order to correctly display the games as they should be, we perform some
+	// offset corrections within the various rendering pipelines.
+	//
+	// The only reason I've made _useMacScreenCorrectHeight toggleable is because
+	// maybe someday the screen correction can be activated or deactivated from the
+	// ScummVM GUI; but currently I'm not taking that responsibility, after all the
+	// work done on ensuring that old savegames translate correctly to the new setting... :-P
+	bool _useMacScreenCorrectHeight = true;
+	int _screenDrawOffset = 0;
 
 	Common::RenderMode _renderMode;
 	uint8 _bytesPerPixel = 1;

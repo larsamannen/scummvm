@@ -1001,7 +1001,7 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 
 	_contentIsDirty = false;
 
-	_screen.clear(_wm->_colorGreen);
+	_screen.clear(_wm->_colorBlack);
 
 	bool shouldUseDesktopArc = !(_wm->_mode & kWMModeWin95) || (_wm->_mode & kWMModeForceMacBorder);
 	drawFilledRoundRect(&_screen, r, shouldUseDesktopArc ? kDesktopArc : 0, _wm->_colorWhite);
@@ -1285,16 +1285,6 @@ bool MacMenu::mouseClick(int x, int y) {
 			_wm->activateMenu();
 
 		setActive(true);
-
-		if (_wm->_mode & kWMModalMenuMode) {
-			draw(_wm->_screen);
-			eventLoop();
-
-			// Do not do full refresh as we took care of restoring
-			// the screen. WM is not even aware we were drawing.
-			_wm->setFullRefresh(false);
-		}
-
 		return true;
 	}
 

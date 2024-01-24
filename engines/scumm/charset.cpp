@@ -22,8 +22,8 @@
 #include "graphics/font.h"
 #include "scumm/charset.h"
 #include "scumm/file.h"
-#include "scumm/gfx_mac.h"
 #include "scumm/scumm.h"
+#include "scumm/macgui/macgui.h"
 #include "scumm/nut_renderer.h"
 #include "scumm/util.h"
 #include "scumm/he/intern_he.h"
@@ -237,7 +237,7 @@ void ScummEngine::loadKorFont() {
 }
 
 byte *ScummEngine::get2byteCharPtr(int idx) {
-	if (_game.platform == Common::kPlatformFMTowns || _game.platform == Common::kPlatformPCEngine)
+	if (!isScummvmKorTarget() && (_game.platform == Common::kPlatformFMTowns || _game.platform == Common::kPlatformPCEngine))
 		return nullptr;
 
 	switch (_language) {
@@ -529,7 +529,7 @@ int CharsetRenderer::getStringWidth(int arg, const byte *text) {
 		}
 
 		if (_vm->_useCJKMode) {
-			if (_vm->_game.platform == Common::kPlatformFMTowns) {
+			if (_vm->_language == Common::JA_JPN && _vm->_game.platform == Common::kPlatformFMTowns) {
 				if (checkSJISCode(chr))
 					// This strange character conversion is the exact way the original does it here.
 					// This is the only way to get an accurate text formatting in the MI1 intro.
@@ -641,7 +641,7 @@ void CharsetRenderer::addLinebreaks(int a, byte *str, int pos, int maxwidth) {
 			lastspace = pos - 1;
 
 		if (_vm->_useCJKMode) {
-			if (_vm->_game.platform == Common::kPlatformFMTowns) {
+			if (_vm->_language == Common::JA_JPN && _vm->_game.platform == Common::kPlatformFMTowns) {
 				if (checkSJISCode(chr))
 					// This strange character conversion is the exact way the original does it here.
 					// This is the only way to get an accurate text formatting in the MI1 intro.
@@ -1220,7 +1220,7 @@ void CharsetRendererClassic::printCharIntern(bool is2byte, const byte *charPtr, 
 			dstPtr = vs->getPixels(_left, drawTop);
 		} else {
 			dstSurface = _vm->_textSurface;
-			dstPtr = (byte *)_vm->_textSurface.getBasePtr(_left * _vm->_textSurfaceMultiplier, (_top - _vm->_screenTop) * _vm->_textSurfaceMultiplier);
+			dstPtr = (byte *)_vm->_textSurface.getBasePtr(_left * _vm->_textSurfaceMultiplier, (_top - _vm->_screenTop - _vm->_screenDrawOffset) * _vm->_textSurfaceMultiplier);
 		}
 
 		if (_blitAlso && vs->hasTwoBuffers) {
@@ -1231,7 +1231,7 @@ void CharsetRendererClassic::printCharIntern(bool is2byte, const byte *charPtr, 
 		}
 
 		if (!ignoreCharsetMask && vs->hasTwoBuffers) {
-			drawTop = _top - _vm->_screenTop;
+			drawTop = _top - _vm->_screenTop - _vm->_screenDrawOffset;
 		}
 
 		if (is2byte && _vm->_game.platform != Common::kPlatformFMTowns)
@@ -1539,7 +1539,7 @@ int CharsetRendererTownsV3::getDrawHeightIntern(uint16 chr) {
 }
 
 void CharsetRendererTownsV3::setDrawCharIntern(uint16 chr) {
-	_sjisCurChar = (_vm->_useCJKMode && chr > 127) ? chr : 0;
+	_sjisCurChar = (!_vm->isScummvmKorTarget() && _vm->_useCJKMode && chr > 127) ? chr : 0;
 }
 #endif
 
@@ -1603,7 +1603,7 @@ void CharsetRendererPCE::setDrawCharIntern(uint16 chr) {
 }
 #endif
 
-CharsetRendererMac::CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile)
+CharsetRendererMac::CharsetRendererMac(ScummEngine *vm, const Common::Path &fontFile)
 	 : CharsetRendererCommon(vm) {
 
 	// The original Macintosh interpreter didn't use the correct spacing
@@ -1691,7 +1691,7 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 	// If this is the beginning of a line, assume the position will be
 	// correct without any padding.
 
-	if (_firstChar || _top != _lastTop) {
+	if (_firstChar || (_top - _vm->_screenDrawOffset) != _lastTop) {
 		_pad = false;
 	}
 
@@ -1709,7 +1709,6 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 
 	int macLeft = 2 * _left;
 	int macTop = 2 * _top;
-
 	// The last character ended on an odd X coordinate. This information
 	// was lost in the rounding, so we compensate for it here.
 
@@ -1749,7 +1748,7 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 	bool drawToTextBox = (vs->number == kTextVirtScreen && _vm->_game.id == GID_INDY3);
 
 	if (drawToTextBox)
-		_vm->_macGui->printCharToTextArea(chr, macLeft, macTop, color);
+		_vm->_macGui->printCharToTextArea(chr, macLeft, macTop - 2 * (_vm->_screenDrawOffset), color);
 	else
 		printCharInternal(chr, color, enableShadow, macLeft, macTop);
 
@@ -1829,7 +1828,7 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 		_pad = true;
 
 	_left = macLeft / 2;
-	_lastTop = _top;
+	_lastTop = _top - _vm->_screenDrawOffset;
 }
 
 byte CharsetRendererMac::getTextColor() {

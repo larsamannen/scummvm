@@ -278,6 +278,63 @@ void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point positi
 	glDepthMask(GL_TRUE);
 }
 
+void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, byte color) {
+	uint8 r1, g1, b1, r2, g2, b2;
+	byte *stipple = nullptr;
+	getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple);
+	glColor3ub(r1, g1, b1);
+
+	int triangleAmount = 20;
+	float twicePi = (float)(2.0 * M_PI);
+
+	// Quick billboard effect inspired from this code:
+	// http://www.lighthouse3d.com/opengl/billboarding/index.php?billCheat
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	GLfloat m[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	for(int i = 1; i < 4; i++)
+		for(int j = 0; j < 4; j++ ) {
+			if (i == 2)
+				continue;
+			if (i == j)
+				m[i*4 + j] = 1.0;
+			else
+				m[i*4 + j] = 0.0;
+		}
+
+	glLoadMatrixf(m);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	copyToVertexArray(0, position);
+
+	for(int i = 0; i <= triangleAmount; i++) {
+		copyToVertexArray(i + 1,
+			Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
+						position.z() + (radius * sin(i * twicePi / triangleAmount)))
+		);
+	}
+
+	glVertexPointer(3, GL_FLOAT, 0, _verts);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, triangleAmount + 2);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glPopMatrix();
+}
+
+void OpenGLRenderer::drawEclipse(byte color1, byte color2) {
+	Math::Vector3d sunPosition(-5000, 2000, 500);
+	float radius = 500.0;
+	drawCelestialBody(sunPosition, radius, color1);
+
+	Math::Vector3d moonPosition(-5000, 2000, 1000);
+	drawCelestialBody(moonPosition, radius, color2);
+}
+
 void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point position, int frame, const Common::Rect viewArea) {
 	uint8 r, g, b;
 

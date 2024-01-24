@@ -36,16 +36,25 @@ public:
 
 	void loadAssetsDOSFullGame() override;
 
+	uint32 _initialEnergy;
+	uint32 _initialShield;
+
 	void initDOS();
 	void initCPC();
 	void initZX();
 	void loadAssetsCPCDemo() override;
 	void loadAssetsZXDemo() override;
+
+	void initGameState() override;
 	void executePrint(FCLInstruction &instruction) override;
 
+
+	void drawBackground() override;
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawCPCUI(Graphics::Surface *surface) override;
 	void drawZXUI(Graphics::Surface *surface) override;
+	void drawAnalogClock(Graphics::Surface *surface, int x, int y, uint32 colorHand1, uint32 colorHand2, uint32 colorBack);
+	void drawAnalogClockHand(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color);
 
 
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;

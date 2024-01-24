@@ -225,6 +225,9 @@ void TextCastMember::importStxt(const Stxt *stxt) {
 	_fgpalinfo1 = stxt->_style.r;
 	_fgpalinfo2 = stxt->_style.g;
 	_fgpalinfo3 = stxt->_style.b;
+	// The default color in the Stxt will override the fgcolor,
+	// e.g. empty editable text boxes will use the Stxt color
+	_fgcolor = g_director->_wm->findBestColor(_fgpalinfo1 >> 8, _fgpalinfo2 >> 8, _fgpalinfo3 >> 8);
 	_ftext = stxt->_ftext;
 	_ptext = stxt->_ptext;
 	_rtext = stxt->_rtext;
@@ -233,6 +236,13 @@ void TextCastMember::importStxt(const Stxt *stxt) {
 	Graphics::MacFont macFont(_fontId, _fontSize, _textSlant);
 	g_director->_wm->_fontMan->getFont(&macFont);
 	_fontId = macFont.getId();
+
+	// If the text is empty, that means we ignored the font and now
+	// set the text height to a minimal one.
+	//
+	// This fixes `number of chars` in Lingo Workshop
+	if (_textType == kTextTypeAdjustToFit && _ftext.empty())
+		_initialRect.setHeight(macFont.getSize() + (2 * _borderSize) + _gutterSize + _boxShadow);
 }
 
 bool textWindowCallback(Graphics::WindowClick click, Common::Event &event, void *ptr) {
@@ -335,7 +345,7 @@ void TextCastMember::importRTE(byte *text) {
 
 void TextCastMember::setRawText(const Common::String &text) {
 	// Do nothing if text did not change
-	if (_rtext.equals(text))
+	if (_ptext.equals(Common::U32String(text)))
 		return;
 
 	_rtext = text;

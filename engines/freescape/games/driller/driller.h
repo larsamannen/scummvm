@@ -38,6 +38,7 @@ public:
 	Common::HashMap<uint16, uint32> _drillMaxScoreByArea;
 	Common::HashMap<uint16, uint32> _drillSuccessByArea;
 
+	void initKeymaps(Common::Keymap *engineKeyMap, const char *target) override;
 	void initGameState() override;
 	bool checkIfGameEnded() override;
 
@@ -101,7 +102,7 @@ private:
 	uint32 getPixel8bitTitleImage(int index);
 	void renderPixels8bitTitleImage(Graphics::ManagedSurface *surface, int &i, int &j, int pixels);
 
-	Common::SeekableReadStream *decryptFileAtari(const Common::String filename);
+	Common::SeekableReadStream *decryptFileAtari(const Common::Path &filename);
 };
 
 enum DrillerReleaseFlags {

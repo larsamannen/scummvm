@@ -105,7 +105,7 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 		return false;
 	}
 
-	debugC(2, kDebugLoading | kDebugImages, "Loading video %s -> %s", path.c_str(), location.toString().c_str());
+	debugC(2, kDebugLoading, "Loading video %s -> %s", path.c_str(), location.toString(Common::Path::kNativeSeparator).c_str());
 	bool result = _video->loadFile(location);
 	if (!result) {
 		delete _video;
@@ -132,6 +132,17 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 bool DigitalVideoCastMember::isModified() {
 	if (!_video || !_video->isVideoLoaded())
 		return true;
+
+	// Inelegant, but necessary. isModified will get called on
+	// every screen update, so use it to keep the playback
+	// status up to date.
+	if (_video->endOfVideo()) {
+		if (_looping) {
+			_video->rewind();
+		} else {
+			_channel->_movieRate = 0.0;
+		}
+	}
 
 	if (_getFirstFrame)
 		return true;
@@ -239,14 +250,6 @@ Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Ch
 	if (_getFirstFrame) {
 		_video->stop();
 		_getFirstFrame = false;
-	}
-
-	if (_video->endOfVideo()) {
-		if (_looping) {
-			_video->rewind();
-		} else {
-			_channel->_movieRate = 0.0;
-		}
 	}
 
 	return widget;

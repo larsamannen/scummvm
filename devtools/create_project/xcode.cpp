@@ -1036,6 +1036,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/fonts-cjk.dat");
 		files.push_back("dists/engine-data/freescape.dat");
 		files.push_back("dists/engine-data/hadesch_translations.dat");
+		files.push_back("dists/engine-data/helpdialog.zip");
 		files.push_back("dists/engine-data/hugo.dat");
 		files.push_back("dists/engine-data/kyra.dat");
 		files.push_back("dists/engine-data/lure.dat");
@@ -1149,6 +1150,10 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/freescape/shaders/freescape_bitmap.vertex");
 			files.push_back("engines/freescape/shaders/freescape_triangle.fragment");
 			files.push_back("engines/freescape/shaders/freescape_triangle.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDSYNTH")) {
+			files.push_back("dists/soundfonts/Roland_SC-55.sf2");
+			files.push_back("dists/soundfonts/COPYRIGHT.Roland_SC-55");
 		}
 		files.push_back("icons/scummvm.icns");
 		files.push_back("AUTHORS");

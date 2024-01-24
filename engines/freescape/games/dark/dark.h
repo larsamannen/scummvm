@@ -46,6 +46,7 @@ public:
 	uint32 _jetFuelSeconds;
 	void addSkanner(Area *area);
 
+	void initKeymaps(Common::Keymap *engineKeyMap, const char *target) override;
 	void initGameState() override;
 	void borderScreen() override;
 	bool checkIfGameEnded() override;
@@ -96,7 +97,7 @@ private:
 	bool tryDestroyECD(int index);
 	bool tryDestroyECDFullGame(int index);
 	void addWalls(Area *area);
-	Common::SeekableReadStream *decryptFile(const Common::String filename);
+	Common::SeekableReadStream *decryptFile(const Common::Path &filename);
 	Common::HashMap<uint16, bool> _exploredAreas;
 };
 

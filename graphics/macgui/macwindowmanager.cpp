@@ -211,7 +211,8 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns, Common::L
 	for (int i = 0; i < ARRAYSIZE(fillPatterns); i++)
 		_builtinPatterns.push_back(fillPatterns[i]);
 
-	g_system->getPaletteManager()->setPalette(palette, 0, ARRAYSIZE(palette) / 3);
+	if (g_system->getScreenFormat().isCLUT8())
+		g_system->getPaletteManager()->setPalette(palette, 0, ARRAYSIZE(palette) / 3);
 
 	_paletteSize = ARRAYSIZE(palette) / 3;
 	if (_paletteSize) {
@@ -1057,8 +1058,18 @@ bool MacWindowManager::processEvent(Common::Event &event) {
 	}
 
 	// Menu gets events first for shortcuts and menu bar
-	if (_menu && _menu->processEvent(event))
+	if (_menu && _menu->processEvent(event)) {
+		if (_mode & kWMModalMenuMode) {
+			_menu->draw(_screen);
+			_menu->eventLoop();
+
+			// Do not do full refresh as we took care of restoring
+			// the screen. WM is not even aware we were drawing.
+			setFullRefresh(false);
+		}
+
 		return true;
+	}
 
 	if (_activeWindow != -1) {
 		if ((_windows[_activeWindow]->isEditable() && _windows[_activeWindow]->getType() == kWindowWindow &&
@@ -1085,7 +1096,7 @@ bool MacWindowManager::processEvent(Common::Event &event) {
 		BaseMacWindow *w = *it;
 		if (_lockedWidget != nullptr && w != _lockedWidget)
 			continue;
-		if (w->hasAllFocus() || (w->isEditable() && event.type == Common::EVENT_KEYDOWN) ||
+		if (w->hasAllFocus() || (event.type == Common::EVENT_KEYDOWN) ||
 				w->getDimensions().contains(event.mouse.x, event.mouse.y)) {
 			if ((event.type == Common::EVENT_LBUTTONDOWN || event.type == Common::EVENT_LBUTTONUP) && (!_backgroundWindow || w != _backgroundWindow))
 				setActiveWindow(w->getId());
@@ -1124,6 +1135,8 @@ void MacWindowManager::removeMarked() {
 	for (it = _windowsToRemove.begin(); it != _windowsToRemove.end(); it++) {
 		removeFromStack(*it);
 		removeFromWindowList(*it);
+		if (_lockedWidget == *it)
+			_lockedWidget = nullptr;
 		delete *it;
 		_activeWindow = -1;
 		_fullRefresh = true;
@@ -1491,13 +1504,13 @@ const Common::U32String::value_type *readHex(uint16 *res, const Common::U32Strin
 	*res = 0;
 
 	for (int i = 0; i < len; i++) {
-		char b = (char)*s++;
+		char b = tolower((char)*s++);
 
 		*res <<= 4;
-		if (tolower(b) >= 'a')
-			*res |= tolower(b) - 'a' + 10;
-		else
-			*res |= tolower(b) - '0';
+		if (b >= 'a' && b <= 'f')
+			*res |= b - 'a' + 10;
+		else if (b >= '0' && b <= '9')
+			*res |= b - '0';
 	}
 
 	return s;

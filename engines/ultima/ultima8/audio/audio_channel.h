@@ -31,30 +31,18 @@ class AudioSample;
 
 class AudioChannel {
 private:
-	// We have:
-	// 1x decompressor size
-	// 2x frame size
-	Common::Array<byte> _playData;
-
 	Audio::SoundHandle _soundHandle;
 	Audio::Mixer *_mixer;
-	uint32          _decompressorSize;  // Persistent data for the decompressor
-	uint32          _frameSize;         //
 
 	int32           _loop;
 	AudioSample     *_sample;
 
 	// Info for sampling
-	uint32          _frameEvenOdd;  // which buffer is 'frame0'
 	int             _lVol, _rVol;   // 0-256
 	uint32          _pitchShift;    // AudioProcess::PITCH_SHIFT_NONE = no shift
 	int             _priority;      // anything.
 	bool            _paused;        // true/false
-private:
-	/**
-	 * Decompresses the next frame of sample data
-	 */
-	void decompressNextFrame();
+
 public:
 	AudioChannel(Audio::Mixer *mixer, uint32 sampleRate, bool stereo);
 	~AudioChannel(void);
@@ -64,23 +52,7 @@ public:
 	void playSample(AudioSample *sample, int loop, int priority, bool paused, 
 		bool isSpeech, uint32 pitchShift, int lvol, int rvol);
 
-	void playMusicStream(Audio::AudioStream *stream);
-
 	bool isPlaying();
-
-	void setPitchShift(int pitchShift) {
-		_pitchShift = pitchShift;
-	}
-	uint32 getPitchShift() const {
-		return _pitchShift;
-	}
-
-	void setLoop(int loop) {
-		_loop = loop;
-	}
-	int32 getLoop() const {
-		return _loop;
-	}
 
 	void setVolume(int lvol, int rvol) {
 		_lVol = lvol;

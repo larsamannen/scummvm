@@ -41,17 +41,17 @@ namespace {
 // based on the current game and system time.
 //
 // For example: dumps/agi.kq.20221013214511.log
-Common::String generateLogFileName(Agi::AgiGame *state, Agi::AgiEngine *vm) {
+Common::Path generateLogFileName(Agi::AgiGame *state, Agi::AgiEngine *vm) {
 	TimeDate date;
 	vm->_system->getTimeAndDate(date, true);
-	return Common::String::format("dumps/agi.%s.%d%02d%02d%02d%02d%02d.log",
+	return Common::Path(Common::String::format("dumps/agi.%s.%d%02d%02d%02d%02d%02d.log",
 								  vm->getTargetName().c_str(),
 								  date.tm_year + 1900,
 								  date.tm_mon + 1,
 								  date.tm_mday,
 								  date.tm_hour,
 								  date.tm_min,
-								  date.tm_sec);
+								  date.tm_sec), '/');
 }
 } // namespace
 
@@ -487,7 +487,7 @@ void cmdSetCel(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	vm->setCel(screenObj, celNr);
 	if (vm->getVersion() >= 0x2000) {
-		screenObj->flags &= ~fDontupdate;
+		screenObj->flags &= ~fDontUpdate;
 	}
 }
 
@@ -498,7 +498,7 @@ void cmdSetCelF(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	byte   value = vm->getVar(varNr);
 
 	vm->setCel(screenObj, value);
-	screenObj->flags &= ~fDontupdate;
+	screenObj->flags &= ~fDontUpdate;
 }
 
 void cmdSetView(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
@@ -833,7 +833,7 @@ void cmdLog(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 		Common::DumpFile *&dumpFile = vm->_logFile;
 		if (!dumpFile) {
 			dumpFile = new Common::DumpFile();
-			Common::String logFileName = generateLogFileName(state, vm);
+			Common::Path logFileName = generateLogFileName(state, vm);
 			dumpFile->open(logFileName);
 		}
 		// The logs will only be written if the "dumps" folder has been created by
@@ -1358,7 +1358,7 @@ void cmdDraw(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	sprites->buildRegularSpriteList();
 	sprites->drawRegularSpriteList();
 	sprites->showSprite(screenObj);
-	screenObj->flags &= ~fDontupdate;
+	screenObj->flags &= ~fDontUpdate;
 
 	debugC(4, kDebugLevelScripts, "vt entry #%d flags = %02x", objectNr, screenObj->flags);
 }
@@ -1553,7 +1553,7 @@ void cmdReverseLoop(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleRevLoop;
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	state->_vm->setFlag(screenObj->loop_flag, false);
 
@@ -1568,7 +1568,7 @@ void cmdReverseLoopV1(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleRevLoop;
 	state->_vm->setCel(screenObj, 0);
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	//screenObj->parm3 = 0;
 }
@@ -1580,7 +1580,7 @@ void cmdEndOfLoop(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleEndOfLoop;
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	vm->setFlag(screenObj->loop_flag, false);
 
@@ -1595,7 +1595,7 @@ void cmdEndOfLoopV1(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleEndOfLoop;
 	state->_vm->setCel(screenObj, 0);
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	//screenObj->parm3 = 0;
 }
@@ -1708,7 +1708,6 @@ void cmdMoveObj(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 stepSize = parameter[3];
 	uint16 moveFlag = parameter[4];
 	ScreenObjEntry *screenObj = &state->screenObjTable[objectNr];
-	// _D (_D_WARN "o=%d, x=%d, y=%d, s=%d, f=%d", p0, p1, p2, p3, p4);
 
 	screenObj->motionType = kMotionMoveObj;
 	screenObj->move_x = moveX;
@@ -1851,11 +1850,11 @@ void cmdVersion(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 void cmdConfigureScreen(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	TextMgr *textMgr = state->_vm->_text;
-	uint16 lineMinPrint = parameter[0];
+	uint16 gameRow = parameter[0];
 	uint16 promptRow = parameter[1];
 	uint16 statusRow = parameter[2];
 
-	textMgr->configureScreen(lineMinPrint);
+	textMgr->configureScreen(gameRow);
 	textMgr->statusRow_Set(statusRow);
 	textMgr->promptRow_Set(promptRow);
 }
@@ -1904,7 +1903,6 @@ void cmdStatus(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 void cmdQuit(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 withoutPrompt = parameter[0];
-//	const char *buttons[] = { "Quit", "Continue", NULL };
 
 	state->_vm->_sound->stopSound();
 	if (withoutPrompt) {
@@ -1997,7 +1995,7 @@ void cmdDistance(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 void cmdAcceptInput(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	TextMgr *textMgr = state->_vm->_text;
 
-	debugC(4, kDebugLevelScripts | kDebugLevelInput, "input normal");
+	debugC(4, kDebugLevelInput, "input normal");
 
 	textMgr->promptEnable();
 	textMgr->promptRedraw();
@@ -2006,7 +2004,7 @@ void cmdAcceptInput(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 void cmdPreventInput(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	TextMgr *textMgr = state->_vm->_text;
 
-	debugC(4, kDebugLevelScripts | kDebugLevelInput, "no input");
+	debugC(4, kDebugLevelInput, "no input");
 
 	textMgr->promptDisable();
 
@@ -2439,15 +2437,15 @@ int AgiEngine::runLogic(int16 logicNr) {
 			_game.execStack.pop_back();
 			return 1;
 		default:
+			if (!_opCodes[op].functionPtr) {
+				error("Illegal opcode %x in logic %d, ip %d", op, state->curLogicNr, state->_curLogic->cIP);
+			}
+
 			curParameterSize = _opCodes[op].parameterSize;
 			memmove(p, state->_curLogic->data + state->_curLogic->cIP, curParameterSize);
 			memset(p + curParameterSize, 0, CMD_BSIZE - curParameterSize);
 
 			debugC(2, kDebugLevelScripts, "%s%s(%d %d %d)", st, _opCodes[op].name, p[0], p[1], p[2]);
-
-			if (!_opCodes[op].functionPtr) {
-				error("Illegal opcode %x in logic %d, ip %d", op, state->curLogicNr, state->_curLogic->cIP);
-			}
 
 			_opCodes[op].functionPtr(&_game, this, p);
 			state->_curLogic->cIP += curParameterSize;

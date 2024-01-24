@@ -1,7 +1,19 @@
 Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2.8.0 (XXXX-XX-XX)
+#### 2.9.0 (XX.XX.XXXX)
+
+ Neue Spiele:
+   - Unterstützung für Orion Burger hinzugefügt.
+
+ Allgemein:
+   - Fehler bei der Erkennung der GLSL-Version auf einigen OpenGL ES2-Plattformen behoben.
+
+ TsAGE:
+   - Unterstützung für russische Fan-Übersetzung hinzugefügt.
+
+
+#### 2.8.0 "Mysteries, Mammoths, and Muppets" (30.12.2023)
 
  Neue Spiele:
    - Unterstützung für die macOS-Versionen von Syberia und Syberia II hinzugefügt.
@@ -12,8 +24,15 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Might and Magic Book One hinzugefügt.
    - Unterstützung für Muppet Tresure Island hinzugefügt.
    - Unterstützung für Primordia, Shardlight und Technobabylon hinzugefügt.
+   - Unterstützung für The Excavation of Hob's Barrow, Strangeland und Whispers
+     of a Machine hinzugefügt.
+   - Unterstützung für AGS-Spiele von Stranga und Cloak and Dagger hinzugefügt.
    - Unterstützung für Adibou 1 (Adi Jr.) hinzugefügt.
    - Unterstützung für Dark Side hinzugefügt.
+   - Unterstützung für Kingdom: The Far Reaches hinzugefügt.
+   - Unterstützung für Escape From Hell hinzugefügt.
+   - Unterstützung für Wrath of the Gods, Gadget: Invention, Travel and Adventure,
+     The Dark Eye und 4 weitere Director-Titel hinzugefügt.
 
  Neue Plattformen:
    - Vollständig erneute Portierung für libretro hinzugefügt.
@@ -27,7 +46,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      (Embedded Audio Synthesis) hinzugefügt.
    - Unterstützung für YUV442 und YUV444 im Theora-Decoder hinzugefügt.
    - Spezielle CPU-Routinen zum Grafik-Blitting zu ManagedSurface hinzugefügt.
-   - Das Standard-GM-Gerät wurde für eine verbesserte Kompatibilität auf "auto" gesetzt.
+   - Unterstützung für General MIDI ist jetzt standardmäßig aktiviert.
 
  AGS:
    - Code-Basis mit dem offiziellen AGS-Code in Version 3.6.0.53 synchronisiert.
@@ -60,6 +79,12 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für die chinesische Version von EOB2 hinzugefügt.
    - Unterstützung für die PC-98-Version von EAB2 hinzugefügt.
 
+ Mohawk:
+   - Die Genauigkeit der Code-Erzeugung für die Domes wurde erheblich verbessert und entspricht nun dem Original.
+
+ Private:
+   - Unterstützung für die japanische Windows-Version hinzugefügt.
+
  SCUMM:
    - Unterstützung für die entpackten RuSCUMM-Patches für russische Übersetzungen hinzugefügt.
    - Der offizielle Roland MT-32-Patch für Monkey Island 1 kann nun auf allen EGA-Versionen
@@ -72,7 +97,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      Die Schrift-Darstellung ist nun pixelgetreu.
    - Unterstützung für die Macintosh- und DOS/V-Versionen von Indiana Jones and the Fate of Atlantis,
      die von MicroMouse vertrieben wurden, hinzugefügt.
-   - Unterstützung für Netzwerk-Multiplay-erSpiele für Backyard Football, Backyard Baseball 2001 und
+   - Unterstützung für Netzwerk-Multiplayer-Spiele für Backyard Football, Backyard Baseball 2001 und
      Backyard Football 2002 hinzugefügt.
 
 
@@ -104,6 +129,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Sword2:
    - Unterstützung für die chinesische Übersetzung hinzugefügt.
 
+ Tinsel:
+   - Fehler behoben, der dazu geführt hat, dass keine Tonbänder mehr verfügbar sind.
+
  Twine:
    - Unterstützung für die japanische Übersetzung hinzugefügt.
 
@@ -130,8 +158,12 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Neue Engine-Option hinzugefügt, mit der die Gesundheits-Edelsteine durch
      eine HP/SP-Leiste ersetzt werden können.
 
+ RiscOS-Version:
+   - Doppeltes Buffering wird jetzt im Vollbildmodus genutzt, wenn V-Sync aktiviert ist.
+   - Unterstützung für Hardware-Farbpaletten hinzugefügt.
 
-#### 2.7.1 (2023-XX-XX)
+
+#### 2.7.1 (31.07.2023)
 
  Allgemein:
   - Die Wiedergabe-Geschwindigkeit von Theora-Videos wurde korrigiert.
