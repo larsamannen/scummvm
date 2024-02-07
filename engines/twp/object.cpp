@@ -412,6 +412,7 @@ void Object::stopObjectMotors() {
 	disableMotor(_turnTo);
 	disableMotor(_shakeTo);
 	disableMotor(_jiggleTo);
+	disableMotor(_scaleTo);
 }
 
 void Object::setFacing(Facing facing) {
@@ -536,6 +537,7 @@ void Object::setReach(Common::SharedPtr<Motor> reach) { SET_MOTOR(reach); }
 void Object::setTalking(Common::SharedPtr<Motor> talking) { SET_MOTOR(talking); }
 void Object::setTurnTo(Common::SharedPtr<Motor> turnTo) { SET_MOTOR(turnTo); }
 void Object::setShakeTo(Common::SharedPtr<Motor> shakeTo) { SET_MOTOR(shakeTo); }
+void Object::setScaleTo(Common::SharedPtr<Motor> scaleTo) { SET_MOTOR(scaleTo); }
 
 void Object::update(float elapsedSec) {
 	if (_dependentObj)
@@ -558,6 +560,8 @@ void Object::update(float elapsedSec) {
 		_shakeTo->update(elapsedSec);
 	if (_jiggleTo)
 		_jiggleTo->update(elapsedSec);
+	if (_scaleTo)
+		_scaleTo->update(elapsedSec);
 
 	if (_nodeAnim)
 		_nodeAnim->update(elapsedSec);
