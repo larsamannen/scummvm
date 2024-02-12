@@ -226,12 +226,12 @@ public:
 	SaveGameManager _saveGameManager;
 	ShaderParams _shaderParams;
 	HotspotMarkerNode _hotspotMarker;
-	unique_ptr<FadeShader> _fadeShader;
 	LightingNode _lightingNode;
 
 private:
 	Gfx _gfx;
 	Preferences _prefs;
+	unique_ptr<FadeShader> _fadeShader;
 	SentenceNode _sentence;
 	WalkboxNode _walkboxNode;
 	PathNode _pathNode;

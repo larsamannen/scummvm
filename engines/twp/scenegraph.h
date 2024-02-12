@@ -269,7 +269,7 @@ private:
 	virtual void drawCore(Math::Matrix4 trsf) override final;
 	Common::String getCursorName() const;
 
-public:
+private:
 	bool _inputHUD = false;
     bool _inputActive = false;
     bool _showCursor = false;

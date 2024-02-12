@@ -28,14 +28,19 @@
 #include "audio/mixer.h"
 #include "twp/ggpack.h"
 
-namespace Audio {
-class SeekableAudioStream;
-}
-
 namespace Twp {
 
 class AudioChannel;
 class SoundDefinition;
+
+struct SoundId {
+    int id;
+    int objId;
+    SoundDefinition* sndDef;
+    Audio::Mixer::SoundType cat;
+    AudioChannel* chan;
+    float pan;
+};
 
 class SoundDefinition;
 class SoundStream : public Common::SeekableReadStream {

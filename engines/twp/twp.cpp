@@ -19,10 +19,6 @@
  *
  */
 
-#include "imgui/imgui.h"
-#include "imgui_impl_sdl2_scummvm.h"
-#include "imgui_impl_opengl3_scummvm.h"
-#include "backends/graphics3d/openglsdl/openglsdl-graphics3d.h"
 #include "common/debug.h"
 #include "common/scummsys.h"
 #include "common/system.h"
@@ -53,12 +49,10 @@
 #include "twp/yack.h"
 #include "twp/enginedialogtarget.h"
 #include "twp/actions.h"
-#include "twp/debugtools.h"
 
 namespace Twp {
 
 TwpEngine *g_engine;
-SDL_Window *g_window = nullptr;
 
 TwpEngine::TwpEngine(OSystem *syst, const ADGameDescription *gameDesc)
 	: Engine(syst),
@@ -442,7 +436,7 @@ void TwpEngine::update(float elapsed) {
 			}
 
 			_inputState.setHotspot(_noun1 != nullptr);
-			bool hudVisible = _inputState.getInputActive() && _inputState.getInputVerbsActive() && _dialog.getState() == DialogState::None && !_cutscene;
+			bool hudVisible = _inputState.getInputActive() && _inputState.getInputVerbsActive() && _dialog.getState() == DialogState::None  && !_cutscene;
 			_hud.setVisible(hudVisible);
 			_sentence.setVisible(_hud.isVisible());
 			_uiInv.setVisible(hudVisible);
@@ -666,20 +660,15 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	_gfx.clear(Color(0, 0, 0));
 	_gfx.camera(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
 	Math::Matrix4 m1, m2, m;
-	m1.setPosition(Math::Vector3d(-SCREEN_WIDTH / 2.f, -SCREEN_HEIGHT / 2.f, 0.f));
-	m2.setPosition(Math::Vector3d(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT / 2.f, 0.f));
+	m1.setPosition(Math::Vector3d(-SCREEN_WIDTH/2.f, -SCREEN_HEIGHT/2.f, 0.f));
+	m2.setPosition(Math::Vector3d(SCREEN_WIDTH/2.f, SCREEN_HEIGHT/2.f, 0.f));
 	Math::Angle angle;
 	m.buildAroundZ(Math::Angle(-_room->_rotation));
-	_gfx.drawSprite(*screenTexture, Color(), m2 * m * m1, false, _fadeShader->_effect != FadeEffect::None);
+	_gfx.drawSprite(*screenTexture, Color(), m2*m*m1, false, _fadeShader->_effect != FadeEffect::None);
 
 	// draw UI
 	_gfx.cameraPos(camPos);
 	_screenScene.draw();
-
-	// imgui render
-	_gfx.use(nullptr);
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	g_system->updateScreen();
 }
@@ -687,16 +676,6 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 Common::Error TwpEngine::run() {
 	initGraphics3d(SCREEN_WIDTH, SCREEN_HEIGHT);
 	_screen = new Graphics::Screen(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-	// Setup Dear ImGui
-	OpenGLSdlGraphics3dManager *manager = dynamic_cast<OpenGLSdlGraphics3dManager *>(g_system->getPaletteManager());
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	g_window = manager->getWindow()->getSDLWindow();
-	SDL_GLContext glContext = SDL_GL_GetCurrentContext();
-	ImGui_ImplSDL2_InitForOpenGL(g_window, glContext);
-	ImGui_ImplOpenGL3_Init("#version 110");
-	ImGui::StyleColorsDark();
 
 	// Set the engine's debugger console
 	setDebugger(new Console());
@@ -745,11 +724,6 @@ Common::Error TwpEngine::run() {
 	while (!shouldQuit()) {
 		Math::Vector2d camPos = _gfx.cameraPos();
 		while (g_system->getEventManager()->pollEvent(e)) {
-			ImGui_ImplSDL2_ProcessEvent(&e);
-			ImGuiIO &io = ImGui::GetIO();
-			if (io.WantTextInput || io.WantCaptureMouse)
-				continue;
-
 			switch (e.type) {
 			case Common::EVENT_CUSTOM_ENGINE_ACTION_START: {
 				switch ((TwpAction)e.customType) {
@@ -844,7 +818,7 @@ Common::Error TwpEngine::run() {
 					if (control) {
 						WalkboxMode mode = (WalkboxMode)(((int)_walkboxNode.getMode() + 1) % 3);
 						debugC(kDebugGame, "set walkbox mode to: %s", (mode == WalkboxMode::Merged ? "merged" : mode == WalkboxMode::All ? "all"
-																																		 : "none"));
+																															: "none"));
 						_walkboxNode.setMode(mode);
 					}
 					break;
@@ -852,7 +826,7 @@ Common::Error TwpEngine::run() {
 					if (control) {
 						PathMode mode = (PathMode)(((int)_pathNode.getMode() + 1) % 3);
 						debugC(kDebugGame, "set path mode to: %s", (mode == PathMode::GraphMode ? "graph" : mode == PathMode::All ? "all"
-																																  : "none"));
+																													 : "none"));
 						_pathNode.setMode(mode);
 					}
 					break;
@@ -903,13 +877,6 @@ Common::Error TwpEngine::run() {
 		uint32 delta = newTime - time;
 		time = newTime;
 		update(speed * delta / 1000.f);
-
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame(g_window);
-		ImGui::NewFrame();
-
-		onImGuiRender();
-
 		draw();
 		_cursor.update();
 
@@ -919,11 +886,6 @@ Common::Error TwpEngine::run() {
 			g_system->delayMillis(10 - delta);
 		}
 	}
-
-	// Cleanup
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
 
 	return Common::kNoError;
 }

@@ -43,7 +43,7 @@ private:
 	void loadSpriteSheet(const Common::String &name);
 	void loadFont(const Common::String &name);
 
-public:
+private:
 	Common::HashMap<Common::String, Texture> _textures;
 	Common::HashMap<Common::String, SpriteSheet> _spriteSheets;
 	Common::HashMap<Common::String, Common::SharedPtr<Font> > _fonts;

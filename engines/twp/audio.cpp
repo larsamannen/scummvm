@@ -203,22 +203,7 @@ void AudioSystem::setVolume(int id, float vol) {
 void AudioSystem::update(float elapsed) {
 	for (int i = 0; i < 32; i++) {
 		if (_slots[i].busy && !g_engine->_mixer->isSoundHandleActive(_slots[i].handle)) {
-			if(_slots[i].loopTimes > 0) {
-				_slots[i].loopTimes--;
-				Audio::SeekableAudioStream *audioStream;
-				Common::String name = _slots[i].sndDef->getName();
-				_slots[i].stream.seek(0);
-				if (name.hasSuffixIgnoreCase(".ogg")) {
-					audioStream = Audio::makeVorbisStream(&_slots[i].stream, DisposeAfterUse::NO);
-				} else if (name.hasSuffixIgnoreCase(".wav")) {
-					audioStream = Audio::makeWAVStream(&_slots[i].stream, DisposeAfterUse::NO);
-				} else {
-					error("Unexpected audio format: %s", name.c_str());
-				}
-				g_engine->_mixer->playStream(_slots[i].soundType, &_slots[i].handle, audioStream, _slots[i].id, _slots[i].volume);
-			} else {
-				_slots[i].busy = false;
-			}
+			_slots[i].busy = false;
 		}
 	}
 	// sound definition ID or sound ID ?
@@ -272,8 +257,6 @@ int AudioSystem::play(Common::SharedPtr<SoundDefinition> sndDef, Audio::Mixer::S
 	slot->volume = volume;
 	slot->fadeInTimeMs = fadeInTimeMs;
 	slot->total = audioStream->getLength().msecs();
-	slot->loopTimes = loopTimes;
-	slot->soundType = cat;
 	return id;
 }
 

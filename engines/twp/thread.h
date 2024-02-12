@@ -51,8 +51,6 @@ public:
 	virtual HSQUIRRELVM getThread() = 0;
 
 	virtual bool isGlobal() = 0;
-	bool isSuspended();
-	bool isDead();
 
 	void suspend();
 	void resume();
@@ -61,6 +59,8 @@ public:
 	virtual void stop() = 0;
 
 protected:
+	bool isDead();
+	bool isSuspended();
 
 public:
 	float _waitTime = 0.f;
