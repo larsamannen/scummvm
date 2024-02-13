@@ -7,8 +7,10 @@
 
 namespace Twp {
 
-static const char *fshader = R"(#version 100
-precision highp float;
+static const char *fshader = R"(#version 110
+#ifdef GL_ES
+	precision highp float;
+#endif
 
 varying vec2 v_texCoords;
 varying vec4 v_color;
@@ -75,8 +77,7 @@ void main(void) {
 	gl_FragColor = vec4(finalCol.rgb * finalLight, finalCol.a);
 })";
 
-static const char *debug_fshader = R"(#version 100
-precision highp float;
+static const char *debug_fshader = R"(#version 110
 varying vec2 v_texCoords;
 varying vec4 v_color;
 
@@ -142,8 +143,7 @@ void main(void) {
 	gl_FragColor = vec4(finalCol.rgb + diffuse, finalCol.a);
 })";
 
-static const char *vshader = R"(#version 100
-precision highp float;
+static const char *vshader = R"(#version 110
 uniform mat4 u_transform;
 attribute vec2 a_position;
 attribute vec4 a_color;

@@ -26,9 +26,8 @@
 
 namespace Twp {
 
-const char *vsrc = R"(#version 100
-precision highp float;
-uniform mat4 u_transform;
+const char *vsrc = R"(#version 110
+	uniform mat4 u_transform;
 attribute vec2 a_position;
 attribute vec4 a_color;
 attribute vec2 a_texCoords;
@@ -40,8 +39,7 @@ void main() {
 	v_texCoords = a_texCoords;
 })";
 
-const char* bwShader = R"(#version 100
-precision highp float;
+	const char* bwShader = R"(#version 110
 varying vec2 v_texCoords;
 varying vec4 v_color;
 uniform sampler2D u_texture;
@@ -52,9 +50,9 @@ void main() {
 	gl_FragColor = vec4(gray, gray, gray, col.a);
 })";
 
-const char* ghostShader = R"(#version 100
+const char* ghostShader = R"(#version 110
 // Work in progress ghost shader.. Too over the top at the moment, it'll make you sick.
-precision highp float;
+
 varying vec4 v_color;
 varying vec2 v_texCoords;
 uniform sampler2D u_texture;
@@ -225,8 +223,8 @@ void main(void) {
 	gl_FragColor = v_color * vec4(col, texture2D(u_texture, c1).a);
 })";
 
-const char* sepiaShader = R"(#version 100
-precision highp float;
+const char* sepiaShader = R"(#version 110
+
 varying vec4 v_color;
 varying vec2 v_texCoords;
 uniform sampler2D u_texture;
@@ -319,8 +317,11 @@ void main(void) {
 })";
 
 FadeShader::FadeShader() {
-	const char *fadeShader = R"(#version 100
-	precision highp float;
+	const char *fadeShader = R"(#version 110
+#ifdef GL_ES
+		precision highp float;
+#endif
+
 	varying vec4 v_color;
 	varying vec2 v_texCoords;
 	uniform sampler2D u_texture;
