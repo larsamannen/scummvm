@@ -203,7 +203,8 @@ void Gfx::init() {
 	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, _vbo));
 	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo));
 
-	const char *fragmentSrc = R"(#version 110
+	const char *fragmentSrc = R"(#version 100
+	precision highp float;
 	varying vec4 v_color;
 	varying vec2 v_texCoords;
 	uniform sampler2D u_texture;

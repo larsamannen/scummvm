@@ -46,7 +46,8 @@ HudShader::HudShader() {
 }
 
 void HudShader::init() {
-	const char *v_source = R"(#version 110
+	const char *v_source = R"(#version 100
+	precision highp float;
 	attribute vec2 a_position;
 	attribute vec4 a_color;
 	attribute vec2 a_texCoords;
@@ -75,7 +76,8 @@ void HudShader::init() {
 		v_ranges = u_ranges;
 	})";
 
-	const char* f_source = R"(#version 110
+	const char* f_source = R"(#version 100
+	precision highp float;
 	varying vec4 v_color;
 	varying vec2 v_texCoords;
 	varying vec4 v_shadowColor;
