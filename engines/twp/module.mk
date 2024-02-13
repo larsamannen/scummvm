@@ -1,6 +1,6 @@
 MODULE := engines/twp
 
-SQUIRREL_OBJS = \
+#SQUIRREL_OBJS = \
 	squirrel/sqapi.o \
 	squirrel/sqbaselib.o \
 	squirrel/sqfuncstate.o \
@@ -21,11 +21,29 @@ SQUIRREL_OBJS = \
 	squirrel/sqstdrex.o \
 	squirrel/sqstdaux.o
 
-CLIPPER_OBJS = clipper/clipper.o
+#CLIPPER_OBJS = clipper/clipper.o
 
 MODULE_OBJS = \
-	$(SQUIRREL_OBJS) \
-	$(CLIPPER_OBJS) \
+	squirrel/sqapi.o \
+	squirrel/sqbaselib.o \
+	squirrel/sqfuncstate.o \
+	squirrel/sqdebug.o \
+	squirrel/sqlexer.o \
+	squirrel/sqobject.o \
+	squirrel/sqcompiler.o \
+	squirrel/sqstate.o \
+	squirrel/sqtable.o \
+	squirrel/sqmem.o \
+	squirrel/sqvm.o \
+	squirrel/sqclass.o \
+	squirrel/sqstdio.o \
+	squirrel/sqstdmath.o \
+	squirrel/sqstdstring.o \
+	squirrel/sqstdstream.o \
+	squirrel/sqstdblob.o \
+	squirrel/sqstdrex.o \
+	squirrel/sqstdaux.o \
+	clipper/clipper.o \
 	twp.o \
 	console.o \
 	metaengine.o \
