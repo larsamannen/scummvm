@@ -3736,8 +3736,6 @@ if test -n "$_host"; then
 				# --enable-release
 				append_var DEFINES  "-DNDEBUG"
 				#append_var DEFINES  "-DDISABLE_TEXT_CONSOLE"
-				append_var CXXFLAGS "-I$($_host_alias-gcc -print-sysroot)/opt/mintlib-dlmalloc/include"
-				append_var LDFLAGS  "-L$($_host_alias-gcc -print-sysroot)/opt/mintlib-dlmalloc/lib/$($_host_alias-gcc $LDFLAGS -print-multi-directory)"
 			fi
 
 			_seq_midi=no
@@ -3865,8 +3863,8 @@ if test -n "$_host"; then
 			_sysroot=`$CXX --print-sysroot`
 			_sdlpath=$_sysroot/usr/bin
 			append_var DEFINES  "-DDINGUX -DOPENDINGUX -DREDUCE_MEMORY_USAGE -DUNCACHED_PLUGINS"
-			append_var CXXFLAGS "-ffast-math -fdata-sections -ffunction-sections -mplt"
-			append_var LDFLAGS  "-ffast-math -fdata-sections -ffunction-sections -mplt"
+			append_var CXXFLAGS "-fdata-sections -ffunction-sections -mplt"
+			append_var LDFLAGS  "-fdata-sections -ffunction-sections -mplt"
 			append_var LDFLAGS  "-O3 -Wl,--as-needed,--gc-sections"
 			if [ x"$_dynamic_modules" != xyes ]; then
 				append_var CXXFLAGS "-mno-shared"

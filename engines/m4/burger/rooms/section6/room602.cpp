@@ -27,6 +27,11 @@ namespace M4 {
 namespace Burger {
 namespace Rooms {
 
+enum {
+	kCHANGE_MOTOR_ANIMATION = 1,
+	kCHANGE_DOOR_ANIMATION = 2
+};
+
 const Room602::GerbilPoint Room602::GERBIL[] = {
 	{ -99, -99 }, { -99, -99 }, { -99, -99 }, { -99, -99 }, { -99, -99 }, { -99, -99 },
 	{ 344, 186 }, { 344, 186 }, { 344, 186 }, { 344, 186 }, { 376, 223 }, { 376, 223 },
@@ -306,18 +311,18 @@ void Room602::init() {
 		kernel_trigger_dispatch_now(12);
 
 		if (_G(game).previous_room != 609)
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 
-		_val2 = 48;
+		_kibbleOffset = 48;
 	} else {
-		_val2 = 0;
+		_kibbleOffset = 0;
 	}
 
-	_G(flags)[V264] = 0;
+	_G(flags)[kStandingOnKibble] = 0;
 	if (_G(flags)[V255] == 1)
 		series_show("602spill", 0xf00);
 
-	if (_G(flags)[V255] && _G(flags)[V278])
+	if (_G(flags)[V255] && !_G(flags)[V278])
 		_G(kernel).call_daemon_every_loop = true;
 
 	if (_G(flags)[V277] == 6003 && _G(flags)[V278] == 1) {
@@ -334,13 +339,13 @@ void Room602::init() {
 		_G(flags)[V257] / 21, _G(flags)[V257]);
 
 	if (_G(flags)[kGerbilCageDoor] == 1) {
-		_val3 = 63;
-		kernel_trigger_dispatch_now(2);
+		_doorShould = 63;
+		kernel_trigger_dispatch_now(kCHANGE_DOOR_ANIMATION);
 	}
 
 	if (_G(flags)[kGerbilCageDoor] == 3) {
-		_val3 = 64;
-		kernel_trigger_dispatch_now(2);
+		_doorShould = 64;
+		kernel_trigger_dispatch_now(kCHANGE_DOOR_ANIMATION);
 	}
 
 	if (_G(flags)[kGerbilCageDoor]) {
@@ -403,7 +408,7 @@ void Room602::init() {
 
 		_series8 = series_play("612mot02", 0x700, 0, -1, 0, -1);
 		_val1 = 53;
-		kernel_trigger_dispatch_now(1);
+		kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 		break;
 
 	default:
@@ -417,7 +422,7 @@ void Room602::init() {
 			_G(flags)[V245] = 10031;
 			_G(flags)[V248] = 1;
 			_val1 = 53;
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 		}
 		break;
 	}
@@ -434,7 +439,7 @@ void Room602::init() {
 
 void Room602::daemon() {
 	switch (_G(kernel).trigger) {
-	case 1:
+	case kCHANGE_MOTOR_ANIMATION:
 		switch (_val1) {
 		case 53:
 			player_set_commands_allowed(false);
@@ -516,7 +521,7 @@ void Room602::daemon() {
 			_val1 = 60;
 
 			if (_G(flags)[V278]) {
-				series_play_with_breaks(PLAY11, "612wil7", 0x700, 1, 3, 6, 100, 114, -2);
+				series_play_with_breaks(PLAY11, "612wi17", 0x700, 1, 3, 6, 100, 114, -2);
 			} else {
 				series_play_with_breaks(PLAY11, "612wi17", 0x6ff, 1, 3, 6, 100, 0, 0);
 			}
@@ -526,7 +531,7 @@ void Room602::daemon() {
 			_G(flags)[V280] = 1;
 			kernel_trigger_dispatch_now(3);
 			_val1 = 58;
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 
 			_G(wilbur_should) = (_G(flags)[V280] == 1) ? 10001 : 35;
 			kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
@@ -544,8 +549,8 @@ void Room602::daemon() {
 		}
 		break;
 
-	case 2:
-		switch (_val3) {
+	case kCHANGE_DOOR_ANIMATION:
+		switch (_doorShould) {
 		case 48:
 			_magnetState = 17;
 			kernel_trigger_dispatch_now(4);
@@ -555,7 +560,7 @@ void Room602::daemon() {
 			_G(flags)[kGerbilCageDoor] = 1;
 			_G(flags)[V258] = 55;
 			_G(flags)[V257] = 0;
-			_val3 = 63;
+			_doorShould = 63;
 			digi_play("602_004", 2, 255, 6, 602);
 			kernel_timing_trigger(1, 2);
 			_magnetState = 16;
@@ -567,7 +572,7 @@ void Room602::daemon() {
 				terminateMachineAndNull(_series3);
 				_series3 = series_show("602door", 0xf00, 0, 2, 6, 0, 100,
 					-_G(flags)[V257] / 21, _G(flags)[V257]);
-				_G(flags)[V257] -= _G(flags)[V258] >> 5;
+				_G(flags)[V257] -= _G(flags)[V258] / 32;
 				_G(flags)[kGerbilCageDoor] = 1;
 
 				if (_G(flags)[V257] + 140 >= 20) {
@@ -579,7 +584,7 @@ void Room602::daemon() {
 				}
 			} else {
 				_G(flags)[kGerbilCageDoor] = 2;
-				_val3 = 48;
+				_doorShould = 48;
 				terminateMachineAndNull(_series3);
 				_series3 = series_show("602door", 0xf00, 0, -1, -1, 0, 100,
 					-_G(flags)[V257] / 21, _G(flags)[V257]);
@@ -594,7 +599,7 @@ void Room602::daemon() {
 				digi_play("602_007", 2);
 				_G(flags)[kGerbilCageDoor] = 0;
 				_G(flags)[V257] = 0;
-				_val3 = 48;
+				_doorShould = 48;
 
 				terminateMachineAndNull(_series3);
 				_series3 = series_show("602door", 0xf00, 1);
@@ -621,8 +626,8 @@ void Room602::daemon() {
 	case 3:
 		_G(flags)[V258] = 40;
 		_G(flags)[kGerbilCageDoor] = 1;
-		_val3 = 63;
-		kernel_trigger_dispatch_now(2);
+		_doorShould = 63;
+		kernel_trigger_dispatch_now(kCHANGE_DOOR_ANIMATION);
 		terminateMachineAndNull(_mouseWheel);
 
 		_mouseWheel = series_play(_G(game).room_id == 602 ? "602wheel" : "612wheel",
@@ -687,7 +692,7 @@ void Room602::daemon() {
 		break;
 
 	case 11:
-		_val3 = 64;
+		_doorShould = 64;
 		_G(flags)[kGerbilCageDoor] = 3;
 		kernel_timing_trigger(1, 2);
 		break;
@@ -795,7 +800,7 @@ void Room602::daemon() {
 			break;
 
 		case 3:
-			_G(flags)[V264] = 0;
+			_G(flags)[kStandingOnKibble] = 0;
 			ws_demand_location(367, 280, 5);
 			ws_hide_walker();
 			_G(wilbur_should) = 4;
@@ -901,7 +906,7 @@ void Room602::daemon() {
 
 				} else {
 					_series9 = series_play("602wi7as", 6, 0x700, -1);
-					_val3 = 62;
+					_doorShould = 62;
 					series_stream_with_breaks(SERIES1,
 						(_G(game).room_id == 602) ? "602wi07a" : "612wi07a",
 						6, 0x6ff, 13);
@@ -1027,7 +1032,7 @@ void Room602::daemon() {
 				ws_demand_location(225, 350);
 			}
 
-			ws_demand_facing(2);
+			ws_demand_facing(kCHANGE_DOOR_ANIMATION);
 			ws_hide_walker();
 			terminateMachineAndNull(_series8);
 
@@ -1042,7 +1047,7 @@ void Room602::daemon() {
 
 		case 24:
 			_val1 = 57;
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 
 			if (_G(flags)[V280] == 1) {
 				_G(wilbur_should) = 10001;
@@ -1085,7 +1090,7 @@ void Room602::daemon() {
 			player_set_commands_allowed(false);
 			ws_demand_location(314, 319, 3);
 			ws_hide_walker();
-			_G(flags)[V264] = 0;
+			_G(flags)[kStandingOnKibble] = 0;
 
 			intr_remove_no_walk_rect(_walk1);
 			_walk1 = intr_add_no_walk_rect(322, 304, 472, 329, 312, 320);
@@ -1106,14 +1111,14 @@ void Room602::daemon() {
 		case 28:
 			_G(wilbur_should) = 41;
 			_val1 = 56;
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 			kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
 			break;
 
 		case 29:
 			_G(wilbur_should) = 41;
 			_val1 = 58;
-			kernel_trigger_dispatch_now(1);
+			kernel_trigger_dispatch_now(kCHANGE_MOTOR_ANIMATION);
 			kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
 			break;
 
@@ -1255,20 +1260,21 @@ void Room602::daemon() {
 		if (_G(player).walker_in_this_scene) {
 			player_update_info();
 
-			if (_G(player_info).x >= (_val2 + 330) &&
-					_G(player_info).y > 289 && _G(player_info).y < 305) {
-				if (_G(flags)[V255] == 1 && _G(flags)[V278] == 0 &&
-						_G(player_info).facing > 2 && _G(player_info).facing < 7) {
-					if (_G(flags)[V264]) {
-						_G(flags)[V264] = 1;
-					} else {
-						_G(flags)[V264] = 1;
-						term_message("Wilbur now slips on kibble!");
-						intr_cancel_sentence();
-						_G(wilbur_should) = 20;
-						kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
-					}
+			if (_G(player_info).x >= (_kibbleOffset + 330) && _G(player_info).x < 396 &&
+					_G(player_info).y > 289 && _G(player_info).y < 305 &&
+					_G(flags)[V255] == 1 && _G(flags)[V278] == 0 &&
+					_G(player_info).facing > 2 && _G(player_info).facing < 7) {
+				if (_G(flags)[kStandingOnKibble]) {
+					_G(flags)[kStandingOnKibble] = 1;
+				} else {
+					_G(flags)[kStandingOnKibble] = 1;
+					term_message("Wilbur now slips on kibble!");
+					intr_cancel_sentence();
+					_G(wilbur_should) = 20;
+					kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
 				}
+			} else {
+				_G(flags)[kStandingOnKibble] = 0;
 			}
 		}
 		break;

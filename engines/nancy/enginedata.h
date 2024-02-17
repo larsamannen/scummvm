@@ -255,7 +255,7 @@ struct SET : public EngineData {
 	Common::Array<SoundDescription> _sounds;
 };
 
-// Contains data for the Save/Load screen
+// Contains data for the Save/Load screen. Used up to nancy7 
 struct LOAD : public EngineData {
 	LOAD(Common::SeekableReadStream *chunkStream);
 
@@ -295,6 +295,33 @@ struct LOAD : public EngineData {
 	Common::String _emptySaveText;
 	Common::String _defaultSaveNamePrefix;
 	// Common::Rect _gameSavedBounds
+};
+
+// Contains data for the new Save/Load screen. Used in nancy8 and up 
+struct LOAD_v2 : public EngineData {
+	LOAD_v2(Common::SeekableReadStream *chunkStream);
+
+	Common::Path _firstPageimageName;
+	Common::Path _otherPageimageName;
+	Common::Path _buttonsImageName;
+
+	Common::Array<Common::Rect> _unpressedButtonSrcs;
+	Common::Array<Common::Rect> _pressedButtonSrcs;
+	Common::Array<Common::Rect> _highlightedButtonSrcs;
+	Common::Array<Common::Rect> _disabledButtonSrcs;
+
+	Common::Array<Common::Rect> _buttonDests;
+	Common::Array<Common::Rect> _textboxBounds;
+
+	int16 _mainFontID;
+	int16 _highlightFontID;
+	int16 _fontXOffset;
+	int16 _fontYOffset;
+
+	uint16 _blinkingTimeDelay;
+
+	Common::Path _gameSavedPopup;
+	Common::String _emptySaveText;
 };
 
 // Contains data for the prompt that appears when exiting the game
@@ -357,9 +384,13 @@ struct CLOK : public EngineData {
 	uint32 timeToKeepOpen = 0;
 	uint16 frameTime = 0;
 
-	uint32 nancy5CountdownTime = 0;
-	Common::Array<Common::Rect> nancy5DaySrcs;
-	Common::Array<Common::Rect> nancy5CountdownSrcs;
+	bool clockIsDisabled = false;
+	bool clockIsDay = false; // nancy5 clock
+
+	uint32 countdownTime = 0;
+	Common::Array<Common::Rect> daySrcs;
+	Common::Array<Common::Rect> countdownSrcs;
+	Common::Rect disabledSrc; // possibly useless
 };
 
 // Contains data for special effects (fades between scenes/fades to black).
@@ -456,6 +487,12 @@ struct TABL : public EngineData {
 	Common::Array<uint16> correctIDs;
 	Common::Array<Common::Rect> srcRects;
 	Common::Array<Common::String> strings;
+};
+
+struct MARK : public EngineData {
+	MARK(Common::SeekableReadStream *chunkStream);
+
+	Common::Array<Common::Rect> _markSrcs;
 };
 
 } // End of namespace Nancy

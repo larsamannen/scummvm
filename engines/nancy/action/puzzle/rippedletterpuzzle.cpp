@@ -38,16 +38,21 @@ namespace Action {
 
 void RippedLetterPuzzle::init() {
 	Common::Rect screenBounds = NancySceneState.getViewport().getBounds();
-	_drawSurface.create(screenBounds.width(), screenBounds.height(), g_nancy->_graphicsManager->getInputPixelFormat());
-	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
+	_drawSurface.create(screenBounds.width(), screenBounds.height(), g_nancy->_graphics->getInputPixelFormat());
+	_drawSurface.clear(g_nancy->_graphics->getTransColor());
 	setTransparent(true);
 	setVisible(true);
 	moveTo(screenBounds);
 
-	_pickedUpPiece._drawSurface.create(_destRects[0].width(), _destRects[0].height(), g_nancy->_graphicsManager->getInputPixelFormat());
-	_pickedUpPiece.setVisible(false);
-
 	g_nancy->_resource->loadImage(_imageName, _image);
+
+	if (_useCustomPickUpTile) {
+		_pickedUpPiece._drawSurface.create(_image, _customPickUpTileSrc);
+	} else {
+		_pickedUpPiece._drawSurface.create(_destRects[0].width(), _destRects[0].height(), g_nancy->_graphics->getInputPixelFormat());
+	}
+
+	_pickedUpPiece.setVisible(false);
 }
 
 void RippedLetterPuzzle::registerGraphics() {
@@ -61,8 +66,10 @@ void RippedLetterPuzzle::readData(Common::SeekableReadStream &stream) {
 
 	readFilename(stream, _imageName);
 
-	byte width = 6;
-	byte height = 4;
+	byte maxWidth = 6;
+	byte maxHeight = g_nancy->getGameType() <= kGameTypeNancy6 ? 4 : 5;
+	byte width = maxWidth;
+	byte height = maxHeight;
 
 	if (g_nancy->getGameType() >= kGameTypeNancy5) {
 		width = stream.readByte();
@@ -70,54 +77,63 @@ void RippedLetterPuzzle::readData(Common::SeekableReadStream &stream) {
 	}
 
 	for (uint i = 0; i < height; ++i) {
-		readRectArray(stream, _srcRects, width, 6);
+		readRectArray(stream, _srcRects, width, maxWidth);
 	}
-	stream.skip((4 - height) * 6 * 16);
+	stream.skip((maxHeight - height) * maxWidth * 16);
 
 	for (uint i = 0; i < height; ++i) {
-		readRectArray(stream, _destRects, width, 6);
+		readRectArray(stream, _destRects, width, maxWidth);
 	}
-	stream.skip((4 - height) * 6 * 16);
+	stream.skip((maxHeight - height) * maxWidth * 16);
 
 	readRect(stream, _rotateHotspot);
 	readRect(stream, _takeHotspot);
 	readRect(stream, _dropHotspot);
+
+	if (g_nancy->getGameType() >= kGameTypeNancy7) {
+		_rotationType = (RotationType)stream.readUint16LE();
+	}
 
 	_initOrder.resize(width * height);
 	for (uint i = 0; i < height; ++i) {
 		for (uint j = 0; j < width; ++j) {
 			_initOrder[i * width + j] = stream.readByte();
 		}
-		stream.skip((6 - width));
+		stream.skip((maxWidth - width));
 	}
-	stream.skip((4 - height) * 6);
+	stream.skip((maxHeight - height) * maxWidth);
 
 	_initRotations.resize(width * height);
 	for (uint i = 0; i < height; ++i) {
 		for (uint j = 0; j < width; ++j) {
 			_initRotations[i * width + j] = stream.readByte();
 		}
-		stream.skip((6 - width));
+		stream.skip((maxWidth - width));
 	}
-	stream.skip((4 - height) * 6);
+	stream.skip((maxHeight - height) * maxWidth);
 
 	_solveOrder.resize(width * height);
 	for (uint i = 0; i < height; ++i) {
 		for (uint j = 0; j < width; ++j) {
 			_solveOrder[i * width + j] = stream.readByte();
 		}
-		stream.skip((6 - width));
+		stream.skip((maxWidth - width));
 	}
-	stream.skip((4 - height) * 6);
+	stream.skip((maxHeight - height) * maxWidth);
 
 	_solveRotations.resize(width * height);
 	for (uint i = 0; i < height; ++i) {
 		for (uint j = 0; j < width; ++j) {
 			_solveRotations[i * width + j] = stream.readByte();
 		}
-		stream.skip((6 - width));
+		stream.skip((maxWidth - width));
 	}
-	stream.skip((4 - height) * 6);
+	stream.skip((maxHeight - height) * maxWidth);
+
+	if (g_nancy->getGameType() >= kGameTypeNancy7) {
+		_useCustomPickUpTile = stream.readByte();
+		readRect(stream, _customPickUpTileSrc);
+	}
 
 	_takeSound.readNormal(stream);
 	_dropSound.readNormal(stream);
@@ -211,13 +227,14 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 				insideRect = _rotateHotspot;
 				insideRect.translate(screenHotspot.left, screenHotspot.top);
 
-				if (insideRect.contains(input.mousePos)) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kRotateCW);
+				if (_rotationType != kRotationNone && insideRect.contains(input.mousePos)) {
+					g_nancy->_cursor->setCursorType(CursorManager::kRotateCW);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						// Player has clicked, rotate the piece
-						if (++_puzzleState->rotations[i] > 3) {
-							_puzzleState->rotations[i] = 0;
+						int inc = (_rotationType == kRotation90 ? 1 : 2);
+						if ((_puzzleState->rotations[i] += inc) > 3) {
+							_puzzleState->rotations[i] -= 4;
 						}
 
 						drawPiece(i, _puzzleState->rotations[i], _puzzleState->order[i]);
@@ -232,14 +249,17 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 				insideRect.translate(screenHotspot.left, screenHotspot.top);
 
 				if (insideRect.contains(input.mousePos)) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
+					g_nancy->_cursor->setCursorType(CursorManager::kHotspot);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						// Player has clicked, take the piece
 
 						// First, copy the graphic from the full drawSurface...
-						_pickedUpPiece._drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
-						_pickedUpPiece._drawSurface.blitFrom(_drawSurface, _destRects[i], Common::Point());
+						if (!_useCustomPickUpTile) {
+							_pickedUpPiece._drawSurface.clear(g_nancy->_graphics->getTransColor());
+							_pickedUpPiece._drawSurface.blitFrom(_drawSurface, _destRects[i], Common::Point());
+						}
+						
 						_pickedUpPiece.setVisible(true);
 						_pickedUpPiece.setTransparent(true);
 						_pickedUpPiece.pickUp();
@@ -265,7 +285,7 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 				insideRect.translate(screenHotspot.left, screenHotspot.top);
 
 				if (insideRect.contains(input.mousePos)) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
+					g_nancy->_cursor->setCursorType(CursorManager::kHotspot);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						// Player has clicked, drop the piece and pick up a new one
@@ -276,8 +296,11 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 							_pickedUpPiece.setVisible(false);
 						} else {
 							// Yes, change the picked piece graphic
-							_pickedUpPiece._drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
-							_pickedUpPiece._drawSurface.blitFrom(_drawSurface, _destRects[i], Common::Point());
+							if (!_useCustomPickUpTile) {
+								_pickedUpPiece._drawSurface.clear(g_nancy->_graphics->getTransColor());
+								_pickedUpPiece._drawSurface.blitFrom(_drawSurface, _destRects[i], Common::Point());
+							}
+							
 							_pickedUpPiece.setVisible(true);
 							_pickedUpPiece.setTransparent(true);
 						}
@@ -302,7 +325,7 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 	if (_pickedUpPieceID == -1) {
 		// No piece picked up, check the exit hotspot
 		if (NancySceneState.getViewport().convertViewportToScreen(_exitHotspot).contains(input.mousePos)) {
-			g_nancy->_cursorManager->setCursorType(g_nancy->_cursorManager->_puzzleExitCursor);
+			g_nancy->_cursor->setCursorType(g_nancy->_cursor->_puzzleExitCursor);
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				// Player has clicked, exit

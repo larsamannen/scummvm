@@ -233,12 +233,12 @@ void BurgerEngine::global_daemon() {
 			ws_unhide_walker(_G(my_walker));
 			player_set_commands_allowed(true);
 			_G(flags)[V299] = 0;
-			_G(flags)[V298] = 0;
+			_G(flags)[kDisableFootsteps] = 0;
 			_G(wilbur_should) = 10002;
 			break;
 		case 10002:
 			_G(flags)[V299] = 0;
-			_G(flags)[V298] = 0;
+			_G(flags)[kDisableFootsteps] = 0;
 			break;
 		case 10003:
 			player_set_commands_allowed(false);
@@ -290,7 +290,7 @@ void BurgerEngine::global_daemon() {
 			break;
 		case 10009:
 			ws_unhide_walker(_G(my_walker));
-			_G(wilbur_should) = 10018;
+			_G(wilbur_should) = 10010;
 			_G(walker).wilbur_speech("602w012x", kCHANGE_WILBUR_ANIMATION);
 			break;
 		case 10010:
@@ -639,7 +639,7 @@ void BurgerEngine::testDone3() {
 	_G(flags)[V109] = 1;
 	_G(flags)[V110] = 1;
 	_G(flags)[kTrufflesInMine] = 1;
-	_G(flags)[V112] = 1;
+	_G(flags)[kPerkinsLostIsland] = 1;
 	_G(flags)[V115] = 5;
 	_G(flags)[V116] = 1;
 	_G(flags)[V117] = 1;
@@ -695,7 +695,7 @@ void BurgerEngine::testDone4() {
 	_G(flags)[V213] = 2;
 	_G(flags)[V214] = 0;
 	_G(flags)[V218] = 5003;
-	_G(flags)[V219] = 1;
+	_G(flags)[kTVOnFire] = 1;
 	_G(flags)[V223] = 2;
 	_G(flags)[V224] = 0;
 	_G(flags)[V227] = 1;

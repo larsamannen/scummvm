@@ -32,63 +32,45 @@ namespace Ultima8 {
 
 
 AudioChannel::AudioChannel(Audio::Mixer *mixer, uint32 sampleRate, bool stereo) :
-		_mixer(mixer), _loop(0), _sample(nullptr),
-		_paused(false), _priority(0), _lVol(0), _rVol(0), _pitchShift(0) {
+		_mixer(mixer), _priority(0) {
 }
 
 AudioChannel::~AudioChannel(void) {
 }
 
-void AudioChannel::playSample(AudioSample *sample, int loop, int priority, bool paused, bool isSpeech, uint32 pitchShift, int lvol, int rvol) {
-	_sample = sample;
-	_loop = loop;
-	_priority = priority;
-	_lVol = lvol;
-	_rVol = rvol;
-	_paused = paused;
-	_pitchShift = pitchShift;
-
-	if (!_sample)
+void AudioChannel::playSample(AudioSample *sample, int loop, int priority, bool isSpeech, uint32 pitchShift, byte volume, int8 balance) {
+	if (!sample)
 		return;
 
-	// Create the _sample
-	Audio::SeekableAudioStream *audioStream = _sample->makeStream();
+	_priority = priority;
 
-	int loops = _loop;
-	if (loops == -1) {
+	// Create the _sample
+	Audio::SeekableAudioStream *audioStream = sample->makeStream();
+
+	int loops = loop;
+	if (loop == -1) {
 		// loop forever
 		loops = 0;
 	}
-	Audio::AudioStream *stream = (_loop <= 1 && _loop != -1) ?
+	Audio::AudioStream *stream = (loop <= 1 && loop != -1) ?
 		(Audio::AudioStream *)audioStream :
 		new Audio::LoopingAudioStream(audioStream, loops);
 
-	// Play it
-	int vol = (_lVol + _rVol) / 2;		 // range is 0 ~ 255
-	int balance = (_rVol - _lVol) / 2; // range is -127 ~ +127
-
 	_mixer->stopHandle(_soundHandle);
-	_mixer->playStream(isSpeech ? Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType, &_soundHandle, stream, -1, vol, balance);
-	if (_pitchShift != AudioProcess::PITCH_SHIFT_NONE)
+	_mixer->playStream(isSpeech ? Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType, &_soundHandle, stream, -1, volume, balance);
+	if (pitchShift != AudioProcess::PITCH_SHIFT_NONE)
 		_mixer->setChannelRate(_soundHandle, stream->getRate() * pitchShift / AudioProcess::PITCH_SHIFT_NONE);
-	if (paused)
-		_mixer->pauseHandle(_soundHandle, true);
 }
 
 bool AudioChannel::isPlaying() {
-	if (!_mixer->isSoundHandleActive(_soundHandle))
-		_sample = nullptr;
-
-	return _sample != nullptr;
+	return _mixer->isSoundHandleActive(_soundHandle);
 }
 
 void AudioChannel::stop() {
 	_mixer->stopHandle(_soundHandle);
-	_sample = nullptr;
 }
 
 void AudioChannel::setPaused(bool paused) {
-	_paused = paused;
 	_mixer->pauseHandle(_soundHandle, paused);
 }
 

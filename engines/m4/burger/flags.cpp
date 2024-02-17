@@ -129,7 +129,7 @@ void Flags::schedule_boonsville_time() {
 
 	term_message("************  Schedule  ************");
 
-	for (const auto& te : EVENTS) {
+	for (const auto &te : EVENTS) {
 		int teHours = te._time / 216000;
 		int teMinutes = (te._time % 216000) / 3600;
 		int teSeconds = (te._time % 3600) / 60;
@@ -152,7 +152,11 @@ void Flags::schedule_boonsville_time() {
 void Flags::reset1() {
 	set_boonsville_time(0);
 	(*this)[V000] = 1000;
-	inv_give_to_player("money");
+
+	if (_G(executing) == WHOLE_GAME)
+		inv_give_to_player("money");
+	else
+		inv_move_object("money", NOWHERE);
 
 	(*this)[V001] = 20;
 	(*this)[V005] = 0;
@@ -187,7 +191,7 @@ void Flags::reset1() {
 	inv_move_object("jawz o' life", 137);
 	inv_move_object("keys", 138);
 
-	(*this)[V112] = 0;
+	(*this)[kPerkinsLostIsland] = 0;
 	(*this)[kTourBusAtDiner] = 0;
 	(*this)[kIceBoxOpened] = 0;
 	(*this)[V245] = 10027;
@@ -310,7 +314,7 @@ void Flags::reset4() {
 	inv_move_object("DIRTY SOCK", 504);
 
 	(*this)[V218] = 5000;
-	(*this)[V219] = 0;
+	(*this)[kTVOnFire] = 0;
 	(*this)[V223] = 0;
 	(*this)[V224] = 0;
 
