@@ -101,7 +101,7 @@ public:
 	bool hasFeature(EngineFeature f) const override {
 		return (f == kSupportsLoadingDuringRuntime) ||
 			   (f == kSupportsSavingDuringRuntime) ||
-			   (f == kSupportsReturnToLauncher);
+			   (f == kSupportsReturnToLauncher) ;
 	}
 
 	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override {

@@ -109,7 +109,6 @@ public:
 public:
 	uint32 id;
 	int width, height;
-	uint fbo;
 };
 
 class RenderTexture : public Texture {
@@ -198,7 +197,6 @@ private:
 	Math::Vector2d _cameraSize;
 	Textures _textures;
 	Texture *_texture = nullptr;
-	int32 _oldFbo = 0;
 };
 } // namespace Twp
 

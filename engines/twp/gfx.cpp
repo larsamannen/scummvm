@@ -69,16 +69,15 @@ static GLint getFormat(int channels) {
 void Texture::load(const Graphics::Surface &surface) {
 	width = surface.w;
 	height = surface.h;
-	const void *data = surface.getPixels();
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
 	// set the texture wrapping/filtering options (on the currently bound texture object)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, surface.format.bytesPerPixel);
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, getFormat(surface.format.bytesPerPixel), width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, getFormat(surface.format.bytesPerPixel), width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface.getPixels()));
 }
 
 void Texture::bind(const Texture *texture) {
@@ -93,14 +92,6 @@ void Texture::capture(Graphics::Surface &surface) {
 	Common::Array<byte> pixels(width * height * 4);
 	GLint boundFrameBuffer;
 
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &boundFrameBuffer);
-	if (boundFrameBuffer != (int)fbo) {
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	}
-	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-	if (boundFrameBuffer != (int)fbo) {
-		glBindFramebuffer(GL_FRAMEBUFFER, boundFrameBuffer);
-	}
 	Graphics::PixelFormat fmt(4, 8, 8, 8, 8, 0, 8, 16, 24);
 	surface.init(width, height, 4 * width, pixels.data(), fmt);
 }
@@ -109,28 +100,17 @@ RenderTexture::RenderTexture(Math::Vector2d size) {
 	width = size.getX();
 	height = size.getY();
 
-	// first create the framebuffer
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	// then create an empty texture
+	// create an empty texture that can be used later on
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// then attach it to framebuffer object
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
-	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 RenderTexture::~RenderTexture() {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDeleteTextures(1, &id);
-	glDeleteFramebuffers(1, &fbo);
 }
 
 Shader::Shader() {
@@ -216,7 +196,6 @@ void Gfx::init() {
 	_mvp = ortho(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_oldFbo);
 }
 
 void Gfx::clear(Color color) {
@@ -390,12 +369,10 @@ void Gfx::use(Shader *shader) {
 
 void Gfx::setRenderTarget(RenderTexture *target) {
 	if (!target) {
-		glBindFramebuffer(GL_FRAMEBUFFER, _oldFbo);
 		int w = g_engine->_system->getWidth();
 		int h = g_engine->_system->getHeight();
 		glViewport(0, 0, w, h);
 	} else {
-		glBindFramebuffer(GL_FRAMEBUFFER, target->fbo);
 		glViewport(0, 0, target->width, target->height);
 	}
 }

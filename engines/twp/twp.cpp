@@ -590,6 +590,7 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	_scene.draw();
 
 	// then render this texture with room effect to another texture
+#if 0
 	_gfx.setRenderTarget(&renderTexture2);
 	if (_room) {
 		setShaderEffect(_room->_effect);
@@ -666,10 +667,17 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	m.buildAroundZ(Math::Angle(-_room->_rotation));
 	_gfx.drawSprite(*screenTexture, Color(), m2*m*m1, false, _fadeShader->_effect != FadeEffect::None);
 
+#endif
 	// draw UI
-	_gfx.cameraPos(camPos);
+	//_gfx.cameraPos(camPos);
+	_gfx.camera(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
 	_screenScene.draw();
-
+//#else
+//	auto texture = _resManager.texture("StartScreenSheet.png");
+//	_gfx.clear(Color(1, 0, 0));
+//	_gfx.camera(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
+//	_gfx.drawSprite(*texture);
+//#endif
 	g_system->updateScreen();
 }
 
@@ -706,7 +714,7 @@ Common::Error TwpEngine::run() {
 	if (saveSlot != -1)
 		(void)loadGameState(saveSlot);
 	else {
-		// const SQChar *code = "cameraInRoom(StartScreen)";
+		//const SQChar *code = "cameraInRoom(StartScreen)";
 		const SQChar *code = "start(1)";
 		_vm.exec(code);
 	}
