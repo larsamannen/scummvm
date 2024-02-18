@@ -590,7 +590,6 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	_scene.draw();
 
 	// then render this texture with room effect to another texture
-#if 0
 	_gfx.setRenderTarget(&renderTexture2);
 	if (_room) {
 		setShaderEffect(_room->_effect);
@@ -606,6 +605,7 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	Math::Vector2d camPos = _gfx.cameraPos();
 	_gfx.drawSprite(renderTexture, Color(), Math::Matrix4(), false, flipY);
 
+#if 0
 	Texture *screenTexture = &renderTexture2;
 	if (_fadeShader->_effect != FadeEffect::None) {
 		// draw second room if any
@@ -668,16 +668,10 @@ void TwpEngine::draw(RenderTexture *outTexture) {
 	_gfx.drawSprite(*screenTexture, Color(), m2*m*m1, false, _fadeShader->_effect != FadeEffect::None);
 
 #endif
+
 	// draw UI
-	//_gfx.cameraPos(camPos);
-	_gfx.camera(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
+	_gfx.cameraPos(camPos);
 	_screenScene.draw();
-//#else
-//	auto texture = _resManager.texture("StartScreenSheet.png");
-//	_gfx.clear(Color(1, 0, 0));
-//	_gfx.camera(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
-//	_gfx.drawSprite(*texture);
-//#endif
 	g_system->updateScreen();
 }
 

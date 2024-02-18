@@ -241,6 +241,8 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, Ma
 
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, _texture->id));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		Math::Matrix4 m = getFinalTransform(trsf);
 		_shader->_shader.setUniform("u_transform", m);
@@ -288,11 +290,15 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, ui
 		if (num == 0) {
 			GL_CALL(glActiveTexture(GL_TEXTURE0));
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, _texture->id));
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			GL_CALL(glUniform1i(_shader->getUniformLocation("u_texture"), 0));
 		} else {
 			for (int i = 0; i < num; i++) {
 				GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
 				GL_CALL(glBindTexture(GL_TEXTURE_2D, _shader->getTexture(i)));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				GL_CALL(glUniform1i(_shader->getTextureLoc(i), i));
 			}
 		}
