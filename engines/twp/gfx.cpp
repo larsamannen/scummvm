@@ -74,8 +74,8 @@ void Texture::load(const Graphics::Surface &surface) {
 	// set the texture wrapping/filtering options (on the currently bound texture object)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, surface.format.bytesPerPixel);
 	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, getFormat(surface.format.bytesPerPixel), width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface.getPixels()));
 }
@@ -103,9 +103,11 @@ RenderTexture::RenderTexture(Math::Vector2d size) {
 	// create an empty texture that can be used later on
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -241,8 +243,6 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, Ma
 
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, _texture->id));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		Math::Matrix4 m = getFinalTransform(trsf);
 		_shader->_shader.setUniform("u_transform", m);
@@ -259,7 +259,7 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, Ma
 	}
 }
 
-void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, uint32 *indices, int i_size, Math::Matrix4 trsf, Texture *texture) {
+void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, unsigned short *indices, int i_size, Math::Matrix4 trsf, Texture *texture) {
 	if (i_size > 0) {
 		int num = _shader->getNumTextures();
 		if (num == 0) {
@@ -285,27 +285,23 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, ui
 		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, _vbo));
 		GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * v_size, vertices, GL_STREAM_DRAW));
 		GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo));
-		GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * i_size, indices, GL_STREAM_DRAW));
+		GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * i_size, indices, GL_STREAM_DRAW));
 
 		if (num == 0) {
 			GL_CALL(glActiveTexture(GL_TEXTURE0));
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, _texture->id));
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			GL_CALL(glUniform1i(_shader->getUniformLocation("u_texture"), 0));
 		} else {
 			for (int i = 0; i < num; i++) {
 				GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
 				GL_CALL(glBindTexture(GL_TEXTURE_2D, _shader->getTexture(i)));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				GL_CALL(glUniform1i(_shader->getTextureLoc(i), i));
 			}
 		}
 
 		_shader->_shader.setUniform("u_transform", getFinalTransform(trsf));
 		_shader->applyUniforms();
-		GL_CALL(glDrawElements(primitivesType, i_size, GL_UNSIGNED_INT, NULL));
+		GL_CALL(glDrawElements(primitivesType, i_size, GL_UNSIGNED_SHORT, NULL));
 		_shader->_shader.unbind();
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -313,7 +309,7 @@ void Gfx::drawPrimitives(uint32 primitivesType, Vertex *vertices, int v_size, ui
 	}
 }
 
-void Gfx::draw(Vertex *vertices, int v_size, uint32 *indices, int i_size, Math::Matrix4 trsf, Texture *texture) {
+void Gfx::draw(Vertex *vertices, int v_size, unsigned short *indices, int i_size, Math::Matrix4 trsf, Texture *texture) {
 	drawPrimitives(GL_TRIANGLES, vertices, v_size, indices, i_size, trsf, texture);
 }
 
@@ -328,7 +324,7 @@ void Gfx::drawQuad(Math::Vector2d size, Color color, Math::Matrix4 trsf) {
 		Vertex{{x, y}, color, {0, 1}},
 		Vertex{{x, y + h}, color, {0, 0}}};
 	noTexture();
-	uint32 quadIndices[] = {
+	unsigned short quadIndices[] = {
 		0, 1, 3,
 		1, 2, 3};
 	draw(vertices, 4, quadIndices, 6, trsf);
@@ -350,7 +346,7 @@ void Gfx::drawSprite(Common::Rect textRect, Texture &texture, Color color, Math:
 		{{pos.getX() + textRect.width(), pos.getY()}, color, {r, b}},
 		{{pos.getX(), pos.getY()}, color, {l, b}},
 		{{pos.getX(), pos.getY() + textRect.height()}, color, {l, t}}};
-	uint32 quadIndices[] = {
+	unsigned short quadIndices[] = {
 		0, 1, 3,
 		1, 2, 3};
 	draw(vertices, 4, quadIndices, 6, trsf, &texture);
