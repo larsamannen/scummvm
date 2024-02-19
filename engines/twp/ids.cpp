@@ -117,4 +117,4 @@ Facing getOppositeFacing(Facing facing) {
 		return FACE_LEFT;
 	}
 }
-}
+} // namespace Twp
