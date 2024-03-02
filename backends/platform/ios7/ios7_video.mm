@@ -390,12 +390,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 #if TARGET_OS_IOS
 - (void)triggerTouchModeChanged {
 	BOOL hwKeyboardConnected = NO;
+#ifdef __IPHONE_14_0
 	if (@available(iOS 14.0, *)) {
 		if (GCKeyboard.coalescedKeyboard != nil) {
 			hwKeyboardConnected = YES;
 		}
 	}
-
+#endif
 	if ([self isKeyboardShown] && !hwKeyboardConnected) {
 		[self hideKeyboard];
 	} else {
@@ -425,9 +426,11 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (BOOL)isiOSAppOnMac {
+#ifdef __IPHONE_14_0
 	if (@available(iOS 14.0, *)) {
 		return [NSProcessInfo processInfo].isiOSAppOnMac;
 	}
+#endif
 	return NO;
 }
 #endif
