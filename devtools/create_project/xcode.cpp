@@ -301,6 +301,7 @@ XcodeProvider::XcodeProvider(StringList &global_warnings, std::map<std::string, 
 void XcodeProvider::addResourceFiles(const BuildSetup &setup, StringList &includeList, StringList &excludeList) {
 	includeList.push_back(setup.srcDir + "/dists/ios7/Info.plist");
 	includeList.push_back(setup.srcDir + "/dists/tvos/Info.plist");
+	includeList.push_back(setup.srcDir + "/dists/ios7/ScummVM-iOS.entitlements");
 
 	ValueList &resources = getResourceFiles(setup);
 	for (ValueList::iterator it = resources.begin(); it != resources.end(); ++it) {
@@ -1349,6 +1350,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	// Debug
 	Object *iPhone_Debug_Object = new Object(this, "XCBuildConfiguration_" PROJECT_DESCRIPTION "-iPhone_Debug", _targets[IOS_TARGET] /* ScummVM-iPhone */, "XCBuildConfiguration", "PBXNativeTarget", "Debug");
 	Property iPhone_Debug;
+	ADD_SETTING_QUOTE(iPhone_Debug, "CODE_SIGN_ENTITLEMENTS", "$(SRCROOT)/dists/ios7/ScummVM-iOS.entitlements");
 	ADD_SETTING_QUOTE(iPhone_Debug, "CODE_SIGN_IDENTITY", "iPhone Developer");
 	ADD_SETTING_QUOTE_VAR(iPhone_Debug, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", "iPhone Developer");
 	ADD_SETTING(iPhone_Debug, "COPY_PHASE_STRIP", "NO");
@@ -1394,6 +1396,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_SETTING(iPhone_Debug, "IPHONEOS_DEPLOYMENT_TARGET", "9.0");
 	ADD_SETTING_QUOTE_VAR(iPhone_Debug, "PROVISIONING_PROFILE[sdk=iphoneos*]", "");
 	ADD_SETTING(iPhone_Debug, "SDKROOT", "iphoneos");
+	ADD_SETTING(iPhone_Debug, "SUPPORTS_MACCATALYST", "YES");
 	ADD_SETTING_QUOTE(iPhone_Debug, "TARGETED_DEVICE_FAMILY", "1,2");
 	ValueList scummvmIOSsimulator_defines;
 	ADD_DEFINE(scummvmIOSsimulator_defines, "\"$(inherited)\"");
@@ -1402,6 +1405,13 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET"))
 		ADD_DEFINE(scummvmIOSsimulator_defines, "WITHOUT_SDL");
 	ADD_SETTING_LIST(iPhone_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]\"", scummvmIOSsimulator_defines, kSettingsNoQuote | kSettingsAsList, 5);
+	ValueList scummvmIOSmaccatalyst_defines;
+	ADD_DEFINE(scummvmIOSmaccatalyst_defines, "\"$(inherited)\"");
+	ADD_DEFINE(scummvmIOSmaccatalyst_defines, "IPHONE");
+	ADD_DEFINE(scummvmIOSmaccatalyst_defines, "IPHONE_IOS7");
+	if (CONTAINS_DEFINE(setup.defines, "USE_SDL_NET"))
+		ADD_DEFINE(scummvmIOSmaccatalyst_defines, "WITHOUT_SDL");
+	ADD_SETTING_LIST(iPhone_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=macosx*]\"", scummvmIOSmaccatalyst_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	// Separate iphoneos and iphonesimulator definitions since simulator running on x86_64
 	// hosts doesn't support NEON
 	ValueList scummvmIOS_defines = scummvmIOSsimulator_defines;
