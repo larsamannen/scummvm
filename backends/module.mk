@@ -216,6 +216,11 @@ MODULE_OBJS += \
 	graphics3d/openglsdl/openglsdl-graphics3d.o
 endif
 
+ifdef USE_METAL
+MODULE_OBJS += \
+	graphics/metal/metal-graphics.o
+endif
+
 ifdef USE_DISCORD
 MODULE_OBJS += \
 	presence/discord/discord.o

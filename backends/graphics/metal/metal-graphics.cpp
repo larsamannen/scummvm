@@ -1,0 +1,131 @@
+/* ScummVM - Graphic Adventure Engine
+ *
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
+ * file distributed with this source distribution.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#include "backends/graphics/metal/metal-graphics.h"
+#include "common/translation.h"
+
+enum {
+	GFX_METAL = 0
+};
+
+namespace Metal {
+
+MetalGraphicsManager::MetalGraphicsManager()
+{
+	
+}
+
+MetalGraphicsManager::~MetalGraphicsManager()
+{
+	
+}
+
+// Windowed
+bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
+	// TODO
+	return false;
+}
+
+void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
+	// TODO
+}
+
+// GraphicsManager
+bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
+	// TODO
+	switch (f) {
+	default:
+		return false;
+	}
+}
+
+void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
+	// TODO
+	switch (f) {
+	default:
+		break;
+	}
+}
+
+bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
+	switch (f) {
+	default:
+		return false;
+	}
+}
+
+namespace {
+
+const OSystem::GraphicsMode glGraphicsModes[] = {
+	{ "metal",  _s("Metal"), GFX_METAL },
+	{ nullptr, nullptr, 0 }
+};
+
+} // End of anonymous namespace
+
+#ifdef USE_RGB_COLOR
+Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
+	// TODO
+	return _currentFormat;
+}
+
+Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() const {
+	Common::List<Graphics::PixelFormat> formats;
+
+	// Our default mode is (memory layout wise) RGBA8888 which is a different
+	// logical layout depending on the endianness. We chose this mode because
+	// it is the only 32bit color mode we can safely assume to be present in
+	// OpenGL and OpenGL ES implementations. Thus, we need to supply different
+	// logical formats based on endianness.
+#ifdef SCUMM_LITTLE_ENDIAN
+	// ABGR8888
+	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+#else
+	// RGBA8888
+	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+#endif
+	// RGB565
+	formats.push_back(Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0));
+	// RGBA5551
+	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
+	// RGBA4444
+	formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
+
+	// These formats are not natively supported by OpenGL ES implementations,
+	// we convert the pixel format internally.
+#ifdef SCUMM_LITTLE_ENDIAN
+	// RGBA8888
+	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+#else
+	// ABGR8888
+	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+#endif
+	// RGB555, this is used by SCUMM HE 16 bit games.
+	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
+
+	formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
+
+	return formats;
+}
+#endif
+
+
+}
