@@ -23,7 +23,7 @@
 #define BACKENDS_GRAPHICS_IOS_IOS_GRAPHICS_H
 
 #include "common/scummsys.h"
-#include <OpenGLES/ES2/gl.h>
+//#include <OpenGLES/ES2/gl.h>
 
 #include "backends/graphics/opengl/opengl-graphics.h"
 

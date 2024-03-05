@@ -26,9 +26,10 @@
 #include <Foundation/Foundation.h>
 #include <QuartzCore/QuartzCore.h>
 
-#include <OpenGLES/EAGL.h>
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
+//#include <OpenGLES/EAGL.h>
+//#include <OpenGLES/ES2/gl.h>
+//#include <OpenGLES/ES2/glext.h>
+#include <Metal/Metal.h>
 
 #include "backends/platform/ios7/ios7_keyboard.h"
 #include "backends/platform/ios7/ios7_common.h"
@@ -53,8 +54,10 @@ uint getSizeNextPOT(uint size);
 #endif
 	UIBackgroundTaskIdentifier _backgroundSaveStateTask;
 
-	EAGLContext *_mainContext;
-	EAGLContext *_openGLContext;
+	//EAGLContext *_mainContext;
+	//EAGLContext *_openGLContext;
+	
+	
 	GLuint _viewRenderbuffer;
 
 	GLint _renderBufferWidth;
