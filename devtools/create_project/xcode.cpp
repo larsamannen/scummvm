@@ -483,6 +483,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	DEF_SYSFRAMEWORK("Foundation");
 	DEF_SYSFRAMEWORK("GameController");
 	DEF_SYSFRAMEWORK("IOKit");
+	DEF_SYSFRAMEWORK("Metal");
 	DEF_SYSFRAMEWORK("OpenGL");
 	DEF_SYSFRAMEWORK("OpenGLES");
 	DEF_SYSFRAMEWORK("QuartzCore");
@@ -631,6 +632,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_iOS.push_back("AudioToolbox.framework");
 	frameworks_iOS.push_back("QuartzCore.framework");
 	frameworks_iOS.push_back("OpenGLES.framework");
+	frameworks_iOS.push_back("Metal.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_iOS.push_back(getLibString("faad", setup.useXCFramework));
