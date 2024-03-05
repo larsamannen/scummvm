@@ -23,11 +23,9 @@
 #define BACKENDS_GRAPHICS_METAL_METAL_GRAPHICS_H
 
 #include "backends/graphics/windowed.h"
-#include <Metal/Metal.h>
+#include "backends/graphics/ios/ios-graphics.h"
 
-namespace Metal {
-
-class MetalGraphicsManager : virtual public WindowedGraphicsManager {
+class MetalGraphicsManager : virtual public WindowedGraphicsManager, public iOSCommonGraphics {
 public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
@@ -53,10 +51,15 @@ protected:
 	void setPalette(const byte *colors, uint start, uint num) override;
 	void grabPalette(byte *colors, uint start, uint num) const override;
 	
+	// IOSGraphics
+	void initSurface() override;
+	void deinitSurface() override;
+	void notifyResize(const int width, const int height) override;
+	bool notifyMousePosition(Common::Point &mouse) override;
+	Common::Point getMousePosition() override;
+
 private:
 	Graphics::PixelFormat _currentFormat;
 };
-
-} // End of namespace Metal
 
 #endif

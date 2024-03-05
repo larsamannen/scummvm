@@ -19,14 +19,14 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
 #include "backends/graphics/metal/metal-graphics.h"
 #include "common/translation.h"
 
 enum {
 	GFX_METAL = 0
 };
-
-namespace Metal {
 
 MetalGraphicsManager::MetalGraphicsManager()
 {
@@ -127,5 +127,22 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 }
 #endif
 
-
+void MetalGraphicsManager::initSurface() {
+	
 }
+
+void MetalGraphicsManager::deinitSurface() {
+}
+
+void MetalGraphicsManager::notifyResize(const int width, const int height) {
+}
+
+bool MetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
+
+	return true;
+}
+
+Common::Point MetalGraphicsManager::getMousePosition() {
+	return Common::Point(0, 0);
+}
+
