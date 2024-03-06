@@ -19,7 +19,19 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
 #include "backends/graphics/ios/ios-metal-graphics.h"
+#include "backends/platform/ios7/ios7_osys_main.h"
+
+
+iOSMetalGraphicsManager::iOSMetalGraphicsManager() {
+	initSurface();
+}
+
+iOSMetalGraphicsManager::~iOSMetalGraphicsManager() {
+	deinitSurface();
+}
 
 void iOSMetalGraphicsManager::initSurface() {
 	
@@ -31,8 +43,53 @@ void iOSMetalGraphicsManager::deinitSurface() {
 void iOSMetalGraphicsManager::notifyResize(const int width, const int height) {
 }
 
+iOSCommonGraphics::State iOSMetalGraphicsManager::getState() const {
+	iOSCommonGraphics::State state;
+
+	state.screenWidth   = 0;
+	state.screenHeight  = 0;
+	state.aspectRatio   = getFeatureState(OSystem::kFeatureAspectRatioCorrection);
+	state.cursorPalette = getFeatureState(OSystem::kFeatureCursorPalette);
+#ifdef USE_RGB_COLOR
+	state.pixelFormat   = getScreenFormat();
+#endif
+	return state;}
+
+bool iOSMetalGraphicsManager::setState(const iOSCommonGraphics::State &state) {
+	return false;
+}
+
 bool iOSMetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
 
 	return true;
 }
 
+float iOSMetalGraphicsManager::getHiDPIScreenFactor() const {
+	return dynamic_cast<OSystem_iOS7 *>(g_system)->getSystemHiDPIScreenFactor();
+}
+
+void iOSMetalGraphicsManager::showOverlay(bool inGUI) {
+	if (_overlayVisible && inGUI == _overlayInGUI)
+		return;
+
+	// Don't change touch mode when not changing mouse coordinates
+	if (inGUI) {
+		_old_touch_mode = dynamic_cast<OSystem_iOS7 *>(g_system)->getCurrentTouchMode();
+		// not in 3D, in overlay
+		dynamic_cast<OSystem_iOS7 *>(g_system)->applyTouchSettings(false, true);
+	} else if (_overlayInGUI) {
+		// Restore touch mode active before overlay was shown
+		dynamic_cast<OSystem_iOS7 *>(g_system)->setCurrentTouchMode(static_cast<TouchMode>(_old_touch_mode));
+	}
+
+	MetalGraphicsManager::showOverlay(inGUI);
+}
+
+void iOSMetalGraphicsManager::hideOverlay() {
+	if (_overlayInGUI) {
+		// Restore touch mode active before overlay was shown
+		dynamic_cast<OSystem_iOS7 *>(g_system)->setCurrentTouchMode(static_cast<TouchMode>(_old_touch_mode));
+	}
+
+	MetalGraphicsManager::hideOverlay();
+}

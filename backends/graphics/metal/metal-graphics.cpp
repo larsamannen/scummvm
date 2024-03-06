@@ -72,10 +72,14 @@ bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	}
 }
 
-const OSystem::GraphicsMode glGraphicsModes[] = {
+const OSystem::GraphicsMode metalGraphicsModes[] = {
 	{ "metal",  _s("Metal"), GFX_METAL },
 	{ nullptr, nullptr, 0 }
 };
+
+const OSystem::GraphicsMode *MetalGraphicsManager::getSupportedGraphicsModes() const {
+	return metalGraphicsModes;
+}
 
 #ifdef USE_RGB_COLOR
 Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
@@ -123,6 +127,14 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 }
 #endif
 
+bool MetalGraphicsManager::setGraphicsMode(int mode, uint flags) {
+	return true;
+}
+
+int MetalGraphicsManager::getGraphicsMode() const {
+	return 0;
+}
+
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	
 }
@@ -168,7 +180,7 @@ void MetalGraphicsManager::fillScreen(uint32 col) {
 }
 
 void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
-	
+	;
 }
 
 void MetalGraphicsManager::updateScreen() {
@@ -189,7 +201,7 @@ void MetalGraphicsManager::showOverlay(bool inGUI) {
 	
 }
 void MetalGraphicsManager::hideOverlay() {
-	
+	printf("HEJ");
 }
 
 bool MetalGraphicsManager::isOverlayVisible() const {

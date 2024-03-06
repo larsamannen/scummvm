@@ -29,7 +29,6 @@ public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
 
-protected:
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
 	void handleResizeImpl(const int width, const int height) override;
@@ -40,6 +39,8 @@ protected:
 	bool getFeatureState(OSystem::Feature f) const override;
 	
 	const OSystem::GraphicsMode *getSupportedGraphicsModes() const override;
+	bool setGraphicsMode(int mode, uint flags = OSystem::kGfxModeNoFlags) override;
+	int getGraphicsMode() const override;
 	
 #ifdef USE_RGB_COLOR
 	Graphics::PixelFormat getScreenFormat() const override;

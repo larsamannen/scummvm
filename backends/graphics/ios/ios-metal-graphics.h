@@ -36,8 +36,8 @@ public:
 	
 	void notifyResize(const int width, const int height) override;
 	
-	virtual iOSCommonGraphics::State getState() const override;
-	virtual bool setState(const iOSCommonGraphics::State &state) override;
+	iOSCommonGraphics::State getState() const override;
+	bool setState(const iOSCommonGraphics::State &state) override;
 	
 	bool notifyMousePosition(Common::Point &mouse) override;
 	Common::Point getMousePosition() override { return Common::Point(_cursorX, _cursorY); }

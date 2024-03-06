@@ -132,7 +132,7 @@ void OSystem_iOS7::initBackend() {
 
 	_startTime = CACurrentMediaTime();
 
-	_graphicsManager = new iOSGraphicsManager();
+	_graphicsManager = new iOSMetalGraphicsManager();//new iOSGraphicsManager();
 
 	setupMixer();
 
