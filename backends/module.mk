@@ -221,6 +221,11 @@ MODULE_OBJS += \
 	graphics/metal/metal-graphics.o
 endif
 
+ifdef IPHONE
+MODULE_OBJS += \
+	graphics/ios/ios-metal-graphics.o
+endif
+
 ifdef USE_DISCORD
 MODULE_OBJS += \
 	presence/discord/discord.o

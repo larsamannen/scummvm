@@ -127,22 +127,4 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 }
 #endif
 
-void MetalGraphicsManager::initSurface() {
-	
-}
-
-void MetalGraphicsManager::deinitSurface() {
-}
-
-void MetalGraphicsManager::notifyResize(const int width, const int height) {
-}
-
-bool MetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
-
-	return true;
-}
-
-Common::Point MetalGraphicsManager::getMousePosition() {
-	return Common::Point(0, 0);
-}
 

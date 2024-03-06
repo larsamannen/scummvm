@@ -48,8 +48,8 @@
 #include "gui/gui-manager.h"
 
 #include "backends/graphics/ios/ios-graphics.h"
+#include "backends/graphics/ios/ios-metal-graphics.h"
 #include "backends/graphics3d/ios/ios-graphics3d.h"
-#include "backends/graphics/metal/metal-graphics.h"
 #include "backends/saves/default/default-saves.h"
 #include "backends/timer/default/default-timer.h"
 #include "backends/mutex/pthread/pthread-mutex.h"
@@ -211,7 +211,7 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 		switchedManager = true;
 	} else if (!render3d && supports3D) {
 		delete _graphicsManager;
-		MetalGraphicsManager *manager = new MetalGraphicsManager();
+		iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
 		_graphicsManager = manager;
 		commonGraphics = manager;
 		switchedManager = true;
