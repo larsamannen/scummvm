@@ -72,14 +72,10 @@ bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	}
 }
 
-namespace {
-
 const OSystem::GraphicsMode glGraphicsModes[] = {
 	{ "metal",  _s("Metal"), GFX_METAL },
 	{ nullptr, nullptr, 0 }
 };
-
-} // End of anonymous namespace
 
 #ifdef USE_RGB_COLOR
 Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
@@ -127,4 +123,129 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 }
 #endif
 
+void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
+	
+}
+
+void MetalGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
+	
+}
+
+int MetalGraphicsManager::getScreenChangeID() const {
+	return 0;
+}
+
+void MetalGraphicsManager::beginGFXTransaction() {
+	
+}
+
+OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
+	return OSystem::kTransactionSuccess;
+}
+
+int16 MetalGraphicsManager::getHeight() const {
+	return 0;
+}
+
+int16 MetalGraphicsManager::getWidth() const {
+	return 0;
+}
+
+void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
+	
+}
+
+Graphics::Surface *MetalGraphicsManager::lockScreen() {
+	return nullptr;
+}
+
+void MetalGraphicsManager::unlockScreen() {
+	
+}
+
+void MetalGraphicsManager::fillScreen(uint32 col) {
+	
+}
+
+void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
+	
+}
+
+void MetalGraphicsManager::updateScreen() {
+	
+}
+void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
+	
+}
+void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {
+	
+}
+
+void MetalGraphicsManager::clearFocusRectangle() {
+	
+}
+
+void MetalGraphicsManager::showOverlay(bool inGUI) {
+	
+}
+void MetalGraphicsManager::hideOverlay() {
+	
+}
+
+bool MetalGraphicsManager::isOverlayVisible() const {
+	return false;
+}
+
+Graphics::PixelFormat MetalGraphicsManager::getOverlayFormat() const {
+	return _currentFormat;
+}
+
+void MetalGraphicsManager::clearOverlay() {
+	
+}
+
+void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
+	
+}
+
+void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
+	
+}
+
+int16 MetalGraphicsManager::getOverlayHeight() const {
+	return 0;
+}
+
+int16 MetalGraphicsManager::getOverlayWidth() const {
+	return 0;
+}
+
+float MetalGraphicsManager::getHiDPIScreenFactor() const {
+	return 0;
+}
+
+bool MetalGraphicsManager::showMouse(bool visible) {
+	return 0;
+}
+
+void MetalGraphicsManager::warpMouse(int x, int y) {
+	
+}
+
+void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+	
+}
+
+void MetalGraphicsManager::setCursorPalette(const byte *colors, uint start, uint num) {
+	
+}
+
+// PaletteManager
+void MetalGraphicsManager::setPalette(const byte *colors, uint start, uint num) {
+	
+}
+
+void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const {
+	
+}
 
