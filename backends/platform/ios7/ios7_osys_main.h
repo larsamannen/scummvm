@@ -31,6 +31,7 @@
 #include "common/ustr.h"
 #include "audio/mixer_intern.h"
 #include "backends/fs/posix/posix-fs-factory.h"
+#include "graphics/metal-cpp/Metal/MTLDevice.hpp"
 
 #include <AudioToolbox/AudioQueue.h>
 
@@ -120,6 +121,9 @@ public:
 	OpenGL::ContextType getOpenGLType() const override { return OpenGL::kContextGLES2; }
 #endif
 
+#if defined(USE_METAL)
+	MTL::Device *createMetalDevice();
+#endif
 public:
 	bool pollEvent(Common::Event &event) override;
 	uint32 getMillis(bool skipRecord = false) override;

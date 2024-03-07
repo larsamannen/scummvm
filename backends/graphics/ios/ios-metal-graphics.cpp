@@ -34,7 +34,10 @@ iOSMetalGraphicsManager::~iOSMetalGraphicsManager() {
 }
 
 void iOSMetalGraphicsManager::initSurface() {
-	
+	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
+
+	// Create Metal Device
+	MTL::Device *device = sys->createMetalDevice();
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {

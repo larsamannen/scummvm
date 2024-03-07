@@ -144,6 +144,11 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	//_openGLContext = nil;
 }
 
+- (MTL::Device *)createMetalDevice {
+	_metalDevice = NULL; // MTL::CreateSystemDefaultDevice();
+	return _metalDevice;
+}
+
 - (void)refreshScreen {
 	//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
 	//[_openGLContext presentRenderbuffer:GL_RENDERBUFFER];

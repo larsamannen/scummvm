@@ -21,6 +21,10 @@
 
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
+#define NS_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+
 #include "backends/graphics/metal/metal-graphics.h"
 #include "common/translation.h"
 
@@ -30,7 +34,11 @@ enum {
 
 MetalGraphicsManager::MetalGraphicsManager()
 {
-	
+	_cursorX = 0;
+	_cursorY = 0;
+	_forceRedraw = false;
+	_windowWidth = 0;
+	_windowHeight = 0;
 }
 
 MetalGraphicsManager::~MetalGraphicsManager()
