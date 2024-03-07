@@ -27,6 +27,7 @@
 
 #include "backends/graphics/metal/metal-graphics.h"
 #include "common/translation.h"
+#include <Metal/MTLDevice.hpp>
 
 enum {
 	GFX_METAL = 0
