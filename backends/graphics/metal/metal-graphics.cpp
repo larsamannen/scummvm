@@ -28,6 +28,7 @@
 #include "backends/graphics/metal/metal-graphics.h"
 #include "common/translation.h"
 #include <Metal/MTLDevice.hpp>
+#include <QuartzCore/QuartzCore.hpp>
 
 enum {
 	GFX_METAL = 0
@@ -45,6 +46,13 @@ MetalGraphicsManager::MetalGraphicsManager()
 MetalGraphicsManager::~MetalGraphicsManager()
 {
 	
+}
+
+void MetalGraphicsManager::notifyContextCreate(CA::MetalDrawable *drawable,
+											   const Graphics::PixelFormat &defaultFormat,
+											   const Graphics::PixelFormat &defaultFormatAlpha) {
+	// Set up the target: backbuffer usually
+	_drawable = drawable;
 }
 
 // Windowed

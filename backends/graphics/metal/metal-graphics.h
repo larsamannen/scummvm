@@ -24,11 +24,18 @@
 
 #include "backends/graphics/windowed.h"
 
+namespace CA {
+class MetalDrawable;
+}
+
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
 
+	void notifyContextCreate(CA::MetalDrawable *drawable,
+							 const Graphics::PixelFormat &defaultFormat,
+							 const Graphics::PixelFormat &defaultFormatAlpha);
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
 	void handleResizeImpl(const int width, const int height) override;
@@ -89,6 +96,7 @@ public:
 
 private:
 	Graphics::PixelFormat _currentFormat;
+	CA::MetalDrawable *_drawable{nullptr};
 };
 
 #endif
