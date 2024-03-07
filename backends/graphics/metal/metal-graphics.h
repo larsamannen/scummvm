@@ -28,12 +28,18 @@ namespace CA {
 class MetalDrawable;
 }
 
+namespace MTL {
+class Device;
+class Texture;
+}
+
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
 
-	void notifyContextCreate(CA::MetalDrawable *drawable,
+	void notifyContextCreate(MTL::Device *device,
+							 CA::MetalDrawable *drawable,
 							 const Graphics::PixelFormat &defaultFormat,
 							 const Graphics::PixelFormat &defaultFormatAlpha);
 	// Windowed
@@ -95,8 +101,12 @@ public:
 	void grabPalette(byte *colors, uint start, uint num) const override;
 
 private:
-	Graphics::PixelFormat _currentFormat;
+	MTL::Device *_device;
 	CA::MetalDrawable *_drawable{nullptr};
+
+	Graphics::PixelFormat _overlayFormat;
+	MTL::Texture *_overlayScreen;
+	
 };
 
 #endif

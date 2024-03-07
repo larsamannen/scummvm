@@ -48,11 +48,14 @@ MetalGraphicsManager::~MetalGraphicsManager()
 	
 }
 
-void MetalGraphicsManager::notifyContextCreate(CA::MetalDrawable *drawable,
+void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
+											   CA::MetalDrawable *drawable,
 											   const Graphics::PixelFormat &defaultFormat,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
 	// Set up the target: backbuffer usually
+	_device = device;
 	_drawable = drawable;
+	_overlayFormat = defaultFormat;
 }
 
 // Windowed
@@ -62,7 +65,12 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
-	// TODO
+	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+	d->setWidth(width);
+	d->setHeight(height);
+	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
+	
+	_overlayScreen = _device->newTexture(d);
 }
 
 // GraphicsManager
@@ -101,7 +109,7 @@ const OSystem::GraphicsMode *MetalGraphicsManager::getSupportedGraphicsModes() c
 #ifdef USE_RGB_COLOR
 Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
 	// TODO
-	return _currentFormat;
+	return _overlayFormat;
 }
 
 Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() const {
@@ -153,7 +161,7 @@ int MetalGraphicsManager::getGraphicsMode() const {
 }
 
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
-	
+	handleResize(width, height);
 }
 
 void MetalGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
@@ -173,15 +181,15 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 }
 
 int16 MetalGraphicsManager::getHeight() const {
-	return 0;
+	return _overlayScreen->height();
 }
 
 int16 MetalGraphicsManager::getWidth() const {
-	return 0;
+	return _overlayScreen->width();
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	
+	_overlayScreen->replaceRegion(MTL::Region( 0, 0, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -226,7 +234,7 @@ bool MetalGraphicsManager::isOverlayVisible() const {
 }
 
 Graphics::PixelFormat MetalGraphicsManager::getOverlayFormat() const {
-	return _currentFormat;
+	return _overlayFormat;
 }
 
 void MetalGraphicsManager::clearOverlay() {
@@ -242,15 +250,21 @@ void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, 
 }
 
 int16 MetalGraphicsManager::getOverlayHeight() const {
+	if (_overlayScreen) {
+		return _overlayScreen->height();
+	}
 	return 0;
 }
 
 int16 MetalGraphicsManager::getOverlayWidth() const {
+	if (_overlayScreen) {
+		return _overlayScreen->width();
+	}
 	return 0;
 }
 
 float MetalGraphicsManager::getHiDPIScreenFactor() const {
-	return 0;
+	return 1.0f;
 }
 
 bool MetalGraphicsManager::showMouse(bool visible) {

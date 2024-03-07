@@ -159,11 +159,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (int)getScreenWidth {
-	return _renderBufferWidth;
+	return _metalLayer.frame.size.width;
+	//return _renderBufferWidth;
 }
 
 - (int)getScreenHeight {
-	return _renderBufferHeight;
+	return _metalLayer.frame.size.height;
+	//return _renderBufferHeight;
 }
 
 - (void)setupRenderBuffer {
