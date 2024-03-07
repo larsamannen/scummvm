@@ -32,8 +32,7 @@
 #include "audio/mixer_intern.h"
 #include "backends/fs/posix/posix-fs-factory.h"
 #include <Metal/MTLDevice.hpp>
-#include <Metal/MTLDrawable.hpp>
-
+#include <QuartzCore/QuartzCore.hpp>
 #include <AudioToolbox/AudioQueue.h>
 
 #define AUDIO_BUFFERS 3
@@ -124,7 +123,7 @@ public:
 
 #if defined(USE_METAL)
 	void assignMetalDevice(MTL::Device *device);
-	MTL::Drawable *nextDrawable();
+	CA::MetalDrawable *nextDrawable();
 #endif
 public:
 	bool pollEvent(Common::Event &event) override;

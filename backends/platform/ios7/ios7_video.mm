@@ -149,8 +149,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	_metalLayer.device = (__bridge id<MTLDevice>)(device);
 }
 
-- (MTL::Drawable *)nextDrawable {
-	return (__bridge MTL::Drawable *)([_metalLayer nextDrawable]);
+- (CA::MetalDrawable *)nextDrawable {
+	return (__bridge CA::MetalDrawable *)([_metalLayer nextDrawable]);
 }
 
 - (void)refreshScreen {

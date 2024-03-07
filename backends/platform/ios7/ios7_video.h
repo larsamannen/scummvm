@@ -24,13 +24,12 @@
 
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
-#include <QuartzCore/QuartzCore.h>
+#include <QuartzCore/QuartzCore.hpp>
 
 //#include <OpenGLES/EAGL.h>
 //#include <OpenGLES/ES2/gl.h>
 //#include <OpenGLES/ES2/glext.h>
 #include <Metal/MTLDevice.hpp>
-#include <Metal/MTLDrawable.hpp>
 
 #include "backends/platform/ios7/ios7_keyboard.h"
 #include "backends/platform/ios7/ios7_common.h"
@@ -73,7 +72,7 @@ uint getSizeNextPOT(uint size);
 - (uint)createOpenGLContext;
 - (void)destroyOpenGLContext;
 - (void)assignMetalDevice:(MTL::Device *)device;
-- (MTL::Drawable *)nextDrawable;
+- (CA::MetalDrawable *)nextDrawable;
 - (void)refreshScreen;
 - (int)getScreenWidth;
 - (int)getScreenHeight;
