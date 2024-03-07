@@ -278,8 +278,12 @@ void OSystem_iOS7::destroyOpenGLContext() {
 	[[iOS7AppDelegate iPhoneView] destroyOpenGLContext];
 }
 
-MTL::Device *OSystem_iOS7::createMetalDevice() {
-	return [[iOS7AppDelegate iPhoneView] createMetalDevice];
+void OSystem_iOS7::assignMetalDevice(MTL::Device *device) {
+	[[iOS7AppDelegate iPhoneView] assignMetalDevice:device];
+}
+
+MTL::Drawable *OSystem_iOS7::nextDrawable() {
+	return [[iOS7AppDelegate iPhoneView] nextDrawable];
 }
 
 void OSystem_iOS7::refreshScreen() const {

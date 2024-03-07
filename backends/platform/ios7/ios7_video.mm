@@ -100,10 +100,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)createContext {
-	CAMetalLayer *metalLayer = (CAMetalLayer *)self.layer;
+	_metalLayer = (CAMetalLayer *)self.layer;
 
-	metalLayer.opaque = YES;
-	metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
+	_metalLayer.opaque = YES;
+	_metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
 	//metalLayer.drawableProperties = @{
 	//                                 kEAGLDrawablePropertyRetainedBacking: @NO,
 	//                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
@@ -144,9 +144,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	//_openGLContext = nil;
 }
 
-- (MTL::Device *)createMetalDevice {
-	_metalDevice = NULL; // MTL::CreateSystemDefaultDevice();
-	return _metalDevice;
+- (void)assignMetalDevice:(MTL::Device *)device {
+	// Assign the metal device to the Core Animation Layer
+	_metalLayer.device = (__bridge id<MTLDevice>)(device);
+}
+
+- (MTL::Drawable *)nextDrawable {
+	return (__bridge MTL::Drawable *)([_metalLayer nextDrawable]);
 }
 
 - (void)refreshScreen {

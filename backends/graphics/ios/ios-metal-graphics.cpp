@@ -37,7 +37,11 @@ void iOSMetalGraphicsManager::initSurface() {
 	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
 
 	// Create Metal Device
-	MTL::Device *device = sys->createMetalDevice();
+	MTL::Device *device = MTL::CreateSystemDefaultDevice();
+	// Assign the device to the Core Animation Layer to connect it to the screen
+	sys->assignMetalDevice(device);
+	// This is the drawable we should render to
+	MTL::Drawable *drawable = sys->nextDrawable();
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {

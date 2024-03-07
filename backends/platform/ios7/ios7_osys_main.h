@@ -31,7 +31,8 @@
 #include "common/ustr.h"
 #include "audio/mixer_intern.h"
 #include "backends/fs/posix/posix-fs-factory.h"
-#include "graphics/metal-cpp/Metal/MTLDevice.hpp"
+#include <Metal/MTLDevice.hpp>
+#include <Metal/MTLDrawable.hpp>
 
 #include <AudioToolbox/AudioQueue.h>
 
@@ -122,7 +123,8 @@ public:
 #endif
 
 #if defined(USE_METAL)
-	MTL::Device *createMetalDevice();
+	void assignMetalDevice(MTL::Device *device);
+	MTL::Drawable *nextDrawable();
 #endif
 public:
 	bool pollEvent(Common::Event &event) override;
