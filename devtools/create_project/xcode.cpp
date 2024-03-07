@@ -1270,7 +1270,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	Object *scummvm_Debug_Object = new Object(this, "XCBuildConfiguration_" PROJECT_NAME "_Debug", PROJECT_NAME, "XCBuildConfiguration", "PBXProject", "Debug");
 	Property scummvm_Debug;
 	ADD_SETTING(scummvm_Debug, "ALWAYS_SEARCH_USER_PATHS", "NO");
-	ADD_SETTING_QUOTE(scummvm_Debug, "USER_HEADER_SEARCH_PATHS", "$(SRCROOT) $(SRCROOT)/engines $(SRCROOT)/graphics/metal-cpp/");
+	ADD_SETTING_QUOTE(scummvm_Debug, "USER_HEADER_SEARCH_PATHS", "$(SRCROOT) $(SRCROOT)/engines");
 	ADD_SETTING(scummvm_Debug, "CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED", "YES");
 	ADD_SETTING(scummvm_Debug, "CLANG_CXX_LANGUAGE_STANDARD", "\"c++17\"");
 	ADD_SETTING(scummvm_Debug, "CLANG_WARN_BOOL_CONVERSION", "YES");
@@ -1315,6 +1315,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	scummvm_HeaderPaths.push_back("include/");
 	scummvm_HeaderPaths.push_back("$(SRCROOT)/engines/");
 	scummvm_HeaderPaths.push_back("$(SRCROOT)");
+    scummvm_HeaderPaths.push_back("$(SRCROOT)/graphics/metal-cpp/");
 	ADD_SETTING_LIST(scummvm_Debug, "HEADER_SEARCH_PATHS", scummvm_HeaderPaths, kSettingsQuoteVariable | kSettingsAsList, 5);
 	ADD_SETTING_QUOTE(scummvm_Debug, "LIBRARY_SEARCH_PATHS", "");
 	ADD_SETTING(scummvm_Debug, "ONLY_ACTIVE_ARCH", "YES");
@@ -1371,6 +1372,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ValueList iPhone_HeaderSearchPaths;
 	iPhone_HeaderSearchPaths.push_back("$(SRCROOT)/engines/");
 	iPhone_HeaderSearchPaths.push_back("$(SRCROOT)");
+	iPhone_HeaderSearchPaths.push_back("$(SRCROOT)/graphics/metal-cpp/");
 	for (StringList::const_iterator i = setup.includeDirs.begin(); i != setup.includeDirs.end(); ++i)
 		iPhone_HeaderSearchPaths.push_back("\"" + *i + "\"");
 	iPhone_HeaderSearchPaths.push_back("\"" + projectOutputDirectory + "\"");
