@@ -102,8 +102,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 - (void)createContext {
 	_metalLayer = (CAMetalLayer *)self.layer;
 
-	_metalLayer.opaque = YES;
-	_metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
+	_metalLayer.opaque = NO;
+	_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 	//metalLayer.drawableProperties = @{
 	//                                 kEAGLDrawablePropertyRetainedBacking: @NO,
 	//                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,

@@ -23,6 +23,7 @@
 #define BACKENDS_GRAPHICS_METAL_METAL_GRAPHICS_H
 
 #include "backends/graphics/windowed.h"
+#include "backends/graphics/metal/renderer.h"
 
 namespace CA {
 class MetalDrawable;
@@ -107,6 +108,7 @@ private:
 	Graphics::PixelFormat _overlayFormat;
 	MTL::Texture *_overlayScreen;
 	
+	Renderer *_renderer;
 };
 
 #endif

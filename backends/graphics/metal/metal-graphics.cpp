@@ -27,11 +27,22 @@
 
 #include "backends/graphics/metal/metal-graphics.h"
 #include "common/translation.h"
-#include <Metal/MTLDevice.hpp>
+#include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
 enum {
 	GFX_METAL = 0
+};
+
+static float quadVertexData[] =
+{
+	0.5, -0.5, 0.0, 1.0,
+	-0.5, -0.5, 0.0, 1.0,
+	-0.5,  0.5, 0.0, 1.0,
+
+	0.5,  0.5, 0.0, 1.0,
+	0.5, -0.5, 0.0, 1.0,
+	-0.5,  0.5, 0.0, 1.0
 };
 
 MetalGraphicsManager::MetalGraphicsManager()
@@ -45,7 +56,8 @@ MetalGraphicsManager::MetalGraphicsManager()
 
 MetalGraphicsManager::~MetalGraphicsManager()
 {
-	
+	_drawable->release();
+	delete _renderer;
 }
 
 void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
@@ -55,7 +67,9 @@ void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
 	// Set up the target: backbuffer usually
 	_device = device;
 	_drawable = drawable;
+	_drawable->retain();
 	_overlayFormat = defaultFormat;
+	_renderer = new Renderer(_device);
 }
 
 // Windowed
@@ -65,12 +79,19 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
+	if (_overlayScreen)
+		_overlayScreen->release();
+
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
 	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
+	d->setTextureType(MTL::TextureType2D);
+	d->setStorageMode(MTL::StorageModeManaged);
+	d->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead);
 	
 	_overlayScreen = _device->newTexture(d);
+	_overlayScreen->retain();
 }
 
 // GraphicsManager
@@ -189,7 +210,7 @@ int16 MetalGraphicsManager::getWidth() const {
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayScreen->replaceRegion(MTL::Region( 0, 0, 0, w, h, 1 ), 0, buf, pitch);
+	_overlayScreen->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -205,11 +226,11 @@ void MetalGraphicsManager::fillScreen(uint32 col) {
 }
 
 void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
-	;
+	
 }
 
 void MetalGraphicsManager::updateScreen() {
-	
+	_renderer->draw(_drawable, _overlayScreen);
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
 	
@@ -246,7 +267,7 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
-	
+	_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 int16 MetalGraphicsManager::getOverlayHeight() const {

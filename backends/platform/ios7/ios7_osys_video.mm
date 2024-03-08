@@ -283,7 +283,7 @@ void OSystem_iOS7::assignMetalDevice(MTL::Device *device) {
 }
 
 CA::MetalDrawable *OSystem_iOS7::nextDrawable() {
-	return nullptr;//[[iOS7AppDelegate iPhoneView] nextDrawable];
+	return [[iOS7AppDelegate iPhoneView] nextDrawable];
 }
 
 void OSystem_iOS7::refreshScreen() const {
