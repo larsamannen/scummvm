@@ -218,7 +218,8 @@ endif
 
 ifdef USE_METAL
 MODULE_OBJS += \
-	graphics/metal/metal-graphics.o
+	graphics/metal/metal-graphics.o \
+	graphics/metal/renderer.o
 endif
 
 ifdef IPHONE
