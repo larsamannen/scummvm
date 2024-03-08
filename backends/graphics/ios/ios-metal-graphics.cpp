@@ -40,11 +40,8 @@ void iOSMetalGraphicsManager::initSurface() {
 	MTL::Device *device = MTL::CreateSystemDefaultDevice();
 	// Assign the device to the Core Animation Layer to connect it to the screen
 	sys->assignMetalDevice(device);
-	// This is the drawable we should render to
-	CA::MetalDrawable *drawable = sys->nextDrawable();
 	
 	notifyContextCreate(device,
-						drawable,
 	// Currently iOS runs the ARMs in little-endian mode but prepare if
 	// that is changed in the future.
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -56,6 +53,10 @@ void iOSMetalGraphicsManager::initSurface() {
 #endif
 	handleResize(sys->getScreenWidth(), sys->getScreenHeight());
 
+}
+
+CA::MetalDrawable *iOSMetalGraphicsManager::getNextDrawable() {
+	return dynamic_cast<OSystem_iOS7 *>(g_system)->nextDrawable();
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {

@@ -56,18 +56,14 @@ MetalGraphicsManager::MetalGraphicsManager()
 
 MetalGraphicsManager::~MetalGraphicsManager()
 {
-	_drawable->release();
 	delete _renderer;
 }
 
 void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
-											   CA::MetalDrawable *drawable,
 											   const Graphics::PixelFormat &defaultFormat,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
 	// Set up the target: backbuffer usually
 	_device = device;
-	_drawable = drawable;
-	_drawable->retain();
 	_overlayFormat = defaultFormat;
 	_renderer = new Renderer(_device);
 }
@@ -230,7 +226,7 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
-	_renderer->draw(_drawable, _overlayScreen);
+	_renderer->draw(getNextDrawable(), _overlayScreen);
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
 	

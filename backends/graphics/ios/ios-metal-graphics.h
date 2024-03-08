@@ -44,6 +44,8 @@ public:
 	
 	float getHiDPIScreenFactor() const override;
 	
+	CA::MetalDrawable *getNextDrawable() override;
+	
 protected:
 	void setSystemMousePosition(const int x, const int y) override {}
 	

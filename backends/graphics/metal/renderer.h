@@ -22,13 +22,16 @@
 #ifndef BACKENDS_GRAPHICS_METAL_RENDERER_H
 #define BACKENDS_GRAPHICS_METAL_RENDERER_H
 
+namespace CA {
+class MetalDrawable;
+}
+
 namespace MTL {
 class Device;
 class Texture;
 class CommandQueue;
 class RenderPipelineState;
 class Buffer;
-class Drawable;
 }
 
 class Renderer
@@ -38,7 +41,7 @@ public:
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw(MTL::Drawable* drawable, MTL::Texture *texture);
+	void draw(CA::MetalDrawable* drawable, MTL::Texture *texture);
 
 private:
 	MTL::Device *_device;

@@ -40,9 +40,11 @@ public:
 	virtual ~MetalGraphicsManager();
 
 	void notifyContextCreate(MTL::Device *device,
-							 CA::MetalDrawable *drawable,
 							 const Graphics::PixelFormat &defaultFormat,
 							 const Graphics::PixelFormat &defaultFormatAlpha);
+	
+	virtual CA::MetalDrawable *getNextDrawable() = 0;
+
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
 	void handleResizeImpl(const int width, const int height) override;
@@ -103,7 +105,6 @@ public:
 
 private:
 	MTL::Device *_device;
-	CA::MetalDrawable *_drawable{nullptr};
 
 	Graphics::PixelFormat _overlayFormat;
 	MTL::Texture *_overlayScreen;

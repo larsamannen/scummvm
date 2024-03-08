@@ -22,6 +22,7 @@
 #include "backends/graphics/metal/renderer.h"
 
 #include <Metal/Metal.hpp>
+#include <QuartzCore/QuartzCore.hpp>
 #include <simd/simd.h>
 
 Renderer::Renderer(MTL::Device* device)
@@ -134,7 +135,7 @@ void Renderer::buildBuffers()
 	_vertexColorsBuffer->didModifyRange(NS::Range::Make( 0, _vertexColorsBuffer->length()));
 }
 
-void Renderer::draw(MTL::Drawable *drawable, MTL::Texture *texture)
+void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
@@ -144,7 +145,7 @@ void Renderer::draw(MTL::Drawable *drawable, MTL::Texture *texture)
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(1, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
-	attachment->setTexture(texture);
+	attachment->setTexture(drawable->texture());
 
 	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
 
