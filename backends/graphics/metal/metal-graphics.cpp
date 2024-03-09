@@ -65,6 +65,7 @@ void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
 	// Set up the target: backbuffer usually
 	_device = device;
 	_overlayFormat = defaultFormat;
+	_drawable = nullptr;
 	_renderer = new Renderer(_device);
 }
 
@@ -75,16 +76,16 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
-	if (_overlayScreen)
-		_overlayScreen->release();
+	//if (_overlayScreen)
+	//	_overlayScreen->release();
 
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
 	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	d->setTextureType(MTL::TextureType2D);
-	d->setStorageMode(MTL::StorageModeManaged);
-	d->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead);
+	//d->setTextureType(MTL::TextureType2D);
+	//d->setStorageMode(MTL::StorageModeManaged);
+	//d->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead | MTL::ResourceUsageWrite);
 	
 	_overlayScreen = _device->newTexture(d);
 	_overlayScreen->retain();
@@ -206,7 +207,7 @@ int16 MetalGraphicsManager::getWidth() const {
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayScreen->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
+	//_overlayScreen->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -226,7 +227,7 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
-	_renderer->draw(getNextDrawable(), _overlayScreen);
+	_renderer->draw(_drawable, _overlay);
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
 	
@@ -263,6 +264,11 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
+	//_overlay.create(w, h, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+	//_overlay.copyRectToSurface(buf, pitch, x, y, w, h);
+	//_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
+	_drawable = getNextDrawable();
+	_overlayScreen = _drawable->texture();
 	_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
 }
 

@@ -22,6 +22,10 @@
 #ifndef BACKENDS_GRAPHICS_METAL_RENDERER_H
 #define BACKENDS_GRAPHICS_METAL_RENDERER_H
 
+namespace Graphics {
+class Surface;
+}
+
 namespace CA {
 class MetalDrawable;
 }
@@ -33,15 +37,24 @@ class CommandQueue;
 class RenderPipelineState;
 class Buffer;
 }
-
+#include <simd/simd.h>
 class Renderer
 {
+	typedef struct
+	{
+	 // Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
+	 vector_float2 position;
+
+	 // 2D texture coordinate
+	 vector_float2 textureCoordinate;
+ } AAPLVertex;
+
 public:
 	Renderer(MTL::Device* device);
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw(CA::MetalDrawable* drawable, MTL::Texture *texture);
+	void draw(CA::MetalDrawable* drawable, Graphics::Surface &surface);
 
 private:
 	MTL::Device *_device;
@@ -49,6 +62,8 @@ private:
 	MTL::RenderPipelineState *_pipeLineState;
 	MTL::Buffer* _vertexPositionsBuffer;
 	MTL::Buffer* _vertexColorsBuffer;
+	vector_uint2 _viewportSize;
+	int _numVertices;
 };
 
 #endif

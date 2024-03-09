@@ -108,7 +108,8 @@ private:
 
 	Graphics::PixelFormat _overlayFormat;
 	MTL::Texture *_overlayScreen;
-	
+	CA::MetalDrawable *_drawable;
+	Graphics::Surface _overlay;
 	Renderer *_renderer;
 };
 

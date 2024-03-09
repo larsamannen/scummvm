@@ -19,11 +19,12 @@
  *
  */
 
-#include "backends/graphics/metal/renderer.h"
-
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 #include <simd/simd.h>
+#include "graphics/surface.h"
+#include "backends/graphics/metal/renderer.h"
+
 
 Renderer::Renderer(MTL::Device* device)
 : _device(device->retain())
@@ -49,27 +50,82 @@ void Renderer::buildShaders()
 	const char* shaderSrc = R"(
 		#include <metal_stdlib>
 		using namespace metal;
-
-		struct v2f
+		typedef enum AAPLVertexInputIndex
 		{
+			AAPLVertexInputIndexVertices     = 0,
+			AAPLVertexInputIndexViewportSize = 1,
+		} AAPLVertexInputIndex;
+		typedef enum AAPLTextureIndex
+		{
+			AAPLTextureIndexBaseColor = 0,
+		} AAPLTextureIndex;
+		typedef struct
+		{
+			// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
+			vector_float2 position;
+
+			// 2D texture coordinate
+			vector_float2 textureCoordinate;
+		} AAPLVertex;
+		struct RasterizerData
+		{
+			// The [[position]] attribute qualifier of this member indicates this value is
+			// the clip space position of the vertex when this structure is returned from
+			// the vertex shader
 			float4 position [[position]];
-			half3 color;
+
+			// Since this member does not have a special attribute qualifier, the rasterizer
+			// will interpolate its value with values of other vertices making up the triangle
+			// and pass that interpolated value to the fragment shader for each fragment in
+			// that triangle.
+			float2 textureCoordinate;
 		};
+ 
+		vertex RasterizerData
+		vertexShader(uint vertexID [[ vertex_id ]],
+					 constant AAPLVertex *vertexArray [[ buffer(AAPLVertexInputIndexVertices) ]],
+					 constant vector_uint2 *viewportSizePointer  [[ buffer(AAPLVertexInputIndexViewportSize) ]])
 
-		v2f vertex vertexMain( uint vertexId [[vertex_id]],
-							   device const float3* positions [[buffer(0)]],
-							   device const float3* colors [[buffer(1)]] )
 		{
-			v2f o;
-			o.position = float4( positions[ vertexId ], 1.0 );
-			o.color = half3 ( colors[ vertexId ] );
-			return o;
-		}
 
-		half4 fragment fragmentMain( v2f in [[stage_in]] )
-		{
-			return half4( in.color, 1.0 );
-		}
+			RasterizerData out;
+
+			// Index into the array of positions to get the current vertex.
+			//   Positions are specified in pixel dimensions (i.e. a value of 100 is 100 pixels from
+			//   the origin)
+			float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
+
+			// Get the viewport size and cast to float.
+			float2 viewportSize = float2(*viewportSizePointer);
+
+			// To convert from positions in pixel space to positions in clip-space,
+			//  divide the pixel coordinates by half the size of the viewport.
+			// Z is set to 0.0 and w to 1.0 because this is 2D sample.
+			out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
+			out.position.xy = pixelSpacePosition / (viewportSize / 2.0);
+
+			 // Pass the input textureCoordinate straight to the output RasterizerData. This value will be
+			 //   interpolated with the other textureCoordinate values in the vertices that make up the
+			 //   triangle.
+			 out.textureCoordinate = vertexArray[vertexID].textureCoordinate;
+
+			 return out;
+		 }
+
+		 // Fragment function
+		 fragment float4
+		 samplingShader(RasterizerData in [[stage_in]],
+						texture2d<half> colorTexture [[ texture(AAPLTextureIndexBaseColor) ]])
+		 {
+			 constexpr sampler textureSampler (mag_filter::linear,
+											   min_filter::linear);
+
+			 // Sample the texture to obtain a color
+			 const half4 colorSample = colorTexture.sample(textureSampler, in.textureCoordinate);
+
+			 // return the color of the texture
+			 return float4(colorSample);
+		 }
 	)";
 
 	NS::Error* error = nullptr;
@@ -80,13 +136,13 @@ void Renderer::buildShaders()
 		assert( false );
 	}
 
-	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexMain", UTF8StringEncoding) );
-	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragmentMain", UTF8StringEncoding) );
+	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexShader", UTF8StringEncoding) );
+	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("samplingShader", UTF8StringEncoding) );
 
 	MTL::RenderPipelineDescriptor* pipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
 	pipelineDescriptor->setVertexFunction(vertexFunction);
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
-	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm);
 
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
 	if (!_pipeLineState)
@@ -103,40 +159,32 @@ void Renderer::buildShaders()
 
 void Renderer::buildBuffers()
 {
-	const size_t NumVertices = 3;
-
-	simd::float3 positions[NumVertices] =
+	
+	static const AAPLVertex quadVertices[] =
 	{
-		{ -0.8f,  0.8f, 0.0f },
-		{  0.0f, -0.8f, 0.0f },
-		{ +0.8f,  0.8f, 0.0f }
+		// Pixel positions, Texture coordinates
+		{ {  250,  -250 },  { 1.f, 1.f } },
+		{ { -250,  -250 },  { 0.f, 1.f } },
+		{ { -250,   250 },  { 0.f, 0.f } },
+
+		{ {  250,  -250 },  { 1.f, 1.f } },
+		{ { -250,   250 },  { 0.f, 0.f } },
+		{ {  250,   250 },  { 1.f, 0.f } },
 	};
+	
+	_numVertices = sizeof(quadVertices) / sizeof(AAPLVertex);
 
-	simd::float3 colors[NumVertices] =
-	{
-		{  1.0, 0.3f, 0.2f },
-		{  0.8f, 1.0, 0.0f },
-		{  0.8f, 0.0f, 1.0 }
-	};
-
-	const size_t positionsDataSize = NumVertices * sizeof( simd::float3 );
-	const size_t colorDataSize = NumVertices * sizeof( simd::float3 );
-
-	MTL::Buffer* vertexPositionsBuffer = _device->newBuffer(positionsDataSize, MTL::ResourceStorageModeManaged);
-	MTL::Buffer* vertexColorsBuffer = _device->newBuffer(colorDataSize, MTL::ResourceStorageModeManaged);
+	MTL::Buffer* vertexPositionsBuffer = _device->newBuffer(sizeof(quadVertices), MTL::ResourceStorageModeManaged);
 
 	_vertexPositionsBuffer = vertexPositionsBuffer;
-	_vertexColorsBuffer = vertexColorsBuffer;
-
-	memcpy( _vertexPositionsBuffer->contents(), positions, positionsDataSize );
-	memcpy( _vertexColorsBuffer->contents(), colors, colorDataSize );
 
 	_vertexPositionsBuffer->didModifyRange(NS::Range::Make( 0, _vertexPositionsBuffer->length()));
-	_vertexColorsBuffer->didModifyRange(NS::Range::Make( 0, _vertexColorsBuffer->length()));
 }
 
-void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
+void Renderer::draw(CA::MetalDrawable *drawable, Graphics::Surface &surface)
 {
+	if (drawable == nullptr)
+		return;
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
 	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
@@ -147,14 +195,36 @@ void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setTexture(drawable->texture());
 
-	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
+	//MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
+	
+	//MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+	//d->setWidth(surface.w);
+	//d->setHeight(surface.h);
+	//d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
+	//d->setTextureType(MTL::TextureType2D);
+	//d->setStorageMode(MTL::StorageModeManaged);
+	//d->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead | MTL::ResourceUsageWrite);
+	
+	//MTL::Texture *texture = _device->newTexture(d);
+	
+	//texture->replaceRegion(MTL::Region(0, 0, 0, surface.w, surface.h, 1), 0, surface.getPixels(), surface.pitch);
 
-	pEnc->setRenderPipelineState(_pipeLineState);
-	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 0);
-	pEnc->setVertexBuffer(_vertexColorsBuffer, 0, 1);
-	pEnc->drawPrimitives( MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3) );
+	//MTL::Viewport viewPort = MTL::Viewport();
+	//viewPort.originX = 0.0f;
+	//viewPort.originY = 0.0f;
+	//viewPort.width = texture->width();
+	//viewPort.height = texture->height();
+	//_viewportSize.x = texture->width();
+	//_viewportSize.y = texture->height();
+	//pEnc->setViewport(viewPort);
+	//pEnc->setRenderPipelineState(_pipeLineState);
+	//pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 0);
+	//pEnc->setVertexBytes(&_viewportSize, sizeof(_viewportSize), 1);
+	//pEnc->setVertexBuffer(_vertexColorsBuffer, 0, 1);
+	//pEnc->setFragmentTexture(texture, 0);
+	//pEnc->drawPrimitives( MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(_numVertices) );
 
-	pEnc->endEncoding();
+	//pEnc->endEncoding();
 	pCmd->presentDrawable(drawable);
 	pCmd->commit();
 
