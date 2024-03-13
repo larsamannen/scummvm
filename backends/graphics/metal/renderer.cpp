@@ -49,84 +49,36 @@ void Renderer::buildShaders()
 
 	const char* shaderSrc = R"(
 		#include <metal_stdlib>
+		#include <simd/simd.h>
 		using namespace metal;
-		typedef enum AAPLVertexInputIndex
-		{
-			AAPLVertexInputIndexVertices     = 0,
-			AAPLVertexInputIndexViewportSize = 1,
-		} AAPLVertexInputIndex;
-		typedef enum AAPLTextureIndex
-		{
-			AAPLTextureIndexBaseColor = 0,
-		} AAPLTextureIndex;
-		typedef struct
-		{
-			// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
-			vector_float2 position;
 
-			// 2D texture coordinate
-			vector_float2 textureCoordinate;
-		} AAPLVertex;
-		struct RasterizerData
+		struct Vertex
 		{
-			// The [[position]] attribute qualifier of this member indicates this value is
-			// the clip space position of the vertex when this structure is returned from
-			// the vertex shader
-			float4 position [[position]];
-
-			// Since this member does not have a special attribute qualifier, the rasterizer
-			// will interpolate its value with values of other vertices making up the triangle
-			// and pass that interpolated value to the fragment shader for each fragment in
-			// that triangle.
-			float2 textureCoordinate;
+			float4 position [[attribute(0)]];
+			float2 texCoords [[attribute(1)]];
 		};
- 
-		vertex RasterizerData
-		vertexShader(uint vertexID [[ vertex_id ]],
-					 constant AAPLVertex *vertexArray [[ buffer(AAPLVertexInputIndexVertices) ]],
-					 constant vector_uint2 *viewportSizePointer  [[ buffer(AAPLVertexInputIndexViewportSize) ]])
-
+  
+		vertex Vertex vertex_main(Vertex vert [[stage_in]],
+								  constant Uniforms &uniforms [[buffer(1)]])
 		{
+			Vertex outVert;
+			outVert.position = vector_float4(0.0, 0.0, 0.0, 1.0);
+			outVert.texCoords = vert.texCoords;
+			return outVert;
+		}
 
-			RasterizerData out;
+		fragment float4 fragment_main(Vertex vert [[stage_in]],
+								texture2d<float> colorTexture [[texture(0)]])
+		{
+			constexpr sampler textureSampler (mag_filter::linear,
+											  min_filter::linear);
+			// Sample the texture to obtain a color
+			const half4 colorSample = colorTexture.sample(textureSampler, in.texCoords);
 
-			// Index into the array of positions to get the current vertex.
-			//   Positions are specified in pixel dimensions (i.e. a value of 100 is 100 pixels from
-			//   the origin)
-			float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
-
-			// Get the viewport size and cast to float.
-			float2 viewportSize = float2(*viewportSizePointer);
-
-			// To convert from positions in pixel space to positions in clip-space,
-			//  divide the pixel coordinates by half the size of the viewport.
-			// Z is set to 0.0 and w to 1.0 because this is 2D sample.
-			out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
-			out.position.xy = pixelSpacePosition / (viewportSize / 2.0);
-
-			 // Pass the input textureCoordinate straight to the output RasterizerData. This value will be
-			 //   interpolated with the other textureCoordinate values in the vertices that make up the
-			 //   triangle.
-			 out.textureCoordinate = vertexArray[vertexID].textureCoordinate;
-
-			 return out;
-		 }
-
-		 // Fragment function
-		 fragment float4
-		 samplingShader(RasterizerData in [[stage_in]],
-						texture2d<half> colorTexture [[ texture(AAPLTextureIndexBaseColor) ]])
-		 {
-			 constexpr sampler textureSampler (mag_filter::linear,
-											   min_filter::linear);
-
-			 // Sample the texture to obtain a color
-			 const half4 colorSample = colorTexture.sample(textureSampler, in.textureCoordinate);
-
-			 // return the color of the texture
-			 return float4(colorSample);
-		 }
-	)";
+			// return the color of the texture
+			return float4(colorSample);
+		}
+ 	)";
 
 	NS::Error* error = nullptr;
 	MTL::Library* library = _device->newLibrary( NS::String::string(shaderSrc, UTF8StringEncoding), nullptr, &error );
@@ -136,13 +88,13 @@ void Renderer::buildShaders()
 		assert( false );
 	}
 
-	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexShader", UTF8StringEncoding) );
-	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("samplingShader", UTF8StringEncoding) );
+	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertex_main", UTF8StringEncoding) );
+	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragment_main", UTF8StringEncoding) );
 
 	MTL::RenderPipelineDescriptor* pipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
 	pipelineDescriptor->setVertexFunction(vertexFunction);
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
-	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm);
+	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
 	if (!_pipeLineState)
@@ -162,14 +114,10 @@ void Renderer::buildBuffers()
 	
 	static const AAPLVertex quadVertices[] =
 	{
-		// Pixel positions, Texture coordinates
-		{ {  250,  -250 },  { 1.f, 1.f } },
-		{ { -250,  -250 },  { 0.f, 1.f } },
-		{ { -250,   250 },  { 0.f, 0.f } },
-
-		{ {  250,  -250 },  { 1.f, 1.f } },
-		{ { -250,   250 },  { 0.f, 0.f } },
-		{ {  250,   250 },  { 1.f, 0.f } },
+		// Positions     ,  Colors
+		{ {  0.5,  -0.5 },  { 1.0, 0.0, 0.0, 1.0 } },
+		{ { -0.5,  -0.5 },  { 0.0, 1.0, 0.0, 1.0 } },
+		{ {  0.0,   0.5 },  { 0.0, 0.0, 1.0, 0.0 } },
 	};
 	
 	_numVertices = sizeof(quadVertices) / sizeof(AAPLVertex);
@@ -181,7 +129,7 @@ void Renderer::buildBuffers()
 	_vertexPositionsBuffer->didModifyRange(NS::Range::Make( 0, _vertexPositionsBuffer->length()));
 }
 
-void Renderer::draw(CA::MetalDrawable *drawable, Graphics::Surface &surface)
+void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 {
 	if (drawable == nullptr)
 		return;
@@ -189,13 +137,20 @@ void Renderer::draw(CA::MetalDrawable *drawable, Graphics::Surface &surface)
 
 	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
 	
+	//MTL::BlitCommandEncoder *encoder = pCmd->blitCommandEncoder();
+	//encoder->copyFromTexture(texture, drawable->texture());
+	//encoder->copyFromTexture(texture, 0, 0, drawable->texture(), 0, 0, 1, 1);
+	//encoder->copyFromTexture(texture, 0, 0, MTL::Origin(0, 0, 0), MTL::Size(texture->width(), texture->height(), texture->depth()), drawable->texture(), 0, 0, MTL::Origin(0, 0, 0));
+	//encoder->endEncoding();
+
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
-	attachment->setClearColor(MTL::ClearColor(1, 0, 0, 1));
+	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
-	attachment->setTexture(drawable->texture());
+	attachment->setStoreAction(MTL::StoreActionStore);
+	attachment->setTexture(texture);
 
-	//MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
+	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
 	
 	//MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	//d->setWidth(surface.w);
@@ -218,15 +173,19 @@ void Renderer::draw(CA::MetalDrawable *drawable, Graphics::Surface &surface)
 	//_viewportSize.y = texture->height();
 	//pEnc->setViewport(viewPort);
 	//pEnc->setRenderPipelineState(_pipeLineState);
-	//pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 0);
+	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 0);
 	//pEnc->setVertexBytes(&_viewportSize, sizeof(_viewportSize), 1);
-	//pEnc->setVertexBuffer(_vertexColorsBuffer, 0, 1);
+	pEnc->setVertexBuffer(_vertexColorsBuffer, 0, 1);
 	//pEnc->setFragmentTexture(texture, 0);
 	//pEnc->drawPrimitives( MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(_numVertices) );
 
-	//pEnc->endEncoding();
+	pEnc->endEncoding();
+	//pCmd->addCompletedHandler(^void( MTL::CommandBuffer* pCmd ){
+
+	//});
+
 	pCmd->presentDrawable(drawable);
 	pCmd->commit();
-
+	//pCmd->waitUntilCompleted();
 	pPool->release();
 }
