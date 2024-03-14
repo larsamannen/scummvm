@@ -24,6 +24,7 @@
 
 #include "backends/graphics/windowed.h"
 #include "backends/graphics/metal/renderer.h"
+#include "backends/graphics/metal/texture.h"
 
 namespace CA {
 class MetalDrawable;
@@ -105,18 +106,36 @@ public:
 	// PaletteManager
 	void setPalette(const byte *colors, uint start, uint num) override;
 	void grabPalette(byte *colors, uint start, uint num) const override;
-	
+
+protected:
+	Surface *createSurface(const Graphics::PixelFormat &format, bool wantAlpha = false, bool wantScaler = false, bool wantMask = false);
+
 private:
 	MTL::Device *_device;
 	
-	Graphics::PixelFormat _overlayFormat;
-	MTL::Texture *_overlayTexture;
+	/**
+	 * The default pixel format of the backend.
+	 */
+	Graphics::PixelFormat _defaultFormat;
+
+	/**
+	 * The default pixel format with an alpha channel.
+	 */
+	Graphics::PixelFormat _defaultFormatAlpha;
+
+	Surface *_gameScreen;
+
+	/**
+	 * The game palette if in CLUT8 mode.
+	 */
+	byte _gamePalette[3 * 256];
 	
-	Graphics::PixelFormat _mouseFormat;
-	MTL::Texture *_mouseTexture;
+	Surface *_overlay;
+	//MTL::Texture *_overlayTexture;
 	
-	CA::MetalDrawable *_drawable;
-	Graphics::Surface _overlay;
+	Surface *_cursor;
+	//MTL::Texture *_mouseTexture;
+	
 	Renderer *_renderer;
 };
 

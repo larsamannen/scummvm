@@ -147,7 +147,7 @@ void Renderer::buildBuffers()
 	_indexBuffer = indexBuffer;
 }
 
-void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
+void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *texture)
 {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	

@@ -47,6 +47,7 @@ MetalGraphicsManager::MetalGraphicsManager()
 
 MetalGraphicsManager::~MetalGraphicsManager()
 {
+	delete _overlay;
 	delete _renderer;
 }
 
@@ -55,8 +56,8 @@ void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
 	// Set up the target: backbuffer usually
 	_device = device;
-	_overlayFormat = defaultFormat;
-	_drawable = nullptr;
+	_defaultFormat = defaultFormat;
+	_defaultFormatAlpha = defaultFormatAlpha;
 	_renderer = new Renderer(_device);
 }
 
@@ -67,22 +68,11 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
-	if (_overlayTexture)
-		_overlayTexture->release();
+	if (_overlay)
+		delete _overlay;
 	
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(width);
-	d->setHeight(height);
-	if (_overlayFormat == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
-		d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	} else if (_overlayFormat == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) {
-		d->setPixelFormat(MTL::PixelFormatRG8Unorm);
-	} else if (_overlayFormat == Graphics::PixelFormat::createFormatCLUT8()) {
-		d->setPixelFormat(MTL::PixelFormatR8Unorm);
-	}
-	_overlayTexture = _device->newTexture(d);
-	d->release();
-	//_overlayTexture->retain();
+	_overlay = createSurface(_defaultFormatAlpha);
+	_overlay->allocate(width, height);
 }
 
 // GraphicsManager
@@ -121,7 +111,7 @@ const OSystem::GraphicsMode *MetalGraphicsManager::getSupportedGraphicsModes() c
 #ifdef USE_RGB_COLOR
 Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
 	// TODO
-	return _overlayFormat;
+	return _defaultFormatAlpha;
 }
 
 Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() const {
@@ -156,9 +146,9 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 #endif
 	// RGB555, this is used by SCUMM HE 16 bit games.
-	//formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
+	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
 	
-	//formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
+	formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
 	
 	return formats;
 }
@@ -174,8 +164,8 @@ int MetalGraphicsManager::getGraphicsMode() const {
 
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	const Graphics::PixelFormat pixelFormat = format ? *format : Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-	_overlayFormat = pixelFormat;
-	handleResizeImpl(width, height);
+	_defaultFormatAlpha = pixelFormat;
+	handleResize(width, height);
 }
 
 void MetalGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
@@ -205,7 +195,7 @@ int16 MetalGraphicsManager::getWidth() const {
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
+	//_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -225,8 +215,10 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
+	_overlay->updateMetalTexture();
+	
 	CA::MetalDrawable *drawable = getNextDrawable();
-	_renderer->draw(drawable, _overlayTexture);
+	_renderer->draw(drawable, _overlay->getMetalTexture());
 	drawable->release();
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
@@ -252,7 +244,7 @@ bool MetalGraphicsManager::isOverlayVisible() const {
 }
 
 Graphics::PixelFormat MetalGraphicsManager::getOverlayFormat() const {
-	return _overlayFormat;
+	return _defaultFormatAlpha;
 }
 
 void MetalGraphicsManager::clearOverlay() {
@@ -264,19 +256,19 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1 ), 0, buf, pitch);
+	_overlay->copyRectToTexture(x, y, w, h, buf, pitch);
 }
 
 int16 MetalGraphicsManager::getOverlayHeight() const {
-	if (_overlayTexture) {
-		return _overlayTexture->height();
+	if (_overlay) {
+		return _overlay->getHeight();
 	}
 	return 0;
 }
 
 int16 MetalGraphicsManager::getOverlayWidth() const {
-	if (_overlayTexture) {
-		return _overlayTexture->width();
+	if (_overlay) {
+		return _overlay->getWidth();
 	}
 	return 0;
 }
@@ -294,30 +286,6 @@ void MetalGraphicsManager::warpMouse(int x, int y) {
 }
 
 void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
-	if (!w || !h)
-		return;
-	if (_mouseTexture)
-		_mouseTexture->release();
-	
-	int pitch;
-	MTL::PixelFormat pixelFormat;
-	if (format && *format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
-		pixelFormat = MTL::PixelFormatRGBA8Unorm;
-		_mouseFormat = *format;
-		pitch = _mouseFormat.bytesPerPixel * w;
-	} else {
-		pixelFormat = MTL::PixelFormatR8Unorm;
-		pitch = 16;
-	}
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(w);
-	d->setHeight(h);
-	d->setPixelFormat(pixelFormat);
-	
-	_mouseTexture = _device->newTexture(d);
-	d->release();
-	//_mouseTexture->retain();
-	_mouseTexture->replaceRegion(MTL::Region(0, 0, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 void MetalGraphicsManager::setCursorPalette(const byte *colors, uint start, uint num) {
@@ -331,6 +299,13 @@ void MetalGraphicsManager::setPalette(const byte *colors, uint start, uint num) 
 
 void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const {
 	
+}
+						   
+Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
+	if (format.bytesPerPixel == 1) {
+		printf("FIXME");
+	}
+	return new Texture(_device, format);
 }
 
 } // end namespace Metal

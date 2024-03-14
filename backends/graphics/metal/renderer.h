@@ -22,10 +22,6 @@
 #ifndef BACKENDS_GRAPHICS_METAL_RENDERER_H
 #define BACKENDS_GRAPHICS_METAL_RENDERER_H
 
-namespace Graphics {
-class Surface;
-}
-
 namespace CA {
 class MetalDrawable;
 }
@@ -56,7 +52,7 @@ public:
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw(CA::MetalDrawable* drawable, MTL::Texture *texture);
+	void draw(CA::MetalDrawable* drawable, const MTL::Texture *texture);
 	
 private:
 	MTL::Device *_device;
