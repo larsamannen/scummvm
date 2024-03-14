@@ -42,7 +42,9 @@ class Renderer
 {
 
 	struct Vertex {
+		// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
 		simd_float2 position;
+		// 2D texture coordinate
 		simd_float2 texCoord;
 	};
 	

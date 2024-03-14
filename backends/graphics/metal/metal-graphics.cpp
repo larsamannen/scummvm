@@ -262,12 +262,7 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
-	//_overlay.create(w, h, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-	//_overlay.copyRectToSurface(buf, pitch, x, y, w, h);
 	_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
-	//_drawable = getNextDrawable();
-	//_overlayScreen = _drawable->texture();
-	//_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 int16 MetalGraphicsManager::getOverlayHeight() const {
@@ -285,7 +280,7 @@ int16 MetalGraphicsManager::getOverlayWidth() const {
 }
 
 float MetalGraphicsManager::getHiDPIScreenFactor() const {
-	return 1.0f;
+	return 2.0f;
 }
 
 bool MetalGraphicsManager::showMouse(bool visible) {
