@@ -37,7 +37,7 @@ Renderer::Renderer(MTL::Device* device)
 Renderer::~Renderer()
 {
 	_vertexPositionsBuffer->release();
-	_vertexColorsBuffer->release();
+	_indexBuffer->release();
 	_pipeLineState->release();
 	_commandQueue->release();
 	_device->release();
@@ -52,35 +52,35 @@ void Renderer::buildShaders()
 		#include <simd/simd.h>
 		using namespace metal;
 
-		struct VertexOut
+		struct Vertex
 		{
-			vector_float4 position [[position]];
-			vector_float4 color;
+			float4 position [[attribute(0)]];
+			float2 texCoord [[attribute(1)]];
 		};
   
-		vertex VertexOut vertexShader(const constant vector_float2 *vertexArray [[buffer(0)]], unsigned int vid [[vertex_id]])
+		struct VertexOut
 		{
-			// Fetch the current vertex we're on using the vid to index into our
-			// buffer data which holds all of our vertex points that we passed in
-			vector_float2 currentVertex = vertexArray[vid];
-			VertexOut output;
-	  
-			output.position = vector_float4(currentVertex.x, currentVertex.y, 0, 1); //populate the output position with the x and y values of our input vertex data
-			//output.color = vector_float4(1,0,0,1); //set the color
-	  
-			return output;
+			float4 position [[position]];
+			float2 texCoord;
+		};
+  
+		vertex VertexOut vertexFunction(Vertex in [[stage_in]])
+		{
+			VertexOut out;
+			out.position = in.position;
+			out.texCoord = in.texCoord;
+			return out;
 		}
 
-		fragment float4 fragmentShader(VertexOut vert [[stage_in]],
-								texture2d<float> colorTexture [[texture(0)]])
+		fragment float4 fragmentFunction(VertexOut in [[stage_in]],
+										 texture2d<float> colorTexture [[texture(0)]])
 		{
-			constexpr sampler textureSampler (mag_filter::linear,
-											  min_filter::linear);
+			constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
 			// Sample the texture to obtain a color
-			float4 colorSample = colorTexture.sample(textureSampler, vert.position.xy);
+			float4 color = colorTexture.sample(colorSampler, in.texCoord);
 
 			// return the color of the texture
-			return colorSample;
+			return color;
 		}
  	)";
 
@@ -92,12 +92,24 @@ void Renderer::buildShaders()
 		assert( false );
 	}
 
-	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexShader", UTF8StringEncoding) );
-	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragmentShader", UTF8StringEncoding) );
-
+	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexFunction", UTF8StringEncoding) );
+	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragmentFunction", UTF8StringEncoding) );
+	
+	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
+	vertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
+	vertexDescriptor->layouts()->object(30)->setStepRate(1);
+	vertexDescriptor->layouts()->object(30)->setStepFunction(MTL::VertexStepFunctionPerVertex);
+	vertexDescriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat4);
+	vertexDescriptor->attributes()->object(0)->setOffset(0);
+	vertexDescriptor->attributes()->object(0)->setBufferIndex(30);
+	vertexDescriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat2);
+	vertexDescriptor->attributes()->object(1)->setOffset(sizeof(simd_float2));
+	vertexDescriptor->attributes()->object(1)->setBufferIndex(30);
+	
 	MTL::RenderPipelineDescriptor* pipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
 	pipelineDescriptor->setVertexFunction(vertexFunction);
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
+	pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
 	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
@@ -116,22 +128,39 @@ void Renderer::buildShaders()
 void Renderer::buildBuffers()
 {
 	//Create vertex buffer
-	static float quadVertex[] = {
-		 0.0f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f,  0.5f, 0.0f, 1.0f,
-
-		 0.5f,  0.5f, 0.0f, 1.0f,
-		 0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f,  0.5f, 0.0f, 1.0f
+/*	static float quadVertex[] = {
+		-1.0f,  1.0f, 0.0f, //vertex 0
+		 1.0f, -1.0f, 0.0f, //vertex 1
+		-1.0f, -1.0f, 0.0f, //vertex 2
+		-1.0f,  1.0f, 0.0f, //vertex 0
+		 1.0f,  1.0f, 0.0f, //vertex 2
+		 1.0f, -1.0f, 0.0f  //vertex 3
 	};
+	
+	static float texCoord[] = {
+		
+	};*/
+	
+	Vertex vertices[] = {
+		{{-0.5, -0.5}, {0.0f, 1.0f}}, // Vertex 0
+		{{ 0.5, -0.5}, {1.0f, 1.0f}}, // Vertex 1
+		{{0.5,  0.5}, {1.0f, 0.0f}}, // Vertex 2
+		{{-0.5,  0.5}, {0.0f, 0.0f}} // Vertex 3
+	};
+	
+	unsigned short indices[] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+	
 
-	MTL::Buffer* vertexBuffer = _device->newBuffer(quadVertex, sizeof(quadVertex), MTL::ResourceStorageModeManaged);
-	//MTL::Buffer* vertexPositionsBuffer = _device->newBuffer(sizeof(quadVertex), MTL::ResourceStorageModeManaged);
-
+	MTL::Buffer* vertexBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+	MTL::Buffer* indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
+	//MTL::Buffer* texCoordBuffer = _device->newBuffer(quadVertex, sizeof(quadVertex), MTL::ResourceStorageModeManaged);
 	_vertexPositionsBuffer = vertexBuffer;
-
-	_vertexPositionsBuffer->didModifyRange(NS::Range::Make( 0, _vertexPositionsBuffer->length()));
+	_indexBuffer = indexBuffer;
+	//_vertexPositionsBuffer->didModifyRange(NS::Range::Make(0, _vertexPositionsBuffer->length()));
+	//_indexBuffer->didModifyRange(NS::Range::Make(0, _indexBuffer->length()));
 }
 
 void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
@@ -178,11 +207,11 @@ void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 	//_viewportSize.y = texture->height();
 	//pEnc->setViewport(viewPort);
 	pEnc->setRenderPipelineState(_pipeLineState);
-	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 0);
+	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30);
 	//pEnc->setVertexBytes(&_viewportSize, sizeof(_viewportSize), 1);
 	//pEnc->setVertexBuffer(_vertexColorsBuffer, 0, 1);
 	pEnc->setFragmentTexture(texture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	pEnc->drawPrimitives( MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(24) );
+	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 
 	pEnc->endEncoding();
 	//pCmd->addCompletedHandler(^void( MTL::CommandBuffer* pCmd ){

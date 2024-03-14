@@ -40,6 +40,12 @@ class Buffer;
 #include <simd/simd.h>
 class Renderer
 {
+
+	struct Vertex {
+		simd_float2 position;
+		simd_float2 texCoord;
+	};
+	
 public:
 	Renderer(MTL::Device* device);
 	~Renderer();
@@ -53,7 +59,7 @@ private:
 	MTL::RenderPipelineState *_pipeLineState;
 	MTL::RenderPipelineState *_renderToTextureRenderPipeline;
 	MTL::Buffer* _vertexPositionsBuffer;
-	MTL::Buffer* _vertexColorsBuffer;
+	MTL::Buffer* _indexBuffer;
 };
 
 #endif
