@@ -55,8 +55,6 @@
 #include "backends/mutex/pthread/pthread-mutex.h"
 #include "backends/fs/chroot/chroot-fs-factory.h"
 #include "backends/fs/posix/posix-fs.h"
-#include "audio/mixer.h"
-#include "audio/mixer_intern.h"
 
 #include "backends/platform/ios7/ios7_osys_main.h"
 

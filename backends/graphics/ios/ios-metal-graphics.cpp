@@ -23,7 +23,7 @@
 
 #include "backends/graphics/ios/ios-metal-graphics.h"
 #include "backends/platform/ios7/ios7_osys_main.h"
-
+#include <Metal/Metal.hpp>
 
 iOSMetalGraphicsManager::iOSMetalGraphicsManager() {
 	initSurface();
@@ -36,11 +36,12 @@ iOSMetalGraphicsManager::~iOSMetalGraphicsManager() {
 void iOSMetalGraphicsManager::initSurface() {
 	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
 
+	// Get the Metal layer
+	_metalLayer = sys->getMetalLayer();
 	// Create Metal Device
 	MTL::Device *device = MTL::CreateSystemDefaultDevice();
-	// Assign the device to the Core Animation Layer to connect it to the screen
-	sys->assignMetalDevice(device);
-	
+	_metalLayer->setDevice(device);
+
 	notifyContextCreate(device,
 	// Currently iOS runs the ARMs in little-endian mode but prepare if
 	// that is changed in the future.
@@ -56,7 +57,7 @@ void iOSMetalGraphicsManager::initSurface() {
 }
 
 CA::MetalDrawable *iOSMetalGraphicsManager::getNextDrawable() {
-	return dynamic_cast<OSystem_iOS7 *>(g_system)->nextDrawable();
+	return _metalLayer->nextDrawable();
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {

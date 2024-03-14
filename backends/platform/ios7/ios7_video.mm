@@ -145,13 +145,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	//_openGLContext = nil;
 }
 
-- (void)assignMetalDevice:(MTL::Device *)device {
-	// Assign the metal device to the Core Animation Layer
-	_metalLayer.device = (__bridge id<MTLDevice>)(device);
-}
-
-- (CA::MetalDrawable *)nextDrawable {
-	return (__bridge CA::MetalDrawable *)([_metalLayer nextDrawable]);
+- (CA::MetalLayer *)getMetalLayer {
+	return (__bridge CA::MetalLayer *)(_metalLayer);
 }
 
 - (void)refreshScreen {

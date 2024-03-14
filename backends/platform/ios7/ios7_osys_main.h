@@ -22,7 +22,6 @@
 #ifndef BACKENDS_PLATFORM_IOS7_IOS7_OSYS_MAIN_H
 #define BACKENDS_PLATFORM_IOS7_IOS7_OSYS_MAIN_H
 
-#include "graphics/surface.h"
 #include "backends/platform/ios7/ios7_common.h"
 #include "backends/modular-backend.h"
 #include "backends/keymapper/hardware-input.h"
@@ -31,7 +30,6 @@
 #include "common/ustr.h"
 #include "audio/mixer_intern.h"
 #include "backends/fs/posix/posix-fs-factory.h"
-#include <Metal/MTLDevice.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 #include <AudioToolbox/AudioQueue.h>
 
@@ -122,8 +120,7 @@ public:
 #endif
 
 #if defined(USE_METAL)
-	void assignMetalDevice(MTL::Device *device);
-	CA::MetalDrawable *nextDrawable();
+	CA::MetalLayer *getMetalLayer();
 #endif
 public:
 	bool pollEvent(Common::Event &event) override;

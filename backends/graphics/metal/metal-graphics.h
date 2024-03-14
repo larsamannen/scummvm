@@ -27,6 +27,7 @@
 
 namespace CA {
 class MetalDrawable;
+class MetalLayer;
 }
 
 namespace MTL {

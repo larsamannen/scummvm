@@ -51,5 +51,8 @@ protected:
 	
 	void showOverlay(bool inGUI) override;
 	void hideOverlay() override;
+	
+private:
+	CA::MetalLayer *_metalLayer;
 };
 #endif
