@@ -30,6 +30,7 @@
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
+namespace Metal {
 
 enum {
 	GFX_METAL = 0
@@ -68,7 +69,7 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	if (_overlayTexture)
 		_overlayTexture->release();
-
+	
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
@@ -88,23 +89,23 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
 	// TODO
 	switch (f) {
-	default:
-		return false;
+		default:
+			return false;
 	}
 }
 
 void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 	// TODO
 	switch (f) {
-	default:
-		break;
+		default:
+			break;
 	}
 }
 
 bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	switch (f) {
-	default:
-		return false;
+		default:
+			return false;
 	}
 }
 
@@ -125,7 +126,7 @@ Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
 
 Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() const {
 	Common::List<Graphics::PixelFormat> formats;
-
+	
 	// Our default mode is (memory layout wise) RGBA8888 which is a different
 	// logical layout depending on the endianness. We chose this mode because
 	// it is the only 32bit color mode we can safely assume to be present in
@@ -144,7 +145,7 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 	// RGBA4444
 	//formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
-
+	
 	// These formats are not natively supported by OpenGL ES implementations,
 	// we convert the pixel format internally.
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -156,9 +157,9 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 #endif
 	// RGB555, this is used by SCUMM HE 16 bit games.
 	//formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
-
+	
 	//formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
-
+	
 	return formats;
 }
 #endif
@@ -297,7 +298,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 		return;
 	if (_mouseTexture)
 		_mouseTexture->release();
-
+	
 	int pitch;
 	MTL::PixelFormat pixelFormat;
 	if (format && *format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
@@ -312,7 +313,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 	d->setWidth(w);
 	d->setHeight(h);
 	d->setPixelFormat(pixelFormat);
-		
+	
 	_mouseTexture = _device->newTexture(d);
 	d->release();
 	//_mouseTexture->retain();
@@ -332,3 +333,4 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 	
 }
 
+} // end namespace Metal

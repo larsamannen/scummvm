@@ -26,7 +26,7 @@
 #include "backends/graphics/ios/ios-graphics.h"
 
 
-class iOSMetalGraphicsManager : public MetalGraphicsManager, public iOSCommonGraphics {
+class iOSMetalGraphicsManager : public Metal::MetalGraphicsManager, public iOSCommonGraphics {
 public:
 	iOSMetalGraphicsManager();
 	virtual ~iOSMetalGraphicsManager();

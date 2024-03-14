@@ -35,21 +35,23 @@ class Device;
 class Texture;
 }
 
+namespace Metal {
+
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
-
+	
 	void notifyContextCreate(MTL::Device *device,
 							 const Graphics::PixelFormat &defaultFormat,
 							 const Graphics::PixelFormat &defaultFormatAlpha);
 	
 	virtual CA::MetalDrawable *getNextDrawable() = 0;
-
+	
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
 	void handleResizeImpl(const int width, const int height) override;
-
+	
 	// GraphicsManager
 	bool hasFeature(OSystem::Feature f) const override;
 	void setFeatureState(OSystem::Feature f, bool enable) override;
@@ -63,17 +65,17 @@ public:
 	Graphics::PixelFormat getScreenFormat() const override;
 	Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
 #endif
-
+	
 	void initSize(uint width, uint height, const Graphics::PixelFormat *format = NULL) override;
 	void initSizeHint(const Graphics::ModeList &modes) override;
 	int getScreenChangeID() const override;
-
+	
 	void beginGFXTransaction() override;
 	OSystem::TransactionError endGFXTransaction() override;
-
+	
 	int16 getHeight() const override;
 	int16 getWidth() const override;
-
+	
 	void copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) override;
 	Graphics::Surface *lockScreen() override;
 	void unlockScreen() override;
@@ -83,7 +85,7 @@ public:
 	void setShakePos(int shakeXOffset, int shakeYOffset) override;
 	void setFocusRectangle(const Common::Rect& rect) override;
 	void clearFocusRectangle() override;
-
+	
 	void showOverlay(bool inGUI) override;
 	void hideOverlay() override;
 	bool isOverlayVisible() const override;
@@ -94,7 +96,7 @@ public:
 	int16 getOverlayHeight() const override;
 	int16 getOverlayWidth() const override;
 	float getHiDPIScreenFactor() const override;
-
+	
 	bool showMouse(bool visible) override;
 	void warpMouse(int x, int y) override;
 	void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = nullptr, const byte *mask = nullptr) override;
@@ -103,19 +105,21 @@ public:
 	// PaletteManager
 	void setPalette(const byte *colors, uint start, uint num) override;
 	void grabPalette(byte *colors, uint start, uint num) const override;
-
+	
 private:
 	MTL::Device *_device;
-
+	
 	Graphics::PixelFormat _overlayFormat;
 	MTL::Texture *_overlayTexture;
-
+	
 	Graphics::PixelFormat _mouseFormat;
 	MTL::Texture *_mouseTexture;
-
+	
 	CA::MetalDrawable *_drawable;
 	Graphics::Surface _overlay;
 	Renderer *_renderer;
 };
+
+} // end namespace Metal
 
 #endif

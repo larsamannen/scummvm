@@ -25,6 +25,7 @@
 #include "graphics/surface.h"
 #include "backends/graphics/metal/renderer.h"
 
+namespace Metal {
 
 Renderer::Renderer(MTL::Device* device)
 : _device(device->retain())
@@ -46,44 +47,44 @@ Renderer::~Renderer()
 void Renderer::buildShaders()
 {
 	using NS::StringEncoding::UTF8StringEncoding;
-
+	
 	const char* shaderSrc = R"(
-		#include <metal_stdlib>
-		#include <simd/simd.h>
-		using namespace metal;
-
-		struct Vertex
-		{
-			float4 position [[attribute(0)]];
-			float2 texCoord [[attribute(1)]];
-		};
+  #include <metal_stdlib>
+  #include <simd/simd.h>
+  using namespace metal;
   
-		struct VertexOut
-		{
-			float4 position [[position]];
-			float2 texCoord;
-		};
+  struct Vertex
+  {
+   float4 position [[attribute(0)]];
+   float2 texCoord [[attribute(1)]];
+  };
   
-		vertex VertexOut vertexFunction(Vertex in [[stage_in]])
-		{
-			VertexOut out;
-			out.position = in.position;
-			out.texCoord = in.texCoord;
-			return out;
-		}
-
-		fragment float4 fragmentFunction(VertexOut in [[stage_in]],
-										 texture2d<float> colorTexture [[texture(0)]])
-		{
-			constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
-			// Sample the texture to obtain a color
-			float4 color = colorTexture.sample(colorSampler, in.texCoord);
-
-			// return the color of the texture
-			return color;
-		}
- 	)";
-
+  struct VertexOut
+  {
+   float4 position [[position]];
+   float2 texCoord;
+  };
+  
+  vertex VertexOut vertexFunction(Vertex in [[stage_in]])
+  {
+   VertexOut out;
+   out.position = in.position;
+   out.texCoord = in.texCoord;
+   return out;
+  }
+  
+  fragment float4 fragmentFunction(VertexOut in [[stage_in]],
+		   texture2d<float> colorTexture [[texture(0)]])
+  {
+   constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
+   // Sample the texture to obtain a color
+   float4 color = colorTexture.sample(colorSampler, in.texCoord);
+  
+   // return the color of the texture
+   return color;
+  }
+  )";
+	
 	NS::Error* error = nullptr;
 	MTL::Library* library = _device->newLibrary( NS::String::string(shaderSrc, UTF8StringEncoding), nullptr, &error );
 	if (!library)
@@ -91,7 +92,7 @@ void Renderer::buildShaders()
 		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
 		assert( false );
 	}
-
+	
 	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexFunction", UTF8StringEncoding) );
 	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragmentFunction", UTF8StringEncoding) );
 	
@@ -111,14 +112,14 @@ void Renderer::buildShaders()
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
 	pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
 	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
-
+	
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
 	if (!_pipeLineState)
 	{
 		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
 		assert( false );
 	}
-
+	
 	vertexFunction->release();
 	fragmentFunction->release();
 	vertexDescriptor->release();
@@ -134,12 +135,12 @@ void Renderer::buildBuffers()
 		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
 		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
 	};
-
+	
 	unsigned short indices[] = {
 		0, 1, 2,
 		0, 2, 3
 	};
-
+	
 	MTL::Buffer* vertexBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
 	MTL::Buffer* indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 	_vertexPositionsBuffer = vertexBuffer;
@@ -149,7 +150,7 @@ void Renderer::buildBuffers()
 void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
-
+	
 	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
@@ -157,7 +158,7 @@ void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(drawable->texture());
-
+	
 	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
 	
 	pEnc->setRenderPipelineState(_pipeLineState);
@@ -170,3 +171,5 @@ void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 	renderPassDescriptor->release();
 	pPool->release();
 }
+
+} // end namespace Metal

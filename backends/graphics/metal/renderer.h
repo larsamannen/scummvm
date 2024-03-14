@@ -38,9 +38,12 @@ class RenderPipelineState;
 class Buffer;
 }
 #include <simd/simd.h>
+
+namespace Metal {
+
 class Renderer
 {
-
+	
 	struct Vertex {
 		// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
 		simd_float2 position;
@@ -54,7 +57,7 @@ public:
 	void buildShaders();
 	void buildBuffers();
 	void draw(CA::MetalDrawable* drawable, MTL::Texture *texture);
-
+	
 private:
 	MTL::Device *_device;
 	MTL::CommandQueue *_commandQueue;
@@ -64,4 +67,5 @@ private:
 	MTL::Buffer* _indexBuffer;
 };
 
+} // end namespace Metal
 #endif
