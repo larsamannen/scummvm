@@ -35,17 +35,6 @@ enum {
 	GFX_METAL = 0
 };
 
-static float quadVertexData[] =
-{
-	0.5, -0.5, 0.0, 1.0,
-	-0.5, -0.5, 0.0, 1.0,
-	-0.5,  0.5, 0.0, 1.0,
-
-	0.5,  0.5, 0.0, 1.0,
-	0.5, -0.5, 0.0, 1.0,
-	-0.5,  0.5, 0.0, 1.0
-};
-
 MetalGraphicsManager::MetalGraphicsManager()
 {
 	_cursorX = 0;
@@ -77,16 +66,22 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
-	if (_overlayScreen)
-		_overlayScreen->release();
+	if (_overlayTexture)
+		_overlayTexture->release();
 
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
-	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	
-	_overlayScreen = _device->newTexture(d);
-	_overlayScreen->retain();
+	if (_overlayFormat == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
+		d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
+	} else if (_overlayFormat == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) {
+		d->setPixelFormat(MTL::PixelFormatRG8Unorm);
+	} else if (_overlayFormat == Graphics::PixelFormat::createFormatCLUT8()) {
+		d->setPixelFormat(MTL::PixelFormatR8Unorm);
+	}
+	_overlayTexture = _device->newTexture(d);
+	d->release();
+	//_overlayTexture->retain();
 }
 
 // GraphicsManager
@@ -148,21 +143,21 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 	// RGBA5551
 	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 	// RGBA4444
-	formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
+	//formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
 
 	// These formats are not natively supported by OpenGL ES implementations,
 	// we convert the pixel format internally.
 #ifdef SCUMM_LITTLE_ENDIAN
 	// RGBA8888
-	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+	//formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
 #else
 	// ABGR8888
 	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 #endif
 	// RGB555, this is used by SCUMM HE 16 bit games.
-	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
+	//formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0));
 
-	formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
+	//formats.push_back(Graphics::PixelFormat::createFormatCLUT8());
 
 	return formats;
 }
@@ -177,7 +172,9 @@ int MetalGraphicsManager::getGraphicsMode() const {
 }
 
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
-	handleResize(width, height);
+	const Graphics::PixelFormat pixelFormat = format ? *format : Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
+	_overlayFormat = pixelFormat;
+	handleResizeImpl(width, height);
 }
 
 void MetalGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
@@ -193,19 +190,21 @@ void MetalGraphicsManager::beginGFXTransaction() {
 }
 
 OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
+	
+	
 	return OSystem::kTransactionSuccess;
 }
 
 int16 MetalGraphicsManager::getHeight() const {
-	return _overlayScreen->height();
+	return _windowHeight;//_overlayTexture->height();
 }
 
 int16 MetalGraphicsManager::getWidth() const {
-	return _overlayScreen->width();
+	return _windowWidth;//_overlayTexture->width();
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayScreen->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
+	_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -225,7 +224,9 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
-	_renderer->draw(getNextDrawable(), _overlayScreen);
+	CA::MetalDrawable *drawable = getNextDrawable();
+	_renderer->draw(drawable, _overlayTexture);
+	drawable->release();
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
 	
@@ -262,19 +263,19 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
-	_overlayScreen->replaceRegion(MTL::Region( x, y, 0, w, h, 1 ), 0, buf, pitch);
+	_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 int16 MetalGraphicsManager::getOverlayHeight() const {
-	if (_overlayScreen) {
-		return _overlayScreen->height();
+	if (_overlayTexture) {
+		return _overlayTexture->height();
 	}
 	return 0;
 }
 
 int16 MetalGraphicsManager::getOverlayWidth() const {
-	if (_overlayScreen) {
-		return _overlayScreen->width();
+	if (_overlayTexture) {
+		return _overlayTexture->width();
 	}
 	return 0;
 }
@@ -292,7 +293,30 @@ void MetalGraphicsManager::warpMouse(int x, int y) {
 }
 
 void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
-	
+	if (!w || !h)
+		return;
+	if (_mouseTexture)
+		_mouseTexture->release();
+
+	int pitch;
+	MTL::PixelFormat pixelFormat;
+	if (format && *format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
+		pixelFormat = MTL::PixelFormatRGBA8Unorm;
+		_mouseFormat = *format;
+		pitch = _mouseFormat.bytesPerPixel * w;
+	} else {
+		pixelFormat = MTL::PixelFormatR8Unorm;
+		pitch = 16;
+	}
+	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+	d->setWidth(w);
+	d->setHeight(h);
+	d->setPixelFormat(pixelFormat);
+		
+	_mouseTexture = _device->newTexture(d);
+	d->release();
+	//_mouseTexture->retain();
+	_mouseTexture->replaceRegion(MTL::Region(0, 0, 0, w, h, 1 ), 0, buf, pitch);
 }
 
 void MetalGraphicsManager::setCursorPalette(const byte *colors, uint start, uint num) {

@@ -107,7 +107,11 @@ private:
 	MTL::Device *_device;
 
 	Graphics::PixelFormat _overlayFormat;
-	MTL::Texture *_overlayScreen;
+	MTL::Texture *_overlayTexture;
+
+	Graphics::PixelFormat _mouseFormat;
+	MTL::Texture *_mouseTexture;
+
 	CA::MetalDrawable *_drawable;
 	Graphics::Surface _overlay;
 	Renderer *_renderer;

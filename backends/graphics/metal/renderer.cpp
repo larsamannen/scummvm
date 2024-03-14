@@ -121,6 +121,7 @@ void Renderer::buildShaders()
 
 	vertexFunction->release();
 	fragmentFunction->release();
+	vertexDescriptor->release();
 	pipelineDescriptor->release();
 	library->release();
 }
@@ -163,9 +164,9 @@ void Renderer::draw(CA::MetalDrawable *drawable, MTL::Texture *texture)
 	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
 	pEnc->setFragmentTexture(texture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
 	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
-
 	pEnc->endEncoding();
 	pCmd->presentDrawable(drawable);
 	pCmd->commit();
+	renderPassDescriptor->release();
 	pPool->release();
 }
