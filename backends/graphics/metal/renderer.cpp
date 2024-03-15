@@ -111,7 +111,18 @@ void Renderer::buildShaders()
 	pipelineDescriptor->setVertexFunction(vertexFunction);
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
 	pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
-	pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+	
+	// Alpha Blending
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = pipelineDescriptor->colorAttachments()->object(0);
+	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+
+	renderbufferAttachment->setBlendingEnabled(true);
+	renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
+	renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
+	renderbufferAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+	renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
+	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 	
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
 	if (!_pipeLineState)
@@ -152,15 +163,16 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *overlayText
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	
 	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
+	
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(drawable->texture());
-	
+
 	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
-	
+
 	pEnc->setRenderPipelineState(_pipeLineState);
 	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
 	pEnc->setFragmentTexture(overlayTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
