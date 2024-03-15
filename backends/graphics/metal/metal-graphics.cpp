@@ -36,7 +36,12 @@ enum {
 	GFX_METAL = 0
 };
 
-MetalGraphicsManager::MetalGraphicsManager()
+MetalGraphicsManager::MetalGraphicsManager() :
+	_defaultFormat(), _defaultFormatAlpha(),
+	_gameScreen(nullptr), _overlay(nullptr), _cursor(nullptr), _cursorMask(nullptr),
+	_cursorHotspotX(0), _cursorHotspotY(0),
+	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
+	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false)
 {
 	_cursorX = 0;
 	_cursorY = 0;
@@ -47,7 +52,10 @@ MetalGraphicsManager::MetalGraphicsManager()
 
 MetalGraphicsManager::~MetalGraphicsManager()
 {
+	delete _gameScreen;
 	delete _overlay;
+	delete _cursor;
+	delete _cursorMask;
 	delete _renderer;
 }
 
@@ -73,6 +81,12 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	
 	_overlay = createSurface(_defaultFormatAlpha);
 	_overlay->allocate(width, height);
+	
+	// Re-setup the scaling for the screen
+	recalculateDisplayAreas();
+
+	// Something changed, so update the screen change ID.
+	//_screenChangeCount++;
 }
 
 // GraphicsManager
@@ -87,15 +101,21 @@ bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
 void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 	// TODO
 	switch (f) {
-		default:
-			break;
+	case OSystem::kFeatureCursorPalette:
+		_cursorPaletteEnabled = enable;
+		updateCursorPalette();
+		break;
+	default:
+		break;
 	}
 }
 
 bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	switch (f) {
-		default:
-			return false;
+	case OSystem::kFeatureCursorPalette:
+		return _cursorPaletteEnabled;
+	default:
+		return false;
 	}
 }
 
@@ -215,10 +235,18 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
+	// Don't draw cursor if it's not visible or there is none
+	bool drawCursor = _cursorVisible && _cursor;
+
 	_overlay->updateMetalTexture();
 	
+	if (drawCursor) {
+		_cursor->updateMetalTexture();
+		_renderer->setCursorViewport(_cursorX + _cursorHotspotX, _cursorY + _cursorHeightScaled - _cursorHotspotYScaled, _cursorWidthScaled, _cursorHeightScaled);
+	}
+	
 	CA::MetalDrawable *drawable = getNextDrawable();
-	_renderer->draw(drawable, _overlay->getMetalTexture());
+	_renderer->draw(drawable, _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
 	drawable->release();
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
@@ -278,18 +306,290 @@ float MetalGraphicsManager::getHiDPIScreenFactor() const {
 }
 
 bool MetalGraphicsManager::showMouse(bool visible) {
-	return 0;
+	return WindowedGraphicsManager::showMouse(visible);
 }
 
 void MetalGraphicsManager::warpMouse(int x, int y) {
 	
 }
 
+namespace {
+template<typename SrcColor, typename DstColor>
+void multiplyColorWithAlpha(const byte *src, byte *dst, const uint w, const uint h,
+							const Graphics::PixelFormat &srcFmt, const Graphics::PixelFormat &dstFmt,
+							const uint srcPitch, const uint dstPitch, const SrcColor keyColor, bool useKeyColor) {
+	for (uint y = 0; y < h; ++y) {
+		for (uint x = 0; x < w; ++x) {
+			const uint32 color = *(const SrcColor *)src;
+
+			if (useKeyColor && color == keyColor) {
+				*(DstColor *)dst = 0;
+			} else {
+				byte a, r, g, b;
+				srcFmt.colorToARGB(color, a, r, g, b);
+
+				if (a != 0xFF) {
+					r = (int) r * a / 255;
+					g = (int) g * a / 255;
+					b = (int) b * a / 255;
+				}
+
+				*(DstColor *)dst = dstFmt.ARGBToColor(a, r, g, b);
+			}
+
+			src += sizeof(SrcColor);
+			dst += sizeof(DstColor);
+		}
+
+		src += srcPitch - w * srcFmt.bytesPerPixel;
+		dst += dstPitch - w * dstFmt.bytesPerPixel;
+	}
+}
+} // End of anonymous namespace
+
 void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+	_cursorUseKey = (mask == nullptr);
+	if (_cursorUseKey)
+		_cursorKeyColor = keycolor;
+
+	_cursorHotspotX = hotspotX;
+	_cursorHotspotY = hotspotY;
+	_cursorDontScale = dontScale;
+
+	if (!w || !h) {
+		delete _cursor;
+		_cursor = nullptr;
+		delete _cursorMask;
+		_cursorMask = nullptr;
+		return;
+	}
+
+	Graphics::PixelFormat inputFormat;
+	Graphics::PixelFormat maskFormat;
+#ifdef USE_RGB_COLOR
+	if (format) {
+		inputFormat = *format;
+	} else {
+		inputFormat = Graphics::PixelFormat::createFormatCLUT8();
+	}
+#else
+	inputFormat = Graphics::PixelFormat::createFormatCLUT8();
+#endif
+
+//#ifdef USE_SCALERS
+//	bool wantScaler = (_currentState.scaleFactor > 1) && !dontScale && _scalerPlugins[_currentState.scalerIndex]->get<ScalerPluginObject>().canDrawCursor();
+//#else
+	bool wantScaler = false;
+//#endif
+
+	bool wantMask = (mask != nullptr);
+	bool haveMask = (_cursorMask != nullptr);
+
+	// In case the color format has changed we will need to create the texture.
+	if (!_cursor || _cursor->getFormat() != inputFormat || haveMask != wantMask) {
+		delete _cursor;
+		_cursor = nullptr;
+
+		//GLenum glIntFormat, glFormat, glType;
+
+		Graphics::PixelFormat textureFormat;
+		if (inputFormat.bytesPerPixel == 1 || (inputFormat.aBits())) { //&& getGLPixelFormat(inputFormat, glIntFormat, glFormat, glType))) {
+			// There is two cases when we can use the cursor format directly.
+			// The first is when it's CLUT8, here color key handling can
+			// always be applied because we use the alpha channel of
+			// _defaultFormatAlpha for that.
+			// The other is when the input format has alpha bits and
+			// furthermore is directly supported.
+			textureFormat = inputFormat;
+		} else {
+			textureFormat = _defaultFormatAlpha;
+		}
+		_cursor = createSurface(textureFormat, true, wantScaler, wantMask);
+		assert(_cursor);
+
+		//updateLinearFiltering();
+
+//#ifdef USE_SCALERS
+//		if (wantScaler) {
+//			_cursor->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
+//		}
+//#endif
+	}
+
+	if (mask) {
+		if (!_cursorMask) {
+			maskFormat = _defaultFormatAlpha;
+			_cursorMask = createSurface(maskFormat, true, wantScaler);
+			assert(_cursorMask);
+
+			//updateLinearFiltering();
+
+//#ifdef USE_SCALERS
+//			if (wantScaler) {
+//				_cursorMask->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
+//			}
+//#endif
+		}
+	} else {
+		delete _cursorMask;
+		_cursorMask = nullptr;
+	}
+
+	Common::Point topLeftCoord(0, 0);
+	Common::Point cursorSurfaceSize(w, h);
+
+	// If the cursor is scalable, add a 1-texel transparent border.
+	// This ensures that linear filtering falloff from the edge pixels has room to completely fade out instead of
+	// being cut off at half-way.  Could use border clamp too, but GLES2 doesn't support that.
+	if (!_cursorDontScale) {
+		topLeftCoord = Common::Point(1, 1);
+		cursorSurfaceSize += Common::Point(2, 2);
+	}
+
+	_cursor->allocate(cursorSurfaceSize.x, cursorSurfaceSize.y);
+	if (_cursorMask)
+		_cursorMask->allocate(cursorSurfaceSize.x, cursorSurfaceSize.y);
+
+	_cursorHotspotX += topLeftCoord.x;
+	_cursorHotspotY += topLeftCoord.y;
+
+	if (inputFormat.bytesPerPixel == 1) {
+		// For CLUT8 cursors we can simply copy the input data into the
+		// texture.
+		if (!_cursorDontScale)
+			_cursor->fill(keycolor);
+		_cursor->copyRectToTexture(topLeftCoord.x, topLeftCoord.y, w, h, buf, w * inputFormat.bytesPerPixel);
+
+		if (mask) {
+			// Construct a mask of opaque pixels
+			Common::Array<byte> maskBytes;
+			maskBytes.resize(cursorSurfaceSize.x * cursorSurfaceSize.y, 0);
+
+			for (uint y = 0; y < h; y++) {
+				for (uint x = 0; x < w; x++) {
+					// The cursor pixels must be masked out for anything except opaque
+					if (mask[y * w + x] == kCursorMaskOpaque)
+						maskBytes[(y + topLeftCoord.y) * cursorSurfaceSize.x + topLeftCoord.x + x] = 1;
+				}
+			}
+
+			_cursor->setMask(&maskBytes[0]);
+		} else {
+			_cursor->setMask(nullptr);
+		}
+	} else {
+		// Otherwise it is a bit more ugly because we have to handle a key
+		// color properly.
+
+		Graphics::Surface *dst = _cursor->getSurface();
+		const uint srcPitch = w * inputFormat.bytesPerPixel;
+
+		// Copy the cursor data to the actual texture surface. This will make
+		// sure that the data is also converted to the expected format.
+
+		// Also multiply the color values with the alpha channel.
+		// The pre-multiplication allows using a blend mode that prevents
+		// color fringes due to filtering.
+
+		if (!_cursorDontScale)
+			_cursor->fill(0);
+
+		byte *topLeftPixelPtr = static_cast<byte *>(dst->getBasePtr(topLeftCoord.x, topLeftCoord.y));
+
+		if (dst->format.bytesPerPixel == 2) {
+			if (inputFormat.bytesPerPixel == 2) {
+				multiplyColorWithAlpha<uint16, uint16>((const byte *)buf, topLeftPixelPtr, w, h,
+													   inputFormat, dst->format, srcPitch, dst->pitch, keycolor, _cursorUseKey);
+			} else if (inputFormat.bytesPerPixel == 4) {
+				multiplyColorWithAlpha<uint32, uint16>((const byte *)buf, topLeftPixelPtr, w, h,
+													   inputFormat, dst->format, srcPitch, dst->pitch, keycolor, _cursorUseKey);
+			}
+		} else if (dst->format.bytesPerPixel == 4) {
+			if (inputFormat.bytesPerPixel == 2) {
+				multiplyColorWithAlpha<uint16, uint32>((const byte *)buf, topLeftPixelPtr, w, h,
+													   inputFormat, dst->format, srcPitch, dst->pitch, keycolor, _cursorUseKey);
+			} else if (inputFormat.bytesPerPixel == 4) {
+				multiplyColorWithAlpha<uint32, uint32>((const byte *)buf, topLeftPixelPtr, w, h,
+													   inputFormat, dst->format, srcPitch, dst->pitch, keycolor, _cursorUseKey);
+			}
+		}
+
+		// Replace all non-opaque pixels with black pixels
+		if (mask) {
+			Graphics::Surface *cursorSurface = _cursor->getSurface();
+
+			for (uint x = 0; x < w; x++) {
+				for (uint y = 0; y < h; y++) {
+					uint8 maskByte = mask[y * w + x];
+
+					if (maskByte != kCursorMaskOpaque)
+						cursorSurface->setPixel(x + topLeftCoord.x, y + topLeftCoord.y, 0);
+				}
+			}
+		}
+
+		// Flag the texture as dirty.
+		_cursor->flagDirty();
+	}
+
+	if (_cursorMask && mask) {
+		// Generate the multiply+invert texture.
+		// We're generating this for a blend mode where source factor is ONE_MINUS_DST_COLOR and dest factor is ONE_MINUS_SRC_ALPHA
+		// In other words, positive RGB channel values will add inverted destination pixels, positive alpha values will modulate
+		// RGB+Alpha = Inverted   Alpha Only = Black   0 = No change
+
+		Graphics::Surface *cursorSurface = _cursor->getSurface();
+		Graphics::Surface *maskSurface = _cursorMask->getSurface();
+		maskFormat = _cursorMask->getFormat();
+
+		const Graphics::PixelFormat cursorFormat = cursorSurface->format;
+
+		_cursorMask->fill(0);
+		for (uint x = 0; x < w; x++) {
+			for (uint y = 0; y < h; y++) {
+				// See the description of renderCursor for an explanation of why this works the way it does.
+
+				uint8 maskOpacity = 0xff;
+
+				if (inputFormat.bytesPerPixel != 1) {
+					uint32 cursorPixel = cursorSurface->getPixel(x + topLeftCoord.x, y + topLeftCoord.y);
+
+					uint8 r, g, b;
+					cursorFormat.colorToARGB(cursorPixel, maskOpacity, r, g, b);
+				}
+
+				uint8 maskInversionAdd = 0;
+
+				uint8 maskByte = mask[y * w + x];
+				if (maskByte == kCursorMaskTransparent)
+					maskOpacity = 0;
+
+				if (maskByte == kCursorMaskInvert) {
+					maskOpacity = 0xff;
+					maskInversionAdd = 0xff;
+				}
+
+				uint32 encodedMaskPixel = maskFormat.ARGBToColor(maskOpacity, maskInversionAdd, maskInversionAdd, maskInversionAdd);
+				maskSurface->setPixel(x + topLeftCoord.x, y + topLeftCoord.y, encodedMaskPixel);
+			}
+		}
+
+		_cursorMask->flagDirty();
+	}
+
+	// In case we actually use a palette set that up properly.
+	if (inputFormat.bytesPerPixel == 1) {
+		updateCursorPalette();
+	}
+
+	recalculateCursorScaling();
 }
 
 void MetalGraphicsManager::setCursorPalette(const byte *colors, uint start, uint num) {
-	
+	_cursorPaletteEnabled = true;
+
+	memcpy(_cursorPalette + start * 3, colors, num * 3);
+	updateCursorPalette();
 }
 
 // PaletteManager
@@ -306,6 +606,49 @@ Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format
 		printf("FIXME");
 	}
 	return new Texture(_device, format);
+}
+
+void MetalGraphicsManager::updateCursorPalette() {
+	if (!_cursor || !_cursor->hasPalette()) {
+		return;
+	}
+
+	if (_cursorPaletteEnabled) {
+		_cursor->setPalette(0, 256, _cursorPalette);
+	} else {
+		_cursor->setPalette(0, 256, _gamePalette);
+	}
+
+	if (_cursorUseKey)
+		_cursor->setColorKey(_cursorKeyColor);
+}
+
+void MetalGraphicsManager::recalculateCursorScaling() {
+	if (!_cursor) {// || !_gameScreen) {
+		return;
+	}
+
+	uint cursorWidth = _cursor->getWidth();
+	uint cursorHeight = _cursor->getHeight();
+
+	// By default we use the unscaled versions.
+	_cursorHotspotXScaled = _cursorHotspotX;
+	_cursorHotspotYScaled = _cursorHotspotY;
+	_cursorWidthScaled = cursorWidth;
+	_cursorHeightScaled = cursorHeight;
+
+	// In case scaling is actually enabled we will scale the cursor according
+	// to the game screen.
+	if (!_cursorDontScale) {
+		const frac_t screenScaleFactorX = intToFrac(_gameDrawRect.width()) / _gameScreen->getWidth();
+		const frac_t screenScaleFactorY = intToFrac(_gameDrawRect.height()) / _gameScreen->getHeight();
+
+		_cursorHotspotXScaled = fracToInt(_cursorHotspotXScaled * screenScaleFactorX);
+		_cursorWidthScaled    = fracToDouble(cursorWidth        * screenScaleFactorX);
+
+		_cursorHotspotYScaled = fracToInt(_cursorHotspotYScaled * screenScaleFactorY);
+		_cursorHeightScaled   = fracToDouble(cursorHeight       * screenScaleFactorY);
+	}
 }
 
 } // end namespace Metal

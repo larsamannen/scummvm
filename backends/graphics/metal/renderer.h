@@ -32,6 +32,7 @@ class Texture;
 class CommandQueue;
 class RenderPipelineState;
 class Buffer;
+class Viewport;
 }
 #include <simd/simd.h>
 
@@ -52,7 +53,8 @@ public:
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw(CA::MetalDrawable* drawable, const MTL::Texture *texture);
+	void draw(CA::MetalDrawable* drawable, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture);
+	void setCursorViewport(int x, int y, int w, int h);
 	
 private:
 	MTL::Device *_device;
@@ -61,6 +63,7 @@ private:
 	MTL::RenderPipelineState *_renderToTextureRenderPipeline;
 	MTL::Buffer* _vertexPositionsBuffer;
 	MTL::Buffer* _indexBuffer;
+	MTL::Viewport *_cursorViewPort;
 };
 
 } // end namespace Metal

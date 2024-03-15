@@ -295,9 +295,9 @@ int OSystem_iOS7::getScreenHeight() const {
 }
 
 float OSystem_iOS7::getSystemHiDPIScreenFactor() const {
-	if (isiOSAppOnMac()) {
-		return 1.0f;
-	}
+	//if (isiOSAppOnMac()) {
+	//	return 1.0f;
+	//}
 	return [[UIScreen mainScreen] scale];
 }
 

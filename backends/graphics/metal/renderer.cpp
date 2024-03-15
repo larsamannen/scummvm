@@ -28,7 +28,7 @@
 namespace Metal {
 
 Renderer::Renderer(MTL::Device* device)
-: _device(device->retain())
+: _device(device->retain()), _cursorViewPort(new MTL::Viewport())
 {
 	_commandQueue = _device->newCommandQueue();
 	buildShaders();
@@ -147,7 +147,7 @@ void Renderer::buildBuffers()
 	_indexBuffer = indexBuffer;
 }
 
-void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *texture)
+void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture)
 {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	
@@ -163,8 +163,13 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *texture)
 	
 	pEnc->setRenderPipelineState(_pipeLineState);
 	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
-	pEnc->setFragmentTexture(texture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	pEnc->setFragmentTexture(overlayTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
 	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+	if (cursorTexture) {
+		pEnc->setViewport(*_cursorViewPort);
+		pEnc->setFragmentTexture(cursorTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+		pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+	}
 	pEnc->endEncoding();
 	pCmd->presentDrawable(drawable);
 	pCmd->commit();
@@ -172,4 +177,10 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *texture)
 	pPool->release();
 }
 
+void Renderer::setCursorViewport(int x, int y, int w, int h) {
+	_cursorViewPort->originX = x;
+	_cursorViewPort->originY = y;
+	_cursorViewPort->width = w;
+	_cursorViewPort->height = h;
+}
 } // end namespace Metal

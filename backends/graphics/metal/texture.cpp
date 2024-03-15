@@ -126,13 +126,7 @@ void Texture::allocate(uint width, uint height) {
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
-	if (_format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
-		d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	} else if (_format == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) {
-		d->setPixelFormat(MTL::PixelFormatRG8Unorm);
-	} else if (_format == Graphics::PixelFormat::createFormatCLUT8()) {
-		d->setPixelFormat(MTL::PixelFormatR8Unorm);
-	}
+	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
 	_metalTexture = _device->newTexture(d);
 	d->release();
 
@@ -192,7 +186,7 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 		++dirtyArea.bottom;
 	}
 
-	_metalTexture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0,_textureData.w, dirtyArea.height(), 1), 0, _textureData.getBasePtr(0, dirtyArea.top), _textureData.pitch);
+	_metalTexture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, dirtyArea.right /*_textureData.w*/, dirtyArea.height(), 1), 0, _textureData.getBasePtr(0, dirtyArea.top), _textureData.pitch);
 
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();

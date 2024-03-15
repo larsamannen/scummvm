@@ -84,6 +84,11 @@ bool iOSMetalGraphicsManager::setState(const iOSCommonGraphics::State &state) {
 }
 
 bool iOSMetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
+	mouse.x = CLIP<int16>(mouse.x, _activeArea.drawRect.left, _activeArea.drawRect.right);
+	mouse.y = CLIP<int16>(mouse.y, _activeArea.drawRect.top, _activeArea.drawRect.bottom);
+
+	setMousePosition(mouse.x, mouse.y);
+	mouse = convertWindowToVirtual(mouse.x, mouse.y);
 
 	return true;
 }

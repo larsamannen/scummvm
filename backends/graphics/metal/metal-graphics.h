@@ -131,10 +131,88 @@ private:
 	byte _gamePalette[3 * 256];
 	
 	Surface *_overlay;
-	//MTL::Texture *_overlayTexture;
-	
+
+	//
+	// Cursor
+	//
+
+	/**
+	 * Set up the correct cursor palette.
+	 */
+	void updateCursorPalette();
+
+	/**
+	 * The rendering surface for the mouse cursor.
+	 */
 	Surface *_cursor;
-	//MTL::Texture *_mouseTexture;
+
+	/**
+	 * The rendering surface for the opacity and inversion mask (if any)
+	 */
+	Surface *_cursorMask;
+
+	/**
+	 * The X offset for the cursor hotspot in unscaled game coordinates.
+	 */
+	int _cursorHotspotX;
+
+	/**
+	 * The Y offset for the cursor hotspot in unscaled game coordinates.
+	 */
+	int _cursorHotspotY;
+
+	/**
+	 * Recalculate the cursor scaling. Scaling is always done according to
+	 * the game screen.
+	 */
+	void recalculateCursorScaling();
+
+	/**
+	 * The X offset for the cursor hotspot in scaled game display area
+	 * coordinates.
+	 */
+	int _cursorHotspotXScaled;
+
+	/**
+	 * The Y offset for the cursor hotspot in scaled game display area
+	 * coordinates.
+	 */
+	int _cursorHotspotYScaled;
+
+	/**
+	 * The width of the cursor in scaled game display area coordinates.
+	 */
+	float _cursorWidthScaled;
+
+	/**
+	 * The height of the cursor in scaled game display area coordinates.
+	 */
+	float _cursorHeightScaled;
+
+	/**
+	 * The key color.
+	 */
+	uint32 _cursorKeyColor;
+
+	/**
+	 * If true, use key color.
+	 */
+	bool _cursorUseKey;
+
+	/**
+	 * Whether no cursor scaling should be applied.
+	 */
+	bool _cursorDontScale;
+
+	/**
+	 * Whether the special cursor palette is enabled.
+	 */
+	bool _cursorPaletteEnabled;
+
+	/**
+	 * The special cursor palette in case enabled.
+	 */
+	byte _cursorPalette[3 * 256];
 	
 	Renderer *_renderer;
 };
