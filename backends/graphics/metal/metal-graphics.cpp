@@ -243,7 +243,7 @@ void MetalGraphicsManager::updateScreen() {
 	if (drawCursor) {
 		_cursor->updateMetalTexture();
 		// This is just a haxx to get the cursor to scale correct. Need to check on scaling
-		_renderer->setCursorViewport((_cursorX + _cursorHotspotX) * 2, (_cursorY + _cursorHeightScaled - _cursorHotspotYScaled) * 2, _cursorWidthScaled*2, _cursorHeightScaled*2);
+		_renderer->setCursorViewport((_cursorX - _cursorHotspotX) * 2, (_cursorY - _cursorHeightScaled - _cursorHotspotYScaled)*2, _cursorWidthScaled*4, _cursorHeightScaled*4);
 	}
 	
 	CA::MetalDrawable *drawable = getNextDrawable();
