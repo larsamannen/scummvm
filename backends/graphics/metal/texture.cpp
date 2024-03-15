@@ -186,7 +186,7 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 		++dirtyArea.bottom;
 	}
 
-	_metalTexture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, dirtyArea.right /*_textureData.w*/, dirtyArea.height(), 1), 0, _textureData.getBasePtr(0, dirtyArea.top), _textureData.pitch);
+	_metalTexture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _textureData.w - dirtyArea.left, dirtyArea.height(), 1), 0, _textureData.getBasePtr(dirtyArea.left, dirtyArea.top), _textureData.pitch);
 
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();
