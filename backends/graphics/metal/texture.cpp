@@ -193,18 +193,23 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 }
 
 // _clut8Texture needs 8 bits internal precision, otherwise graphics glitches
-// can occur. GL_ALPHA does not have any internal precision requirements.
+// can occur.
 // However, in practice (according to fuzzie) it's 8bit. If we run into
 // problems, we need to switch to GL_R8 and GL_RED, but that is only supported
 // for ARB_texture_rg and GLES3+ (EXT_rexture_rg does not support GL_R8).
-TextureCLUT8GPU::TextureCLUT8GPU()
-	: _clut8Texture(nullptr),
-	  _paletteTexture(nullptr),
-	  //_target(new TextureTarget()), _clut8Pipeline(new CLUT8LookUpPipeline()),
-	  _clut8Vertices(), _clut8Data(), _userPixelData(), _palette(),
-	  _paletteDirty(false) {
+TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device) :
+	_device(device),
+	_clut8Texture(nullptr),
+	_paletteTexture(nullptr),
+	//_target(new TextureTarget()), _clut8Pipeline(new CLUT8LookUpPipeline()),
+	_clut8Vertices(), _clut8Data(), _userPixelData(), _palette(),
+	_paletteDirty(false) {
 	// Allocate space for 256 colors.
-	//_paletteTexture-> setSize(256, 1);
+	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+	d->setWidth(256);
+	d->setHeight(1);
+	_paletteTexture = _device->newTexture(d);
+	d->release();
 
 	// Setup pipeline.
 	//_clut8Pipeline->setFramebuffer(_target);
@@ -258,6 +263,11 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// Assure the texture can contain our user data.
 	//_clut8Texture.setSize(width, height);
 	//_target->setSize(width, height);
+	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+	d->setWidth(width);
+	d->setHeight(height);
+	_clut8Texture = _device->newTexture(d);
+	d->release();
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
@@ -269,7 +279,7 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// Create a sub-buffer for raw access.
 	_userPixelData = _clut8Data.getSubArea(Common::Rect(width, height));
 
-	// Setup structures for internal rendering to _glTexture.
+	// Setup structures for internal rendering to metal texture.
 	_clut8Vertices[0] = 0;
 	_clut8Vertices[1] = 0;
 
@@ -329,7 +339,8 @@ void TextureCLUT8GPU::updateMetalTexture() {
 
 	// Update CLUT8 texture if necessary.
 	if (Surface::isDirty()) {
-		//_clut8Texture.updateArea(getDirtyArea(), _clut8Data);
+		Common::Rect dirtyArea = getDirtyArea();
+		_clut8Texture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _clut8Data.w - dirtyArea.left, dirtyArea.height(), 1), 0, _clut8Data.getBasePtr(dirtyArea.left, dirtyArea.top), _clut8Data.pitch); //updateArea(getDirtyArea(), _clut8Data);
 		clearDirty();
 	}
 
@@ -345,6 +356,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 					   );
 
 		//_paletteTexture.updateArea(Common::Rect(256, 1), palSurface);
+		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), palSurface.pitch);
 		_paletteDirty = false;
 	}
 

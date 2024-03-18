@@ -201,7 +201,12 @@ void MetalGraphicsManager::beginGFXTransaction() {
 }
 
 OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
-	
+	_gameScreen = createSurface(Graphics::PixelFormat::createFormatCLUT8(), false, false);
+
+	assert(_gameScreen);
+	if (_gameScreen->hasPalette()) {
+		_gameScreen->setPalette(0, 256, _gamePalette);
+	}
 	
 	return OSystem::kTransactionSuccess;
 }
@@ -215,7 +220,7 @@ int16 MetalGraphicsManager::getWidth() const {
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
-	//_overlayTexture->replaceRegion(MTL::Region(x, y, 0, w, h, 1), 0, buf, pitch);
+	_gameScreen->copyRectToTexture(x, y, w, h, buf, pitch);
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
@@ -227,17 +232,18 @@ void MetalGraphicsManager::unlockScreen() {
 }
 
 void MetalGraphicsManager::fillScreen(uint32 col) {
-	
+
 }
 
 void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
-	
+
 }
 
 void MetalGraphicsManager::updateScreen() {
 	// Don't draw cursor if it's not visible or there is none
 	bool drawCursor = _cursorVisible && _cursor;
 
+	_gameScreen->updateMetalTexture();
 	_overlay->updateMetalTexture();
 	
 	if (drawCursor) {
@@ -247,7 +253,7 @@ void MetalGraphicsManager::updateScreen() {
 	}
 	
 	CA::MetalDrawable *drawable = getNextDrawable();
-	_renderer->draw(drawable, _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
+	_renderer->draw(drawable, _overlayVisible ? _overlay->getMetalTexture() : _gameScreen->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
 	drawable->release();
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
@@ -604,7 +610,7 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 						   
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
 	if (format.bytesPerPixel == 1) {
-		printf("FIXME");
+		return new TextureCLUT8GPU(_device);
 	}
 	return new Texture(_device, format);
 }
@@ -625,7 +631,7 @@ void MetalGraphicsManager::updateCursorPalette() {
 }
 
 void MetalGraphicsManager::recalculateCursorScaling() {
-	if (!_cursor) {// || !_gameScreen) {
+	if (!_cursor || !_gameScreen) {
 		return;
 	}
 

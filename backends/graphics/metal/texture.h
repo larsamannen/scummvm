@@ -200,7 +200,7 @@ private:
 
 class TextureCLUT8GPU : public Surface {
 public:
-	TextureCLUT8GPU();
+	TextureCLUT8GPU(MTL::Device *device);
 	~TextureCLUT8GPU() override;
 
 	void destroy() override;
@@ -235,6 +235,7 @@ public:
 private:
 	void lookUpColors();
 
+	MTL::Device *_device;
 	MTL::Texture *_clut8Texture;
 	MTL::Texture *_paletteTexture;
 
