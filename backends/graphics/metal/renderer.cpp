@@ -158,7 +158,7 @@ void Renderer::buildBuffers()
 	_indexBuffer = indexBuffer;
 }
 
-void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture)
+void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *gameTexture, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture)
 {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	
@@ -175,7 +175,12 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *overlayText
 
 	pEnc->setRenderPipelineState(_pipeLineState);
 	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
+
+	pEnc->setFragmentTexture(gameTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+
 	pEnc->setFragmentTexture(overlayTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+
 	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 	if (cursorTexture) {
 		pEnc->setViewport(*_cursorViewPort);
@@ -184,6 +189,32 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *overlayText
 	}
 	pEnc->endEncoding();
 	pCmd->presentDrawable(drawable);
+	pCmd->commit();
+	renderPassDescriptor->release();
+	pPool->release();
+}
+
+void Renderer::drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, float *vertices) {
+	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+	
+	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
+	
+	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
+	attachment->setLoadAction(MTL::LoadActionClear);
+	attachment->setStoreAction(MTL::StoreActionStore);
+	attachment->setTexture(outTexture);
+	
+	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
+
+	pEnc->setRenderPipelineState(_pipeLineState);
+	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
+
+	pEnc->setFragmentTexture(inTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+	
+	pEnc->endEncoding();
 	pCmd->commit();
 	renderPassDescriptor->release();
 	pPool->release();

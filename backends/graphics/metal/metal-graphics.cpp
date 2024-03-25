@@ -10,7 +10,7 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * but WITHOUT ANY WARR ANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -208,6 +208,8 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 		_gameScreen->setPalette(0, 256, _gamePalette);
 	}
 	
+	_gameScreen->allocate(_windowWidth, _windowHeight);
+	
 	return OSystem::kTransactionSuccess;
 }
 
@@ -249,11 +251,11 @@ void MetalGraphicsManager::updateScreen() {
 	if (drawCursor) {
 		_cursor->updateMetalTexture();
 		// This is just a haxx to get the cursor to scale correct. Need to check on scaling
-		_renderer->setCursorViewport((_cursorX - _cursorHotspotX) * 2, (_cursorY - _cursorHeightScaled - _cursorHotspotYScaled)*2, _cursorWidthScaled*4, _cursorHeightScaled*4);
+		_renderer->setCursorViewport((_cursorX - _cursorHotspotX), (_cursorY - _cursorHeightScaled - _cursorHotspotYScaled), _cursorWidthScaled, _cursorHeightScaled);
 	}
 	
 	CA::MetalDrawable *drawable = getNextDrawable();
-	_renderer->draw(drawable, _overlayVisible ? _overlay->getMetalTexture() : _gameScreen->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
+	_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
 	drawable->release();
 }
 void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
@@ -268,6 +270,11 @@ void MetalGraphicsManager::clearFocusRectangle() {
 }
 
 void MetalGraphicsManager::showOverlay(bool inGUI) {
+	if (_overlayVisible && _overlayInGUI == inGUI) {
+		return;
+	}
+
+	WindowedGraphicsManager::showOverlay(inGUI);
 	
 }
 void MetalGraphicsManager::hideOverlay() {
@@ -465,6 +472,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 		// texture.
 		if (!_cursorDontScale)
 			_cursor->fill(keycolor);
+		
 		_cursor->copyRectToTexture(topLeftCoord.x, topLeftCoord.y, w, h, buf, w * inputFormat.bytesPerPixel);
 
 		if (mask) {

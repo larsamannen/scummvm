@@ -81,6 +81,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	UILongPressGestureRecognizer *twoFingerLongPressGesture;
 	CGPoint touchesBegan;
 #endif
+	CGFloat _frameWidth;
+	CGFloat _frameHeight;
 }
 
 + (Class)layerClass {
@@ -94,7 +96,9 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 // called in at least iOS 9.3.5.
 - (void)layoutSublayersOfLayer:(CAMetalLayer *)layer {
 	if (layer == self.layer) {
-		[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
+		if (layer.frame.size.width != _frameWidth ||
+			layer.frame.size.height != _frameHeight)
+			[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
 	}
 	[super layoutSublayersOfLayer:layer];
 }
@@ -344,7 +348,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 - (id)initWithFrame:(struct CGRect)frame {
 	self = [super initWithFrame: frame];
-
+	_frameWidth = frame.size.width;
+	_frameHeight = frame.size.height;
 	_backgroundSaveStateTask = UIBackgroundTaskInvalid;
 #if TARGET_OS_IOS
 	_currentOrientation = UIInterfaceOrientationUnknown;

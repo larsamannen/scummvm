@@ -24,6 +24,7 @@
 
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
+#include "backends/graphics/metal/renderer.h"
 
 #include "common/rect.h"
 
@@ -238,9 +239,12 @@ private:
 	MTL::Device *_device;
 	MTL::Texture *_clut8Texture;
 	MTL::Texture *_paletteTexture;
+	MTL::Texture *_clut8RenderedTexture;
 
 	//TextureTarget *_target;
 	//CLUT8LookUpPipeline *_clut8Pipeline;
+	Renderer *_renderer;
+
 
 	float _clut8Vertices[4*2];
 

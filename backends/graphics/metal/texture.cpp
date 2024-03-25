@@ -203,7 +203,7 @@ TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device) :
 	_paletteTexture(nullptr),
 	//_target(new TextureTarget()), _clut8Pipeline(new CLUT8LookUpPipeline()),
 	_clut8Vertices(), _clut8Data(), _userPixelData(), _palette(),
-	_paletteDirty(false) {
+	_paletteDirty(false), _renderer(new Renderer(device)) {
 	// Allocate space for 256 colors.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(256);
@@ -223,10 +223,15 @@ TextureCLUT8GPU::~TextureCLUT8GPU() {
 	_clut8Data.free();
 	if (_clut8Texture)
 		_clut8Texture->release();
+	if (_clut8RenderedTexture)
+		_clut8RenderedTexture->release();
+	delete _renderer;
 }
 
 void TextureCLUT8GPU::destroy() {
 	_clut8Texture->release();
+	_clut8RenderedTexture->release();
+
 	//_clut8Texture.destroy();
 	//_paletteTexture.destroy();
 	//_target->destroy();
@@ -267,6 +272,9 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	d->setWidth(width);
 	d->setHeight(height);
 	_clut8Texture = _device->newTexture(d);
+	
+	d->setUsage(MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead);
+	_clut8RenderedTexture = _device->newTexture(d);
 	d->release();
 
 	// In case the needed texture dimension changed we will reinitialize the
@@ -331,7 +339,7 @@ void TextureCLUT8GPU::setPalette(uint start, uint colors, const byte *palData) {
 }
 
 const MTL::Texture *TextureCLUT8GPU::getMetalTexture() const {
-	return _clut8Texture;
+	return _clut8RenderedTexture;
 }
 
 void TextureCLUT8GPU::updateMetalTexture() {
@@ -340,7 +348,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 	// Update CLUT8 texture if necessary.
 	if (Surface::isDirty()) {
 		Common::Rect dirtyArea = getDirtyArea();
-		_clut8Texture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _clut8Data.w - dirtyArea.left, dirtyArea.height(), 1), 0, _clut8Data.getBasePtr(dirtyArea.left, dirtyArea.top), _clut8Data.pitch); //updateArea(getDirtyArea(), _clut8Data);
+		_clut8Texture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _clut8Data.w - dirtyArea.left, dirtyArea.height(), 1), 0, _clut8Data.getBasePtr(dirtyArea.left, dirtyArea.top), _clut8Data.pitch*4); //updateArea(getDirtyArea(), _clut8Data);
 		clearDirty();
 	}
 
@@ -356,7 +364,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 					   );
 
 		//_paletteTexture.updateArea(Common::Rect(256, 1), palSurface);
-		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), palSurface.pitch);
+		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), palSurface.pitch*4);
 		_paletteDirty = false;
 	}
 
@@ -371,7 +379,7 @@ void TextureCLUT8GPU::lookUpColors() {
 	//_clut8Pipeline->activate();
 
 	// Do color look up.
-	//_clut8Pipeline->drawTexture(_clut8Texture, _clut8Vertices);
+	_renderer->drawTexture(_clut8Texture, _clut8RenderedTexture, _clut8Vertices);
 
 	//_clut8Pipeline->deactivate();
 }

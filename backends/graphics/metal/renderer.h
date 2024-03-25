@@ -53,7 +53,8 @@ public:
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw(CA::MetalDrawable* drawable, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture);
+	void draw(CA::MetalDrawable* drawable, const MTL::Texture *gameTexture, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture);
+	void drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, float *vertices);
 	void setCursorViewport(int x, int y, int w, int h);
 	
 private:
