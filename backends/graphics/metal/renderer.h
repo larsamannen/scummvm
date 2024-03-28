@@ -54,14 +54,14 @@ public:
 	void buildShaders();
 	void buildBuffers();
 	void draw(CA::MetalDrawable* drawable, const MTL::Texture *gameTexture, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture);
-	void drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, float *vertices);
+	void drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, const MTL::Texture *paletteTexture);
 	void setCursorViewport(int x, int y, int w, int h);
 	
 private:
 	MTL::Device *_device;
 	MTL::CommandQueue *_commandQueue;
 	MTL::RenderPipelineState *_pipeLineState;
-	MTL::RenderPipelineState *_renderToTextureRenderPipeline;
+	MTL::RenderPipelineState *_clut8PipeLineState;
 	MTL::Buffer* _vertexPositionsBuffer;
 	MTL::Buffer* _indexBuffer;
 	MTL::Viewport *_cursorViewPort;

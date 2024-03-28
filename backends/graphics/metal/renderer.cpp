@@ -49,41 +49,56 @@ void Renderer::buildShaders()
 	using NS::StringEncoding::UTF8StringEncoding;
 	
 	const char* shaderSrc = R"(
-  #include <metal_stdlib>
-  #include <simd/simd.h>
-  using namespace metal;
+	#include <metal_stdlib>
+	#include <simd/simd.h>
+	using namespace metal;
   
-  struct Vertex
-  {
-   float4 position [[attribute(0)]];
-   float2 texCoord [[attribute(1)]];
-  };
+	struct Vertex
+	{
+		float4 position   [[attribute(0)]];
+		float2 texCoord   [[attribute(1)]];
+	};
   
-  struct VertexOut
-  {
-   float4 position [[position]];
-   float2 texCoord;
-  };
+	struct VertexOut
+	{
+		float4 position [[position]];
+		float2 texCoord;
+	};
   
-  vertex VertexOut vertexFunction(Vertex in [[stage_in]])
-  {
-   VertexOut out;
-   out.position = in.position;
-   out.texCoord = in.texCoord;
-   return out;
-  }
+	vertex VertexOut vertexFunction(Vertex in [[stage_in]])
+	{
+		VertexOut out;
+		out.position = in.position;
+		out.texCoord = in.texCoord;
+		return out;
+	}
   
-  fragment float4 fragmentFunction(VertexOut in [[stage_in]],
-		   texture2d<float> colorTexture [[texture(0)]])
-  {
-   constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
-   // Sample the texture to obtain a color
-   float4 color = colorTexture.sample(colorSampler, in.texCoord);
+	fragment float4 fragmentFunction(VertexOut in [[stage_in]],
+		texture2d<float> colorTexture [[texture(0)]])
+	{
+		constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
+		// Sample the texture to obtain a color
+		float4 color = colorTexture.sample(colorSampler, in.texCoord);
   
-   // return the color of the texture
-   return color;
-  }
-  )";
+		// return the color of the texture
+		return color;
+	}
+
+	fragment float4 clut8FragmentFunction(VertexOut in [[stage_in]],
+		texture2d<float> colorTexture [[texture(0)]],
+		texture2d<float> palette [[texture(1)]])
+	{
+		constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
+ 
+		const float adjustFactor = 255.0 / 256.0 + 1.0 / (2.0 * 256.0);
+ 
+		// Sample the texture to obtain a color
+		float4 index = colorTexture.sample(colorSampler, in.texCoord);
+		float4 color = palette.sample(colorSampler, float2(index.r * adjustFactor, 0.0f));
+
+		// return the color of the texture
+		return color;
+	})";
 	
 	NS::Error* error = nullptr;
 	MTL::Library* library = _device->newLibrary( NS::String::string(shaderSrc, UTF8StringEncoding), nullptr, &error );
@@ -95,6 +110,7 @@ void Renderer::buildShaders()
 	
 	MTL::Function* vertexFunction = library->newFunction( NS::String::string("vertexFunction", UTF8StringEncoding) );
 	MTL::Function* fragmentFunction = library->newFunction( NS::String::string("fragmentFunction", UTF8StringEncoding) );
+	MTL::Function* clut8FragmentFunction = library->newFunction( NS::String::string("clut8FragmentFunction", UTF8StringEncoding) );
 	
 	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
 	vertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
@@ -112,10 +128,18 @@ void Renderer::buildShaders()
 	pipelineDescriptor->setFragmentFunction(fragmentFunction);
 	pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
 	
-	// Alpha Blending
+	MTL::RenderPipelineDescriptor* clut8PipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+	clut8PipelineDescriptor->setVertexFunction(vertexFunction);
+	clut8PipelineDescriptor->setFragmentFunction(clut8FragmentFunction);
+	clut8PipelineDescriptor->setVertexDescriptor(vertexDescriptor);
+	
 	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = pipelineDescriptor->colorAttachments()->object(0);
 	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+	
+	MTL::RenderPipelineColorAttachmentDescriptor *clut8RenderbufferAttachment = clut8PipelineDescriptor->colorAttachments()->object(0);
+	clut8RenderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 
+	// Alpha Blending
 	renderbufferAttachment->setBlendingEnabled(true);
 	renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
 	renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
@@ -130,9 +154,16 @@ void Renderer::buildShaders()
 		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
 		assert( false );
 	}
+	_clut8PipeLineState = _device->newRenderPipelineState( clut8PipelineDescriptor, &error );
+	if (!_clut8PipeLineState)
+	{
+		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
+		assert( false );
+	}
 	
 	vertexFunction->release();
 	fragmentFunction->release();
+	clut8FragmentFunction->release();
 	vertexDescriptor->release();
 	pipelineDescriptor->release();
 	library->release();
@@ -194,7 +225,7 @@ void Renderer::draw(CA::MetalDrawable *drawable, const MTL::Texture *gameTexture
 	pPool->release();
 }
 
-void Renderer::drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, float *vertices) {
+void Renderer::drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, const MTL::Texture *paletteTexture) {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	
 	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
@@ -208,10 +239,11 @@ void Renderer::drawTexture(const MTL::Texture *inTexture, const MTL::Texture *ou
 	
 	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
 
-	pEnc->setRenderPipelineState(_pipeLineState);
+	pEnc->setRenderPipelineState(_clut8PipeLineState);
 	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
 
 	pEnc->setFragmentTexture(inTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	pEnc->setFragmentTexture(paletteTexture, 1); // This texture can now be referred to by index with the attribute [[texture(1)]] in a shader function’s parameter list.
 	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 	
 	pEnc->endEncoding();
