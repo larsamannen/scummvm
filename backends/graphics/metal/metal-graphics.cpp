@@ -609,11 +609,19 @@ void MetalGraphicsManager::setCursorPalette(const byte *colors, uint start, uint
 
 // PaletteManager
 void MetalGraphicsManager::setPalette(const byte *colors, uint start, uint num) {
-	
+	assert(_gameScreen->hasPalette());
+
+	memcpy(_gamePalette + start * 3, colors, num * 3);
+	_gameScreen->setPalette(start, num, colors);
+
+	// We might need to update the cursor palette here.
+	updateCursorPalette();
 }
 
 void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const {
-	
+	assert(_gameScreen->hasPalette());
+
+	memcpy(colors, _gamePalette + start * 3, num * 3);
 }
 						   
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {

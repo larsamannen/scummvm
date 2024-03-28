@@ -126,7 +126,6 @@ void Texture::allocate(uint width, uint height) {
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
-	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
 	_metalTexture = _device->newTexture(d);
 	d->release();
 
@@ -274,7 +273,7 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
 	d->setHeight(height);
-	d->setPixelFormat(MTL::PixelFormatR8Unorm_sRGB);
+	d->setPixelFormat(MTL::PixelFormatR8Unorm);
 	_clut8Texture = _device->newTexture(d);
 
 	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
