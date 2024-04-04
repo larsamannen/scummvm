@@ -70,8 +70,8 @@ void iOSMetalGraphicsManager::notifyResize(const int width, const int height) {
 iOSCommonGraphics::State iOSMetalGraphicsManager::getState() const {
 	iOSCommonGraphics::State state;
 
-	state.screenWidth   = 0;
-	state.screenHeight  = 0;
+	state.screenWidth   = getWidth();
+	state.screenHeight  = getHeight();
 	state.aspectRatio   = getFeatureState(OSystem::kFeatureAspectRatioCorrection);
 	state.cursorPalette = getFeatureState(OSystem::kFeatureCursorPalette);
 #ifdef USE_RGB_COLOR
@@ -80,7 +80,17 @@ iOSCommonGraphics::State iOSMetalGraphicsManager::getState() const {
 	return state;}
 
 bool iOSMetalGraphicsManager::setState(const iOSCommonGraphics::State &state) {
-	return false;
+	beginGFXTransaction();
+
+#ifdef USE_RGB_COLOR
+	initSize(state.screenWidth, state.screenHeight, &state.pixelFormat);
+#else
+	initSize(state.screenWidth, state.screenHeight, nullptr);
+#endif
+	setFeatureState(OSystem::kFeatureAspectRatioCorrection, state.aspectRatio);
+	setFeatureState(OSystem::kFeatureCursorPalette, state.cursorPalette);
+
+	return endGFXTransaction() == OSystem::kTransactionSuccess;
 }
 
 bool iOSMetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
@@ -88,6 +98,7 @@ bool iOSMetalGraphicsManager::notifyMousePosition(Common::Point &mouse) {
 	mouse.y = CLIP<int16>(mouse.y, _activeArea.drawRect.top, _activeArea.drawRect.bottom);
 
 	setMousePosition(mouse.x, mouse.y);
+	
 	mouse = convertWindowToVirtual(mouse.x, mouse.y);
 
 	return true;

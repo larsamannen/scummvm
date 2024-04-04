@@ -218,8 +218,13 @@ endif
 
 ifdef USE_METAL
 MODULE_OBJS += \
+	graphics/metal/pipelines/clut8.o \
+	graphics/metal/pipelines/pipeline.o \
+	graphics/metal/pipelines/shader.o \
+	graphics/metal/framebuffer.o \
 	graphics/metal/metal-graphics.o \
 	graphics/metal/renderer.o \
+	graphics/metal/shader.o \
 	graphics/metal/texture.o
 endif
 

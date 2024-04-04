@@ -25,6 +25,8 @@
 #include "backends/graphics/windowed.h"
 #include "backends/graphics/metal/renderer.h"
 #include "backends/graphics/metal/texture.h"
+#include "backends/graphics/metal/framebuffer.h"
+
 
 namespace CA {
 class MetalDrawable;
@@ -35,6 +37,10 @@ namespace MTL {
 class Device;
 class Texture;
 }
+
+enum {
+	GFX_METAL = 0
+};
 
 namespace Metal {
 
@@ -68,7 +74,6 @@ public:
 #endif
 	
 	void initSize(uint width, uint height, const Graphics::PixelFormat *format = NULL) override;
-	void initSizeHint(const Graphics::ModeList &modes) override;
 	int getScreenChangeID() const override;
 	
 	void beginGFXTransaction() override;
@@ -83,7 +88,6 @@ public:
 	void fillScreen(uint32 col) override;
 	void fillScreen(const Common::Rect &r, uint32 col) override;
 	void updateScreen() override;
-	void setShakePos(int shakeXOffset, int shakeYOffset) override;
 	void setFocusRectangle(const Common::Rect& rect) override;
 	void clearFocusRectangle() override;
 	
@@ -96,7 +100,6 @@ public:
 	void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) override;
 	int16 getOverlayHeight() const override;
 	int16 getOverlayWidth() const override;
-	float getHiDPIScreenFactor() const override;
 	
 	bool showMouse(bool visible) override;
 	void warpMouse(int x, int y) override;
@@ -110,6 +113,59 @@ public:
 protected:
 	Surface *createSurface(const Graphics::PixelFormat &format, bool wantAlpha = false, bool wantScaler = false, bool wantMask = false);
 
+	//
+	// Transaction support
+	//
+	struct VideoState {
+		VideoState() : valid(false), gameWidth(0), gameHeight(0),
+#ifdef USE_RGB_COLOR
+			gameFormat(),
+#endif
+			aspectRatioCorrection(false), graphicsMode(GFX_METAL), filtering(true),
+			scalerIndex(0), scaleFactor(1), shader() {
+		}
+
+		bool valid;
+
+		uint gameWidth, gameHeight;
+#ifdef USE_RGB_COLOR
+		Graphics::PixelFormat gameFormat;
+#endif
+		bool aspectRatioCorrection;
+		int graphicsMode;
+		bool filtering;
+
+		uint scalerIndex;
+		int scaleFactor;
+
+		Common::Path shader;
+
+		bool operator==(const VideoState &right) {
+			return gameWidth == right.gameWidth && gameHeight == right.gameHeight
+#ifdef USE_RGB_COLOR
+				&& gameFormat == right.gameFormat
+#endif
+				&& aspectRatioCorrection == right.aspectRatioCorrection
+				&& graphicsMode == right.graphicsMode
+				&& filtering == right.filtering
+				&& shader == right.shader;
+		}
+
+		bool operator!=(const VideoState &right) {
+			return !(*this == right);
+		}
+	};
+
+	/**
+	 * The currently set up video state.
+	 */
+	VideoState _currentState;
+
+	/**
+	 * The old video state used when doing a transaction rollback.
+	 */
+	VideoState _oldState;
+	
 private:
 	MTL::Device *_device;
 	
@@ -220,6 +276,13 @@ private:
 	Common::Point _shakeOffsetScaled;
 	
 	Renderer *_renderer;
+
+	/**
+	 * The current screen change ID.
+	 */
+	int _screenChangeID;
+	
+	Pipeline *_pipeline;
 };
 
 } // end namespace Metal

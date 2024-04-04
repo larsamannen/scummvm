@@ -25,10 +25,10 @@
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
 #include "backends/graphics/metal/renderer.h"
-
 #include "common/rect.h"
 
 namespace MTL {
+class Buffer;
 class Device;
 class Texture;
 }
@@ -199,6 +199,9 @@ private:
 	Graphics::Surface _userPixelData;
 };
 
+class TextureTarget;
+class CLUT8LookUpPipeline;
+
 class TextureCLUT8GPU : public Surface {
 public:
 	TextureCLUT8GPU(MTL::Device *device);
@@ -239,17 +242,15 @@ private:
 	MTL::Device *_device;
 	MTL::Texture *_clut8Texture;
 	MTL::Texture *_paletteTexture;
-	MTL::Texture *_clut8RenderedTexture;
-
-	//TextureTarget *_target;
-	//CLUT8LookUpPipeline *_clut8Pipeline;
+	TextureTarget *_target;
+	CLUT8LookUpPipeline *_clut8Pipeline;
 	Renderer *_renderer;
-
-
-	float _clut8Vertices[4*2];
 
 	Graphics::Surface _clut8Data;
 	Graphics::Surface _userPixelData;
+	
+	MTL::Buffer *_vertexPositionsBuffer;
+	MTL::Buffer *_indexBuffer;
 
 	byte _palette[4 * 256];
 	bool _paletteDirty;

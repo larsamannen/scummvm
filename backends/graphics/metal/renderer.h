@@ -27,11 +27,12 @@ class MetalDrawable;
 }
 
 namespace MTL {
-class Device;
-class Texture;
-class CommandQueue;
-class RenderPipelineState;
 class Buffer;
+class CommandBuffer;
+class CommandQueue;
+class Device;
+class RenderPipelineState;
+class Texture;
 class Viewport;
 }
 #include <simd/simd.h>
@@ -59,6 +60,7 @@ public:
 	
 private:
 	MTL::Device *_device;
+	MTL::CommandBuffer *_commandBuffer;
 	MTL::CommandQueue *_commandQueue;
 	MTL::RenderPipelineState *_pipeLineState;
 	MTL::RenderPipelineState *_clut8PipeLineState;

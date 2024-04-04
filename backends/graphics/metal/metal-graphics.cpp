@@ -26,28 +26,29 @@
 #define MTL_PRIVATE_IMPLEMENTATION
 
 #include "backends/graphics/metal/metal-graphics.h"
+#include "backends/graphics/metal/pipelines/pipeline.h"
+#include "backends/graphics/metal/pipelines/shader.h"
+#include "backends/graphics/metal/shader.h"
 #include "common/translation.h"
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
 namespace Metal {
 
-enum {
-	GFX_METAL = 0
-};
-
 MetalGraphicsManager::MetalGraphicsManager() :
-	_defaultFormat(), _defaultFormatAlpha(),
+	_pipeline(nullptr), _currentState(), _oldState(), _defaultFormat(), _defaultFormatAlpha(),
 	_gameScreen(nullptr), _overlay(nullptr), _cursor(nullptr), _cursorMask(nullptr),
 	_cursorHotspotX(0), _cursorHotspotY(0),
 	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
-	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false)
+	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false),
+	_screenChangeID(0)
 {
 	_cursorX = 0;
 	_cursorY = 0;
 	_forceRedraw = false;
 	_windowWidth = 0;
 	_windowHeight = 0;
+	memset(_gamePalette, 0, sizeof(_gamePalette));
 }
 
 MetalGraphicsManager::~MetalGraphicsManager()
@@ -57,6 +58,7 @@ MetalGraphicsManager::~MetalGraphicsManager()
 	delete _cursor;
 	delete _cursorMask;
 	delete _renderer;
+	delete _pipeline;
 }
 
 void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
@@ -66,6 +68,8 @@ void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
 	_device = device;
 	_defaultFormat = defaultFormat;
 	_defaultFormatAlpha = defaultFormatAlpha;
+	ShaderMan.notifyCreate();
+	_pipeline = new ShaderPipeline(ShaderMan.query(ShaderManager::kDefault));
 	_renderer = new Renderer(_device);
 }
 
@@ -76,17 +80,33 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
-	if (_overlay)
+	uint overlayWidth = width;
+	uint overlayHeight = height;
+	
+	// HACK: We limit the minimal overlay size to 256x200, which is the
+	// minimum of the dimensions of the two resolutions 256x240 (NES) and
+	// 320x200 (many DOS games use this). This hopefully assure that our
+	// GUI has working layouts.
+	overlayWidth = MAX<uint>(overlayWidth, 256);
+	overlayHeight = MAX<uint>(overlayHeight, 200);
+	
+	if (!_overlay || _overlay->getFormat() != _defaultFormatAlpha) {
 		delete _overlay;
+		_overlay = nullptr;
+		
+		_overlay = createSurface(_defaultFormatAlpha);
+		assert(_overlay);
+	}
+	_overlay->allocate(overlayWidth, overlayHeight);
+	_overlay->fill(0);
 	
-	_overlay = createSurface(_defaultFormatAlpha);
-	_overlay->allocate(width, height);
-	
-	// Re-setup the scaling for the screen
+	// Re-setup the scaling and filtering for the screen and cursor
 	recalculateDisplayAreas();
-
+	recalculateCursorScaling();
+	//updateLinearFiltering();
+	
 	// Something changed, so update the screen change ID.
-	//_screenChangeCount++;
+	++_screenChangeID;
 }
 
 // GraphicsManager
@@ -130,8 +150,7 @@ const OSystem::GraphicsMode *MetalGraphicsManager::getSupportedGraphicsModes() c
 
 #ifdef USE_RGB_COLOR
 Graphics::PixelFormat MetalGraphicsManager::getScreenFormat() const {
-	// TODO
-	return _defaultFormatAlpha;
+	return _currentState.gameFormat;
 }
 
 Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() const {
@@ -154,13 +173,13 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 	// RGBA5551
 	formats.push_back(Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
 	// RGBA4444
-	//formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
+	formats.push_back(Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0));
 	
 	// These formats are not natively supported by OpenGL ES implementations,
 	// we convert the pixel format internally.
 #ifdef SCUMM_LITTLE_ENDIAN
 	// RGBA8888
-	//formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
 #else
 	// ABGR8888
 	formats.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
@@ -175,32 +194,206 @@ Common::List<Graphics::PixelFormat> MetalGraphicsManager::getSupportedFormats() 
 #endif
 
 bool MetalGraphicsManager::setGraphicsMode(int mode, uint flags) {
+	_currentState.graphicsMode = mode;
 	return true;
 }
 
 int MetalGraphicsManager::getGraphicsMode() const {
-	return 0;
+	return _currentState.graphicsMode;
 }
 
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
-	const Graphics::PixelFormat pixelFormat = format ? *format : Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-	_defaultFormatAlpha = pixelFormat;
-	handleResize(width, height);
-}
+	Graphics::PixelFormat requestedFormat;
+#ifdef USE_RGB_COLOR
+	if (!format) {
+		requestedFormat = Graphics::PixelFormat::createFormatCLUT8();
+	} else {
+		requestedFormat = *format;
+	}
+	_currentState.gameFormat = requestedFormat;
+#endif
 
-void MetalGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
-	
+	_currentState.gameWidth = width;
+	_currentState.gameHeight = height;
+	_gameScreenShakeXOffset = 0;
+	_gameScreenShakeYOffset = 0;
+	handleResizeImpl(width, height);
 }
 
 int MetalGraphicsManager::getScreenChangeID() const {
-	return 0;
+	return _screenChangeID;
 }
 
 void MetalGraphicsManager::beginGFXTransaction() {
+	// Start a transaction.
+	_oldState = _currentState;
 	
 }
 
 OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
+	
+	bool setupNewGameScreen = false;
+	if (   _oldState.gameWidth  != _currentState.gameWidth
+		|| _oldState.gameHeight != _currentState.gameHeight) {
+		setupNewGameScreen = true;
+	}
+
+#ifdef USE_RGB_COLOR
+	if (_oldState.gameFormat != _currentState.gameFormat) {
+		setupNewGameScreen = true;
+	}
+
+	// Check whether the requested format can actually be used.
+	Common::List<Graphics::PixelFormat> supportedFormats = getSupportedFormats();
+	// In case the requested format is not usable we will fall back to CLUT8.
+	if (Common::find(supportedFormats.begin(), supportedFormats.end(), _currentState.gameFormat) == supportedFormats.end()) {
+		_currentState.gameFormat = Graphics::PixelFormat::createFormatCLUT8();
+		//transactionError |= OSystem::kTransactionFormatNotSupported;
+	}
+#endif
+#if 0
+#ifdef USE_SCALERS
+	if (_oldState.scaleFactor != _currentState.scaleFactor ||
+		_oldState.scalerIndex != _currentState.scalerIndex) {
+		setupNewGameScreen = true;
+	}
+#endif
+
+	do {
+		const uint desiredAspect = getDesiredGameAspectRatio();
+		const uint requestedWidth  = _currentState.gameWidth;
+		const uint requestedHeight = intToFrac(requestedWidth) / desiredAspect;
+
+		// Consider that shader is OK by default
+		// If loadVideoMode fails, we won't consider that shader was the error
+		bool shaderOK = true;
+
+		if (!loadVideoMode(requestedWidth, requestedHeight,
+#ifdef USE_RGB_COLOR
+						   _currentState.gameFormat
+#else
+						   Graphics::PixelFormat::createFormatCLUT8()
+#endif
+						  )
+			|| !(shaderOK = loadShader(_currentState.shader))
+		   // HACK: This is really nasty but we don't have any guarantees of
+		   // a context existing before, which means we don't know the maximum
+		   // supported texture size before this. Thus, we check whether the
+		   // requested game resolution is supported over here.
+		   || (   _currentState.gameWidth  > (uint)OpenGLContext.maxTextureSize
+			   || _currentState.gameHeight > (uint)OpenGLContext.maxTextureSize)) {
+			if (_transactionMode == kTransactionActive) {
+				// Try to setup the old state in case its valid and is
+				// actually different from the new one.
+				if (_oldState.valid && _oldState != _currentState) {
+					// Give some hints on what failed to set up.
+					if (   _oldState.gameWidth  != _currentState.gameWidth
+						|| _oldState.gameHeight != _currentState.gameHeight) {
+						transactionError |= OSystem::kTransactionSizeChangeFailed;
+					}
+
+#ifdef USE_RGB_COLOR
+					if (_oldState.gameFormat != _currentState.gameFormat) {
+						transactionError |= OSystem::kTransactionFormatNotSupported;
+					}
+#endif
+
+					if (_oldState.aspectRatioCorrection != _currentState.aspectRatioCorrection) {
+						transactionError |= OSystem::kTransactionAspectRatioFailed;
+					}
+
+					if (_oldState.graphicsMode != _currentState.graphicsMode) {
+						transactionError |= OSystem::kTransactionModeSwitchFailed;
+					}
+
+					if (_oldState.filtering != _currentState.filtering) {
+						transactionError |= OSystem::kTransactionFilteringFailed;
+					}
+#ifdef USE_SCALERS
+					if (_oldState.scalerIndex != _currentState.scalerIndex) {
+						transactionError |= OSystem::kTransactionModeSwitchFailed;
+					}
+#endif
+
+#if !USE_FORCED_GLES
+					if (_oldState.shader != _currentState.shader) {
+						transactionError |= OSystem::kTransactionShaderChangeFailed;
+					}
+#endif
+					// Roll back to the old state.
+					_currentState = _oldState;
+					_transactionMode = kTransactionRollback;
+
+					// Try to set up the old state.
+					continue;
+				}
+				// If the shader failed and we had not a valid old state, try to unset the shader and do it again
+				if (!shaderOK && !_currentState.shader.empty()) {
+					_currentState.shader.clear();
+					_transactionMode = kTransactionRollback;
+					continue;
+				}
+			}
+
+			// DON'T use error(), as this tries to bring up the debug
+			// console, which WON'T WORK now that we might no have a
+			// proper screen.
+			warning("OpenGLGraphicsManager::endGFXTransaction: Could not load any graphics mode!");
+			g_system->quit();
+		}
+
+		// In case we reach this we have a valid state, yay.
+		_transactionMode = kTransactionNone;
+		_currentState.valid = true;
+	} while (_transactionMode == kTransactionRollback);
+#endif
+	if (setupNewGameScreen) {
+		delete _gameScreen;
+		_gameScreen = nullptr;
+
+		bool wantScaler = _currentState.scaleFactor > 1;
+
+#ifdef USE_RGB_COLOR
+		_gameScreen = createSurface(_currentState.gameFormat, false, wantScaler);
+#else
+		_gameScreen = createSurface(Graphics::PixelFormat::createFormatCLUT8(), false, wantScaler);
+#endif
+		assert(_gameScreen);
+		if (_gameScreen->hasPalette()) {
+			_gameScreen->setPalette(0, 256, _gamePalette);
+		}
+
+#ifdef USE_SCALERS
+		if (wantScaler) {
+			_gameScreen->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
+		}
+#endif
+
+		_gameScreen->allocate(_currentState.gameWidth, _currentState.gameHeight);
+		// We fill the screen to all black or index 0 for CLUT8.
+#ifdef USE_RGB_COLOR
+		if (_currentState.gameFormat.bytesPerPixel == 1) {
+			_gameScreen->fill(0);
+		} else {
+			_gameScreen->fill(_gameScreen->getSurface()->format.RGBToColor(0, 0, 0));
+		}
+#else
+		_gameScreen->fill(0);
+#endif
+	}
+	// Update our display area and cursor scaling. This makes sure we pick up
+	// aspect ratio correction and game screen changes correctly.
+	recalculateDisplayAreas();
+	recalculateCursorScaling();
+	//updateLinearFiltering();
+
+	// Something changed, so update the screen change ID.
+	++_screenChangeID;
+
+	// Since transactionError is a ORd list of TransactionErrors this is
+	// clearly wrong. But our API is simply broken.
+	//return (OSystem::TransactionError)transactionError;
+#if 0
 	_gameScreen = createSurface(Graphics::PixelFormat::createFormatCLUT8(), false, false);
 
 	assert(_gameScreen);
@@ -209,16 +402,16 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 	}
 	
 	_gameScreen->allocate(_windowWidth, _windowHeight);
-	
+#endif
 	return OSystem::kTransactionSuccess;
 }
 
 int16 MetalGraphicsManager::getHeight() const {
-	return _windowHeight;//_overlayTexture->height();
+	return _currentState.gameHeight;
 }
 
 int16 MetalGraphicsManager::getWidth() const {
-	return _windowWidth;//_overlayTexture->width();
+	return _currentState.gameWidth;
 }
 
 void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) {
@@ -234,11 +427,11 @@ void MetalGraphicsManager::unlockScreen() {
 }
 
 void MetalGraphicsManager::fillScreen(uint32 col) {
-
+	_gameScreen->fill(col);
 }
 
 void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
-
+	_gameScreen->fill(r, col);
 }
 
 void MetalGraphicsManager::updateScreen() {
@@ -258,9 +451,7 @@ void MetalGraphicsManager::updateScreen() {
 	_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
 	drawable->release();
 }
-void MetalGraphicsManager::setShakePos(int shakeXOffset, int shakeYOffset) {
-	
-}
+
 void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {
 	
 }
@@ -286,15 +477,24 @@ bool MetalGraphicsManager::isOverlayVisible() const {
 }
 
 Graphics::PixelFormat MetalGraphicsManager::getOverlayFormat() const {
-	return _defaultFormatAlpha;
+	return _overlay->getFormat();
 }
 
 void MetalGraphicsManager::clearOverlay() {
-	
+	_overlay->fill(0);
 }
 
 void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
-	
+	const Graphics::Surface *overlayData = _overlay->getSurface();
+
+	assert(surface.w >= overlayData->w);
+	assert(surface.h >= overlayData->h);
+	assert(surface.format.bytesPerPixel == overlayData->format.bytesPerPixel);
+
+	const byte *src = (const byte *)overlayData->getPixels();
+	byte *dst = (byte *)surface.getPixels();
+	// LARs TODO
+	//Graphics::copyBlit(dst, src, surface.pitch, overlayData->pitch, overlayData->w, overlayData->h, overlayData->format.bytesPerPixel);
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
@@ -313,10 +513,6 @@ int16 MetalGraphicsManager::getOverlayWidth() const {
 		return _overlay->getWidth();
 	}
 	return 0;
-}
-
-float MetalGraphicsManager::getHiDPIScreenFactor() const {
-	return 2.0f;
 }
 
 bool MetalGraphicsManager::showMouse(bool visible) {
@@ -362,6 +558,7 @@ void multiplyColorWithAlpha(const byte *src, byte *dst, const uint w, const uint
 } // End of anonymous namespace
 
 void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+
 	_cursorUseKey = (mask == nullptr);
 	if (_cursorUseKey)
 		_cursorKeyColor = keycolor;
@@ -393,7 +590,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 //#ifdef USE_SCALERS
 //	bool wantScaler = (_currentState.scaleFactor > 1) && !dontScale && _scalerPlugins[_currentState.scalerIndex]->get<ScalerPluginObject>().canDrawCursor();
 //#else
-	bool wantScaler = false;
+	bool wantScaler = !dontScale;
 //#endif
 
 	bool wantMask = (mask != nullptr);

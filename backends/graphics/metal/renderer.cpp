@@ -88,13 +88,13 @@ void Renderer::buildShaders()
 		texture2d<float> colorTexture [[texture(0)]],
 		texture2d<float> palette [[texture(1)]])
 	{
-		constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
+		constexpr sampler colorSampler (address::clamp_to_edge, filter::linear);
  
 		const float adjustFactor = 255.0 / 256.0 + 1.0 / (2.0 * 256.0);
  
 		// Sample the texture to obtain a color
 		float4 index = colorTexture.sample(colorSampler, in.texCoord);
-		float4 color = palette.sample(colorSampler, float2(index.r * adjustFactor, 0.0f));
+		float4 color = palette.sample(colorSampler, float2(index.a * adjustFactor, 0.0f));
 
 		// return the color of the texture
 		return color;
@@ -147,7 +147,7 @@ void Renderer::buildShaders()
 	renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
 	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
-	
+
 	_pipeLineState = _device->newRenderPipelineState( pipelineDescriptor, &error );
 	if (!_pipeLineState)
 	{
