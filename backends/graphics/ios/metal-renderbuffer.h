@@ -19,26 +19,50 @@
  *
  */
 
-#ifndef BACKENDS_GRAPHICS_METAL_PIPELINES_CLUT8_H
-#define BACKENDS_GRAPHICS_METAL_PIPELINES_CLUT8_H
+#ifndef BACKENDS_GRAPHICS_IOS_METAL_RENDERBUFFER_H
+#define BACKENDS_GRAPHICS_IOS_METAL_RENDERBUFFER_H
 
-#include "backends/graphics/metal/pipelines/shader.h"
+#include "backends/graphics/metal/framebuffer.h"
+
+namespace CA {
+class MetalDrawable;
+class MetalLayer;
+}
+
+namespace MTL {
+class RenderPassDescriptor;
+}
 
 namespace Metal {
 
-class CLUT8LookUpPipeline : public ShaderPipeline {
+/**
+ * Render to renderbuffer framebuffer implementation.
+ *
+ * This target allows to render to a renderbuffer, which can then be used as
+ * a rendering source like expected on iOS.
+ */
+class MetalRenderbufferTarget : public Framebuffer {
 public:
-	CLUT8LookUpPipeline(MTL::Device *metalDevice);
-
-	void setPaletteTexture(const MTL::Texture *paletteTexture) { _paletteTexture = paletteTexture; }
-
+	MetalRenderbufferTarget(CA::MetalLayer *_metalLayer);
+	~MetalRenderbufferTarget() override;
+	
+	/**
+	 * Set size of the render target.
+	 */
+	bool setSize(uint width, uint height) override;
+	void refreshScreen() override;
+	
 protected:
-	void drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) override;
-
+	void activateInternal() override;
+	void deactivateInternal() override;
+	
 private:
-	const MTL::Texture *_paletteTexture;
+	CA::MetalLayer *_metalLayer;
+	CA::MetalDrawable *_drawable;
+	MTL::RenderPassDescriptor *_renderPassDescriptor;
 };
 
 } // End of namespace Metal
 
 #endif
+

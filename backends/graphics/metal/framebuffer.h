@@ -31,7 +31,7 @@ class CommandQueue;
 class Device;
 class RenderCommandEncoder;
 class RenderPassColorAttachmentDescriptor;
-class RenderPipelineState;
+class RenderPassDescriptor;
 class Texture;
 class Viewport;
 }
@@ -52,9 +52,9 @@ struct Vertex {
  */
 class Framebuffer {
 public:
-	Framebuffer();
+	Framebuffer(MTL::Device *device);
 	virtual ~Framebuffer() {};
-
+	
 public:
 	enum BlendMode {
 		/**
@@ -62,19 +62,19 @@ public:
 		 * without mixing with them.
 		 */
 		kBlendModeDisabled,
-
+		
 		/**
 		 * Newly drawn pixels overwrite the existing contents of the framebuffer
 		 * without mixing with them. Alpha channel is discarded.
 		 */
 		kBlendModeOpaque,
-
+		
 		/**
 		 * Newly drawn pixels mix with the framebuffer based on their alpha value
 		 * for transparency.
 		 */
 		kBlendModeTraditionalTransparency,
-
+		
 		/**
 		 * Newly drawn pixels mix with the framebuffer based on their alpha value
 		 * for transparency.
@@ -83,75 +83,75 @@ public:
 		 * with the alpha value.
 		 */
 		kBlendModePremultipliedTransparency,
-
+		
 		/**
 		 * Newly drawn pixels add to the destination value.
 		 */
 		kBlendModeAdditive,
-
+		
 		/**
 		 * Newly drawn pixels mask out existing pixels based on the alpha value and
 		 * add inversions of the pixels based on the color.
 		 */
 		kBlendModeMaskAlphaAndInvertByColor,
 	};
-
+	
 	/**
 	 * Set the clear color of the framebuffer.
 	 */
 	void setClearColor(float r, float g, float b, float a);
-
+	
 	/**
 	 * Enable/disable GL_BLEND.
 	 */
 	void enableBlend(BlendMode mode);
-
+	
 	/**
 	 * Enable/disable GL_SCISSOR_TEST.
 	 */
 	void enableScissorTest(bool enable);
-
+	
 	/**
 	 * Set scissor box dimensions.
 	 */
 	void setScissorBox(int x, int y, int w, int h);
-
+	
 	/**
 	 * Obtain projection matrix of the framebuffer.
 	 */
 	const Math::Matrix4 &getProjectionMatrix() const { return _projectionMatrix; }
-
+	
 	enum CopyMask {
 		kCopyMaskClearColor   = (1 << 0),
 		kCopyMaskBlendState   = (1 << 1),
 		kCopyMaskScissorState = (1 << 2),
 		kCopyMaskScissorBox   = (1 << 4),
-
+		
 		kCopyMaskAll          = kCopyMaskClearColor | kCopyMaskBlendState |
-								kCopyMaskScissorState | kCopyMaskScissorBox,
+		kCopyMaskScissorState | kCopyMaskScissorBox,
 	};
-
+	
 	/**
 	 * Copy rendering state from another framebuffer
 	 */
 	void copyRenderStateFrom(const Framebuffer &other, uint copyMask);
-
+	
 protected:
 	bool isActive() const { return _pipeline != nullptr; }
-
+	
 	MTL::Viewport *_viewport;
 	void applyViewport();
-
+	
 	Math::Matrix4 _projectionMatrix;
 	void applyProjectionMatrix();
-
+	
 	/**
 	 * Activate framebuffer.
 	 *
 	 * This is supposed to set all state associated with the framebuffer.
 	 */
 	virtual void activateInternal() = 0;
-
+	
 	/**
 	 * Deactivate framebuffer.
 	 *
@@ -159,31 +159,41 @@ protected:
 	 * framebuffer.
 	 */
 	virtual void deactivateInternal() {}
-
+	
 public:
 	/**
 	 * Set the size of the target buffer.
 	 */
 	virtual bool setSize(uint width, uint height) = 0;
-
+	
 	/**
 	 * Accessor to activate framebuffer for pipeline.
 	 */
 	void activate(Pipeline *pipeline);
-
+	
 	/**
 	 * Accessor to deactivate framebuffer from pipeline.
 	 */
 	void deactivate();
 	
+	virtual void refreshScreen();
+	
+	MTL::RenderCommandEncoder *getRenderCommandEncoder() { return _renderCommandEncoder; }
+	MTL::Device *getMetalDevice() { return _metalDevice; }
+	
 protected:
 	MTL::Device *_metalDevice;
 	MTL::Texture *_texture;
+	MTL::CommandBuffer *_commandBuffer;
+	MTL::CommandQueue *_commandQueue;
+	MTL::RenderCommandEncoder *_renderCommandEncoder;
+	MTL::RenderPassColorAttachmentDescriptor *_renderPassColorAttachmentDescriptor;
+	
+	float _clearColor[4];
 
 private:
 	Pipeline *_pipeline;
 
-	float _clearColor[4];
 	void applyClearColor();
 
 	BlendMode _blendState;
@@ -194,12 +204,6 @@ private:
 
 	int _scissorBox[4];
 	void applyScissorBox();
-	
-	MTL::CommandBuffer *_commandBuffer;
-	MTL::CommandQueue *_commandQueue;
-	MTL::RenderPipelineState *_pipeLineState;
-	MTL::RenderCommandEncoder *_rendererCommandEncoder;
-	MTL::RenderPassColorAttachmentDescriptor *_rendererPassColorAttachmentDescriptor;
 };
 
 /**
@@ -224,7 +228,7 @@ protected:
  */
 class TextureTarget : public Framebuffer {
 public:
-	TextureTarget();
+	TextureTarget(MTL::Device *device);
 	~TextureTarget() override;
 
 	/**
@@ -252,6 +256,7 @@ protected:
 
 private:
 	MTL::Texture *_texture;
+	MTL::RenderPassDescriptor *_renderPassDescriptor;
 	//GLuint _glFBO;
 	bool _needUpdate;
 };

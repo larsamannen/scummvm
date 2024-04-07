@@ -138,11 +138,18 @@ public:
 	 * Obtain underlying Metal texture.
 	 */
 	virtual const MTL::Texture *getMetalTexture() const = 0;
+	
+	const MTL::Buffer *getVertexPositionsBuffer() const;
+	const MTL::Buffer *getIndexBuffer() const;
 protected:
 	void clearDirty() { _allDirty = false; _dirtyArea = Common::Rect(); }
 
 	void addDirtyArea(const Common::Rect &r);
 	Common::Rect getDirtyArea() const;
+	
+	MTL::Buffer *_vertexPositionsBuffer;
+	MTL::Buffer *_indexBuffer;
+
 private:
 	bool _allDirty;
 	Common::Rect _dirtyArea;
@@ -248,9 +255,6 @@ private:
 
 	Graphics::Surface _clut8Data;
 	Graphics::Surface _userPixelData;
-	
-	MTL::Buffer *_vertexPositionsBuffer;
-	MTL::Buffer *_indexBuffer;
 
 	byte _palette[4 * 256];
 	bool _paletteDirty;

@@ -61,16 +61,83 @@ MetalGraphicsManager::~MetalGraphicsManager()
 	delete _pipeline;
 }
 
-void MetalGraphicsManager::notifyContextCreate(MTL::Device *device,
+void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
+											   Framebuffer *target,
 											   const Graphics::PixelFormat &defaultFormat,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
 	// Set up the target: backbuffer usually
-	_device = device;
+//	delete _targetBuffer;
+	_targetBuffer = target;
+
+	// Initialize pipeline.
+	delete _pipeline;
+	_pipeline = nullptr;
+
+	_device = metalLayer->device();
+	ShaderMan.notifyCreate(_device);
+	_pipeline = new ShaderPipeline(_device, ShaderMan.query(ShaderManager::kDefaultFragmentShader));
+	
+	_pipeline->setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// Setup backbuffer state.
+
+	// Default to opaque black as clear color.
+	_targetBuffer->setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	
+	_pipeline->setFramebuffer(_targetBuffer);
+	
 	_defaultFormat = defaultFormat;
 	_defaultFormatAlpha = defaultFormatAlpha;
-	ShaderMan.notifyCreate();
-	_pipeline = new ShaderPipeline(ShaderMan.query(ShaderManager::kDefault));
-	_renderer = new Renderer(_device);
+
+	// Refresh the output screen dimensions if some are set up.
+	if (_windowWidth != 0 && _windowHeight != 0) {
+		handleResize(_windowWidth, _windowHeight);
+	}
+	
+	if (_gameScreen) {
+		_gameScreen->recreate();
+	}
+
+	if (_overlay) {
+		_overlay->recreate();
+	}
+
+	if (_cursor) {
+		_cursor->recreate();
+	}
+
+	if (_cursorMask) {
+		_cursorMask->recreate();
+	}
+
+	//_renderer = new Renderer(_device);
+}
+
+void MetalGraphicsManager::notifyContextDestroy() {
+	if (_gameScreen) {
+		_gameScreen->destroy();
+	}
+
+	if (_overlay) {
+		_overlay->destroy();
+	}
+
+	if (_cursor) {
+		_cursor->destroy();
+	}
+
+	if (_cursorMask) {
+		_cursorMask->destroy();
+	}
+
+	// Destroy rendering pipeline.
+	delete _pipeline;
+	_pipeline = nullptr;
+
+	// Destroy the target
+	delete _targetBuffer;
+	_targetBuffer = nullptr;
+
 }
 
 // Windowed
@@ -97,6 +164,7 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 		_overlay = createSurface(_defaultFormatAlpha);
 		assert(_overlay);
 	}
+
 	_overlay->allocate(overlayWidth, overlayHeight);
 	_overlay->fill(0);
 	
@@ -435,21 +503,62 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
+	// Update changes to textures.
+	_gameScreen->updateMetalTexture();
+	if (_cursorVisible && _cursor) {
+		_cursor->updateMetalTexture();
+	}
+	if (_cursorVisible && _cursorMask) {
+		_cursorMask->updateMetalTexture();
+	}
+	_overlay->updateMetalTexture();
+	
+	_pipeline->activate();
+	
+	// Clear the screen buffer.
+	// TODO LARS, clear the screen?
+	
+	if (!_overlayVisible) {
+		// The scissor test is enabled to:
+		// - Clip the cursor to the game screen
+		// - Clip the game screen when the shake offset is non-zero
+		_targetBuffer->enableScissorTest(true);
+	}
+
 	// Don't draw cursor if it's not visible or there is none
 	bool drawCursor = _cursorVisible && _cursor;
 
-	_gameScreen->updateMetalTexture();
-	_overlay->updateMetalTexture();
+	// Alpha blending is disabled when drawing the screen
+	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
+
+	// First step: Draw the (virtual) game screen.
+	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 	
-	if (drawCursor) {
-		_cursor->updateMetalTexture();
-		// This is just a haxx to get the cursor to scale correct. Need to check on scaling
-		_renderer->setCursorViewport((_cursorX - _cursorHotspotX), (_cursorY - _cursorHeightScaled - _cursorHotspotYScaled), _cursorWidthScaled, _cursorHeightScaled);
+	// Third step: Draw the overlay if visible.
+	if (_overlayVisible) {
+		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
+		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
+		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
+		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
+	}
+
+	// Fourth step: Draw the cursor if we didn't before.
+	//if (drawCursor)
+	//	renderCursor();
+
+	if (!_overlayVisible) {
+		_targetBuffer->enableScissorTest(false);
 	}
 	
-	CA::MetalDrawable *drawable = getNextDrawable();
-	_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
-	drawable->release();
+	_cursorNeedsRedraw = false;
+	_forceRedraw = false;
+	_targetBuffer->refreshScreen();
+	
+	_pipeline->deactivate();
+	
+	//CA::MetalDrawable *drawable = getNextDrawable();
+	//_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
+	//drawable->release();
 }
 
 void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {

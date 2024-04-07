@@ -87,14 +87,7 @@ const char* shaderSrc = R"(
 	})";
 } // End of anonymous namespace
 
-ShaderManager::ShaderManager() : _metalDevice(nullptr) {
-	NS::Error* error = nullptr;
-	_shaderLibrary = _metalDevice->newLibrary(NS::String::string(shaderSrc, UTF8StringEncoding), nullptr, &error);
-	if (!_shaderLibrary)
-	{
-		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
-		assert( false );
-	}
+ShaderManager::ShaderManager() {
 }
 
 ShaderManager::~ShaderManager() {
@@ -105,9 +98,17 @@ void ShaderManager::notifyDestroy() {
 	_shaderLibrary = nullptr;
 }
 
-void ShaderManager::notifyCreate() {
+void ShaderManager::notifyCreate(MTL::Device *device) {
 	// Ensure everything is destroyed
 	notifyDestroy();
+
+	NS::Error* error = nullptr;
+	_shaderLibrary = device->newLibrary(NS::String::string(shaderSrc, UTF8StringEncoding), nullptr, &error);
+	if (!_shaderLibrary)
+	{
+		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
+		assert( false );
+	}
 
 	_defaultVertexShader = _shaderLibrary->newFunction(NS::String::string("vertexFunction", UTF8StringEncoding));
 	_defaultFragmentShader = _shaderLibrary->newFunction(NS::String::string("fragmentFunction", UTF8StringEncoding));
@@ -116,12 +117,12 @@ void ShaderManager::notifyCreate() {
 
 MTL::Function *ShaderManager::query(ShaderUsage shader) const {
 	switch (shader) {
-	case kDefault:
+	case kDefaultFragmentShader:
 		return _defaultFragmentShader;
-		break;
-	case kCLUT8LookUp:
+	case kCLUT8LookUpFragmentShader:
 		return _lookUpFragmentShader;
-		break;
+	case kDefaultVertexShader:
+		return _defaultVertexShader;
 	default:
 		return nullptr;
 	}

@@ -29,42 +29,34 @@
 
 namespace Metal {
 
-Framebuffer::Framebuffer()
-	: _metalDevice(nullptr), _viewport(new MTL::Viewport()), _projectionMatrix(),
+Framebuffer::Framebuffer(MTL::Device *device)
+	: _metalDevice(device), _viewport(new MTL::Viewport()), _projectionMatrix(),
 	  _pipeline(nullptr), _clearColor(),
 	  _blendState(kBlendModeDisabled), _scissorTestState(false), _scissorBox() {
+	  _commandQueue = _metalDevice->newCommandQueue();
 }
 
 void Framebuffer::activate(Pipeline *pipeline) {
 	assert(pipeline);
 	_pipeline = pipeline;
-	_commandQueue = _metalDevice->newCommandQueue();
+	_commandBuffer = _commandQueue->commandBuffer();
 
-	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	_rendererPassColorAttachmentDescriptor = renderPassDescriptor->colorAttachments()->object(0);
-	
-	// Move these?
-	_rendererPassColorAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
-	_rendererPassColorAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
-	_rendererPassColorAttachmentDescriptor->setTexture(_texture);
-	
-
-	applyViewport();
-	applyProjectionMatrix();
-	applyClearColor();
-	applyBlendState();
-	applyScissorTestState();
-	applyScissorBox();
+	//applyViewport();
+	//applyProjectionMatrix();
+	//applyClearColor();
+	//applyBlendState();
+	//applyScissorTestState();
+	//applyScissorBox();
 
 	activateInternal();
-	
-	//_rendererCommandEncoder = _commandQueue->renderCommandEncoder(renderPassDescriptor);
 }
 
 void Framebuffer::deactivate() {
 	deactivateInternal();
-
-	_pipeline = nullptr;
+	if (_texture)
+		_texture->release();
+	if (_commandQueue)
+		_commandQueue->release();
 }
 
 void Framebuffer::setClearColor(float r, float g, float b, float a) {
@@ -110,8 +102,8 @@ void Framebuffer::setScissorBox(int x, int y, int w, int h) {
 }
 
 void Framebuffer::applyViewport() {
-	assert(_rendererCommandEncoder);
-	_rendererCommandEncoder->setViewport(*_viewport);
+	assert(_renderCommandEncoder);
+	_renderCommandEncoder->setViewport(*_viewport);
 }
 
 void Framebuffer::applyProjectionMatrix() {
@@ -120,8 +112,8 @@ void Framebuffer::applyProjectionMatrix() {
 }
 
 void Framebuffer::applyClearColor() {
-	assert(_rendererPassColorAttachmentDescriptor);
-	_rendererPassColorAttachmentDescriptor->setClearColor(MTL::ClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]));
+	assert(_renderPassColorAttachmentDescriptor);
+	_renderPassColorAttachmentDescriptor->setClearColor(MTL::ClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]));
 }
 
 void Framebuffer::applyBlendState() {
@@ -189,6 +181,10 @@ void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {
 	}
 }
 
+void Framebuffer::refreshScreen() {
+	_commandBuffer->commit();
+}
+
 //
 // Backbuffer implementation
 //
@@ -240,12 +236,18 @@ bool Backbuffer::setSize(uint width, uint height) {
 // Render to texture target implementation
 //
 
-TextureTarget::TextureTarget() : _texture(nullptr), _needUpdate(true) {
+TextureTarget::TextureTarget(MTL::Device *device) : Framebuffer(device), _texture(nullptr), _needUpdate(true) {
+	_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	_renderPassColorAttachmentDescriptor = _renderPassDescriptor->colorAttachments()->object(0);
+	_renderPassColorAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
+	_renderPassColorAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
 }
 
 TextureTarget::~TextureTarget() {
-	//delete _texture;
-	//GL_CALL_SAFE(glDeleteFramebuffers, (1, &_glFBO));
+	_texture->release();
+	_renderCommandEncoder->release();
+	_renderPassDescriptor->release();
+	_renderPassColorAttachmentDescriptor->release();
 }
 
 void TextureTarget::activateInternal() {
@@ -266,10 +268,10 @@ void TextureTarget::activateInternal() {
 }
 
 void TextureTarget::destroy() {
-	//GL_CALL(glDeleteFramebuffers(1, &_glFBO));
-	//_glFBO = 0;
-
-	//_texture->destroy();
+	_texture->release();
+	_renderCommandEncoder->release();
+	_renderPassDescriptor->release();
+	_renderPassColorAttachmentDescriptor->release();
 }
 
 void TextureTarget::create() {
@@ -293,6 +295,9 @@ bool TextureTarget::setSize(uint width, uint height) {
 	_viewport->originY = 0;
 	_viewport->width = texWidth;
 	_viewport->height = texHeight;
+
+	_renderPassColorAttachmentDescriptor->setTexture(_texture);
+	_renderCommandEncoder = _commandBuffer->renderCommandEncoder(_renderPassDescriptor);
 
 #if 0
 	// Setup orthogonal projection matrix.
@@ -319,7 +324,7 @@ bool TextureTarget::setSize(uint width, uint height) {
 	// Directly apply changes when we are active.
 	if (isActive()) {
 		applyViewport();
-		//applyProjectionMatrix();
+		applyProjectionMatrix();
 	}
 	return true;
 }

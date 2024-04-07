@@ -22,6 +22,7 @@
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
 #include "backends/graphics/ios/ios-metal-graphics.h"
+#include "backends/graphics/ios/metal-renderbuffer.h"
 #include "backends/platform/ios7/ios7_osys_main.h"
 #include <Metal/Metal.hpp>
 
@@ -42,7 +43,8 @@ void iOSMetalGraphicsManager::initSurface() {
 	MTL::Device *device = MTL::CreateSystemDefaultDevice();
 	_metalLayer->setDevice(device);
 
-	notifyContextCreate(device,
+	notifyContextCreate(_metalLayer,
+	new Metal::MetalRenderbufferTarget(_metalLayer),
 	// Currently iOS runs the ARMs in little-endian mode but prepare if
 	// that is changed in the future.
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -61,6 +63,7 @@ CA::MetalDrawable *iOSMetalGraphicsManager::getNextDrawable() {
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {
+	notifyContextDestroy();
 }
 
 void iOSMetalGraphicsManager::notifyResize(const int width, const int height) {

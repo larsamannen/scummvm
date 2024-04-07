@@ -90,6 +90,15 @@ Common::Rect Surface::getDirtyArea() const {
 	}
 }
 
+const MTL::Buffer *Surface::getVertexPositionsBuffer() const {
+	_vertexPositionsBuffer->retain();
+	return _vertexPositionsBuffer;
+}
+const MTL::Buffer *Surface::getIndexBuffer() const {
+	_indexBuffer->retain();
+	return _indexBuffer;
+}
+
 //
 // Surface implementations
 //
@@ -109,6 +118,7 @@ void Texture::destroy() {
 }
 
 void Texture::recreate() {
+	_metalTexture->release();
 	//_glTexture.create();
 
 	// In case image date exists assure it will be completely refreshed next
@@ -123,6 +133,9 @@ void Texture::enableLinearFiltering(bool enable) {
 }
 
 void Texture::allocate(uint width, uint height) {
+	if (_metalTexture) {
+		_metalTexture->release();
+	}
 	// Assure the texture can contain our user data.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
@@ -139,6 +152,21 @@ void Texture::allocate(uint width, uint height) {
 
 	// Create a sub-buffer for raw access.
 	_userPixelData = _textureData.getSubArea(Common::Rect(width, height));
+	
+	Vertex vertices[] = {
+		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0
+		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
+		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
+		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
+	};
+	
+	unsigned short indices[] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
@@ -199,9 +227,10 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 // for ARB_texture_rg and GLES3+ (EXT_rexture_rg does not support GL_R8).
 TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device)
 	: _device(device), _clut8Texture(nullptr), _paletteTexture(nullptr),
-	  _target(new TextureTarget()), _clut8Pipeline(new CLUT8LookUpPipeline()),
+	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(device)),
 	  _clut8Data(), _userPixelData(), _palette(),
 	  _paletteDirty(false), _renderer(new Renderer(device)) {
+	_paletteTexture->release();
 	// Allocate space for 256 colors.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(256);
@@ -232,13 +261,15 @@ void TextureCLUT8GPU::destroy() {
 	_target->destroy();
 	delete _clut8Pipeline;
 	_clut8Pipeline = nullptr;
-	_vertexPositionsBuffer->release();
-	_indexBuffer->release();
+	//_vertexPositionsBuffer->release();
+	//_indexBuffer->release();
 }
 
 void TextureCLUT8GPU::recreate() {
 	//_clut8Texture.create();
 	//_paletteTexture.create();
+	_clut8Texture->release();
+	_paletteTexture->release();
 	_target->create();
 
 	// In case image date exists assure it will be completely refreshed next
@@ -249,7 +280,7 @@ void TextureCLUT8GPU::recreate() {
 	}
 
 	if (_clut8Pipeline == nullptr) {
-		_clut8Pipeline = new CLUT8LookUpPipeline();
+		_clut8Pipeline = new CLUT8LookUpPipeline(_device);
 		// Setup pipeline.
 		_clut8Pipeline->setFramebuffer(_target);
 		_clut8Pipeline->setPaletteTexture(_paletteTexture);
@@ -262,6 +293,7 @@ void TextureCLUT8GPU::enableLinearFiltering(bool enable) {
 }
 
 void TextureCLUT8GPU::allocate(uint width, uint height) {
+	_clut8Texture->release();	
 	// Assure the texture can contain our user data.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
@@ -294,10 +326,8 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 		0, 2, 3
 	};
 	
-	MTL::Buffer* vertexBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
-	MTL::Buffer* indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-	_vertexPositionsBuffer = vertexBuffer;
-	_indexBuffer = indexBuffer;
+	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
@@ -305,8 +335,8 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// texture.
 	flagDirty();
 	
-	vertexBuffer->release();
-	indexBuffer->release();
+	//vertexBuffer->release();
+	//indexBuffer->release();
 }
 
 Graphics::PixelFormat TextureCLUT8GPU::getFormat() const {

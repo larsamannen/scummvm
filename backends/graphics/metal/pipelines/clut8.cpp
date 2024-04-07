@@ -19,27 +19,30 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
 #include "backends/graphics/metal/pipelines/clut8.h"
 #include "backends/graphics/metal/shader.h"
 #include "backends/graphics/metal/framebuffer.h"
+#include <Metal/Metal.hpp>
 
 namespace Metal {
 
-CLUT8LookUpPipeline::CLUT8LookUpPipeline()
-	: ShaderPipeline(ShaderMan.query(ShaderManager::kCLUT8LookUp)), _paletteTexture(nullptr) {
+CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
+	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)), _paletteTexture(nullptr) {
 }
 
 void CLUT8LookUpPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
 
+	MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
 	// Set the palette texture.
-	///GL_CALL(glActiveTexture(GL_TEXTURE1));
 	if (_paletteTexture) {
-		// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-		//pEnc->setFragmentTexture(&texture, 0);
+		// This texture can now be referred to by index with the attribute [[texture(1)]] in a shader function’s parameter list.
+		encoder->setFragmentTexture(_paletteTexture, 1);
 	}
+	//encoder->release();
 
-	//GL_CALL(glActiveTexture(GL_TEXTURE0));
 	ShaderPipeline::drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
 }
 

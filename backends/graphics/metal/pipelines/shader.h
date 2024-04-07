@@ -25,6 +25,7 @@
 #include "backends/graphics/metal/pipelines/pipeline.h"
 
 namespace MTL {
+class Device;
 class Function;
 }
 
@@ -32,7 +33,7 @@ namespace Metal {
 
 class ShaderPipeline : public Pipeline {
 public:
-	ShaderPipeline(MTL::Function *shader);
+	ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader);
 	~ShaderPipeline() override;
 
 	void setColor(float r, float g, float b, float a) override;
@@ -51,6 +52,7 @@ protected:
 	float _colorAttributes[4*4];
 
 	MTL::Function *const _activeShader;
+	MTL::Device *_metalDevice;
 };
 
 } // End of namespace Metal

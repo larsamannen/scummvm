@@ -96,7 +96,12 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 // called in at least iOS 9.3.5.
 - (void)layoutSublayersOfLayer:(CAMetalLayer *)layer {
 	if (layer == self.layer) {
-		[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
+		if (_frameWidth != layer.frame.size.width ||
+			_frameHeight != layer.frame.size.height) {
+			_frameWidth = layer.frame.size.width;
+			_frameHeight = layer.frame.size.height;
+			[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
+		}
 	}
 	[super layoutSublayersOfLayer:layer];
 }

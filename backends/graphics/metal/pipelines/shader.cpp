@@ -31,20 +31,45 @@ namespace Metal {
 // A 4 elements with 2 components vector of floats
 static const int kCoordinatesSize = 4 * 2 * sizeof(float);
 
-ShaderPipeline::ShaderPipeline(MTL::Function *shader)
-	: _activeShader(shader), _colorAttributes() {
-	// Use the same VBO for vertices and texcoords as we modify them at the same time
-	//_coordsVBO = OpenGL::Shader::createBuffer(GL_ARRAY_BUFFER, kCoordinatesSize, nullptr, GL_STATIC_DRAW);
-	//_activeShader->enableVertexAttribute("position", _coordsVBO, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	//_texcoordsVBO = OpenGL::Shader::createBuffer(GL_ARRAY_BUFFER, kCoordinatesSize, nullptr, GL_STATIC_DRAW);
-	//_activeShader->enableVertexAttribute("texCoordIn", _texcoordsVBO, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	//_colorVBO = OpenGL::Shader::createBuffer(GL_ARRAY_BUFFER, sizeof(_colorAttributes), nullptr, GL_DYNAMIC_DRAW);
-	//_activeShader->enableVertexAttribute("blendColorIn", _colorVBO, 4, GL_FLOAT, GL_FALSE, 0, 0);
+ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
+	: _metalDevice(metalDevice), _activeShader(shader), _colorAttributes() {
+	NS::Error* error = nullptr;
+
+	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
+	vertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
+	vertexDescriptor->layouts()->object(30)->setStepRate(1);
+	vertexDescriptor->layouts()->object(30)->setStepFunction(MTL::VertexStepFunctionPerVertex);
+	// position
+	vertexDescriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat2);
+	vertexDescriptor->attributes()->object(0)->setOffset(0);
+	vertexDescriptor->attributes()->object(0)->setBufferIndex(30);
+	// texCoord
+	vertexDescriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat2);
+	vertexDescriptor->attributes()->object(1)->setOffset(sizeof(simd_float2));
+	vertexDescriptor->attributes()->object(1)->setBufferIndex(30);
+
+	_pipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+	_pipelineDescriptor->setVertexFunction(ShaderMan.query(ShaderManager::kDefaultVertexShader));
+	_pipelineDescriptor->setFragmentFunction(_activeShader);
+	_pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
+		
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
+	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+
+	_pipeLineState = _metalDevice->newRenderPipelineState(_pipelineDescriptor, &error);
+	if (!_pipeLineState)
+	{
+		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
+		assert( false );
+	}
+	vertexDescriptor->release();
+	_activeShader->release();
 }
 
 ShaderPipeline::~ShaderPipeline() {
-	//delete _activeShader;
-
+	_activeShader->release();
+	_pipelineDescriptor->vertexDescriptor()->release();
+	//_pipelineDescriptor->release();
 	//OpenGL::Shader::freeBuffer(_coordsVBO);
 	//OpenGL::Shader::freeBuffer(_texcoordsVBO);
 	//OpenGL::Shader::freeBuffer(_colorVBO);
@@ -65,7 +90,6 @@ void ShaderPipeline::activateInternal() {
 }
 
 void ShaderPipeline::deactivateInternal() {
-	//_activeShader->unbind();
 
 	Pipeline::deactivateInternal();
 }
@@ -80,27 +104,21 @@ void ShaderPipeline::setColor(float r, float g, float b, float a) {
 	}
 }
 
-void ShaderPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *_indexBuffer) {
+void ShaderPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
-	
-	// bind
-	//pEnc->setFragmentTexture(&gameTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	//pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 
-
-	//texture.bind();
-
-	//GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, _coordsVBO));
-	//GL_CALL(glBufferData(GL_ARRAY_BUFFER, kCoordinatesSize, coordinates, GL_STATIC_DRAW));
-	//GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, _texcoordsVBO));
-	//GL_CALL(glBufferData(GL_ARRAY_BUFFER, kCoordinatesSize, texcoords, GL_STATIC_DRAW));
-	//GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-
-	//GL_CALL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
+	encoder->setRenderPipelineState(_pipeLineState);
+	// reference to the layout buffer in vertexDescriptor
+	encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
+	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	encoder->setFragmentTexture(&texture, 0);
+	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
+	//encoder->release();
 }
 
 void ShaderPipeline::setProjectionMatrix(const Math::Matrix4 &projectionMatrix) {
-	assert(isActive());
+	//assert(isActive());
 
 	//_activeShader->setUniform("projection", projectionMatrix);
 }

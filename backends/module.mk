@@ -230,7 +230,8 @@ endif
 
 ifdef IPHONE
 MODULE_OBJS += \
-	graphics/ios/ios-metal-graphics.o
+	graphics/ios/ios-metal-graphics.o \
+	graphics/ios/metal-renderbuffer.o
 endif
 
 ifdef USE_DISCORD

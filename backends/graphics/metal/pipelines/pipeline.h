@@ -29,6 +29,8 @@
 
 namespace MTL {
 class Buffer;
+class RenderPipelineDescriptor;
+class RenderPipelineState;
 class Texture;
 }
 
@@ -113,6 +115,8 @@ protected:
 	bool isActive() const { return activePipeline == this; }
 
 	Framebuffer *_activeFramebuffer;
+	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
+	MTL::RenderPipelineState *_pipeLineState;
 
 private:
 	/** Currently active rendering pipeline. */

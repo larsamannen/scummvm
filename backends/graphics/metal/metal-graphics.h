@@ -49,10 +49,19 @@ public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
 	
-	void notifyContextCreate(MTL::Device *device,
+	void notifyContextCreate(CA::MetalLayer *metalLayer,
+							 Framebuffer *target,
 							 const Graphics::PixelFormat &defaultFormat,
 							 const Graphics::PixelFormat &defaultFormatAlpha);
-	
+
+	/**
+	 * Notify the manager that the OpenGL context is about to be destroyed.
+	 * This will free up/reset internal OpenGL related state and *must* be
+	 * called whenever a context might be created again after destroying a
+	 * context.
+	 */
+	void notifyContextDestroy();
+	// TODO REMOVE THIS
 	virtual CA::MetalDrawable *getNextDrawable() = 0;
 	
 	// Windowed
@@ -178,6 +187,11 @@ private:
 	 * The default pixel format with an alpha channel.
 	 */
 	Graphics::PixelFormat _defaultFormatAlpha;
+	
+	/**
+	 * Render target.
+	 */
+	Framebuffer *_targetBuffer;
 
 	Surface *_gameScreen;
 

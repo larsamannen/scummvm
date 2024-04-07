@@ -35,11 +35,14 @@ namespace Metal {
 class ShaderManager : public Common::Singleton<ShaderManager> {
 public:
 	enum ShaderUsage {
-		/** Default shader implementing the GL fixed-function pipeline. */
-		kDefault = 0,
+		/** Default shader implementing the Metal fixed-function pipeline. */
+		kDefaultFragmentShader = 0,
 
 		/** CLUT8 look up shader. */
-		kCLUT8LookUp,
+		kCLUT8LookUpFragmentShader,
+		
+		/** Default vertex shader */
+		kDefaultVertexShader,
 
 		/** Number of built-in shaders. Should not be used for query. */
 		kMaxUsages
@@ -53,7 +56,7 @@ public:
 	/**
 	 * Notify shader manager about context creation.
 	 */
-	void notifyCreate();
+	void notifyCreate(MTL::Device *device);
 
 	/**
 	 * Query a built-in shader.
@@ -66,7 +69,6 @@ private:
 	ShaderManager();
 	~ShaderManager();
 
-	MTL::Device *_metalDevice;
 	MTL::Library *_shaderLibrary;
 	MTL::Function *_defaultVertexShader;
 	MTL::Function *_defaultFragmentShader;
