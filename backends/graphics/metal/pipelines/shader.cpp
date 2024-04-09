@@ -55,6 +55,13 @@ ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 		
 	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
 	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+		renderbufferAttachment->setBlendingEnabled(true);
+		renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
+		renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
+		renderbufferAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+		renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
+		renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+		renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 
 	_pipeLineState = _metalDevice->newRenderPipelineState(_pipelineDescriptor, &error);
 	if (!_pipeLineState)
@@ -110,16 +117,18 @@ void ShaderPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL:
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
-	attachment->setLoadAction(MTL::LoadActionClear);
+	attachment->setLoadAction(MTL::LoadActionLoad);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(_activeFramebuffer->getTargetTexture());
 
 	MTL::RenderCommandEncoder *encoder = _commandBuffer->renderCommandEncoder(renderPassDescriptor);
 	encoder->setRenderPipelineState(_pipeLineState);
+	//encoder->setBlendColor(<#float red#>, <#float green#>, <#float blue#>, <#float alpha#>);
 	// reference to the layout buffer in vertexDescriptor
 	encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
 	encoder->setFragmentTexture(&texture, 0);
+	encoder->setViewport(*_viewport);
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();

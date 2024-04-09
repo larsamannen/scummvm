@@ -33,6 +33,7 @@ class CommandBuffer;
 class RenderPipelineDescriptor;
 class RenderPipelineState;
 class Texture;
+class Viewport;
 }
 
 namespace Metal {
@@ -46,7 +47,7 @@ class Pipeline {
 public:
 	Pipeline();
 	virtual ~Pipeline() { if (isActive()) deactivate(); }
-
+	
 	/**
 	 * Activate the pipeline.
 	 *
@@ -54,12 +55,12 @@ public:
 	 * Metal pipeline.
 	 */
 	void activate(MTL::CommandBuffer *commandBuffer);
-
+	
 	/**
 	 * Deactivate the pipeline.
 	 */
 	void deactivate();
-
+	
 	/**
 	 * Set framebuffer to render to.
 	 *
@@ -69,7 +70,7 @@ public:
 	 * @return Formerly active framebuffer.
 	 */
 	Framebuffer *setFramebuffer(Framebuffer *framebuffer);
-
+	
 	/**
 	 * Set modulation color.
 	 *
@@ -79,7 +80,7 @@ public:
 	 * @param a Alpha component in [0,1].
 	 */
 	virtual void setColor(float r, float g, float b, float a) = 0;
-
+	
 	/**
 	 * Draw a texture rectangle to the currently active framebuffer.
 	 *
@@ -89,13 +90,21 @@ public:
 	inline void drawTexture(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 		drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
 	}
-
+	
 	/**
 	 * Set the projection matrix.
 	 *
 	 * This is intended to be only ever be used by Framebuffer subclasses.
 	 */
 	virtual void setProjectionMatrix(const Math::Matrix4 &projectionMatrix) = 0;
+	
+	void setViewport(MTL::Viewport *viewport) { _viewport = viewport; }
+	
+	void disableBlendMode();
+	
+	void setBlendModeOpaque();
+	
+	void setBlendModeMaskAlphaAndInvertByColor();
 	
 protected:
 	/**
@@ -120,6 +129,7 @@ protected:
 	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
 	MTL::RenderPipelineState *_pipeLineState;
 	MTL::CommandBuffer *_commandBuffer;
+	MTL::Viewport *_viewport;
 
 private:
 	/** Currently active rendering pipeline. */

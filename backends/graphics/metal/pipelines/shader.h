@@ -27,6 +27,7 @@
 namespace MTL {
 class Device;
 class Function;
+class Viewport;
 }
 
 namespace Metal {

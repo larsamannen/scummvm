@@ -120,6 +120,7 @@ public:
 	void grabPalette(byte *colors, uint start, uint num) const override;
 
 protected:
+	void renderCursor();
 	Surface *createSurface(const Graphics::PixelFormat &format, bool wantAlpha = false, bool wantScaler = false, bool wantMask = false);
 
 	//

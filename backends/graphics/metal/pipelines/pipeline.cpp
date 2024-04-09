@@ -18,9 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
 
 #include "backends/graphics/metal/pipelines/pipeline.h"
 #include "backends/graphics/metal/framebuffer.h"
+
+#include <Metal/Metal.hpp>
 
 namespace Metal {
 
@@ -64,6 +67,28 @@ void Pipeline::deactivateInternal() {
 	if (_activeFramebuffer) {
 		_activeFramebuffer->deactivate();
 	}
+}
+
+void Pipeline::disableBlendMode() {
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
+	renderbufferAttachment->setBlendingEnabled(false);
+}
+
+void Pipeline::setBlendModeOpaque() {
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
+}
+
+void Pipeline::setBlendModeMaskAlphaAndInvertByColor() {
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
+#if 0
+	renderbufferAttachment->setBlendingEnabled(true);
+	renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
+	renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
+	renderbufferAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+	renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
+	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+#endif
 }
 
 Framebuffer *Pipeline::setFramebuffer(Framebuffer *framebuffer) {

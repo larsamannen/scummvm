@@ -505,13 +505,48 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 	_gameScreen->fill(r, col);
 }
 
+void MetalGraphicsManager::renderCursor() {
+	/*
+	Windows and Mac cursor XOR works by drawing the cursor to the screen with the formula (Destination AND Mask XOR Color)
+
+	OpenGL does not have an XOR blend mode though.  Full inversions can be accomplished by using blend modes with
+	ONE_MINUS_DST_COLOR but the problem is how to do that in a way that handles linear filtering properly.
+
+	To avoid color fringing, we need to produce an output of 3 separately-modulated inputs: The framebuffer modulated by
+	(1 - inversion)*(1 - alpha), the inverted framebuffer modulated by inversion*(1 - alpha), and the cursor colors modulated by alpha.
+	The last part is additive and not framebuffer dependent so it can just be a separate draw call.  The first two are the problem
+	because we can't use the unmodified framebuffer value twice if we do it in two separate draw calls, and if we do it in a single
+	draw call, we can only supply one RGB input even though the inversion mask should be RGB.
+
+	If we only allow grayscale inversions though, then we can put inversion*(1 - alpha) in the RGB channel and
+	(1 - inversion)*(1 - alpha) in the alpha channel and use and use ((1-dstColor)*src+(1-srcAlpha)*dest) blend formula to do
+	the inversion and opacity mask at once.  We use 1-srcAlpha instead of srcAlpha so zero-fill is transparent.
+	*/
+	if (_cursorMask) {
+		_targetBuffer->enableBlend(Framebuffer::kBlendModeMaskAlphaAndInvertByColor);
+
+		_pipeline->drawTexture(*_cursorMask->getMetalTexture(), _cursorMask->getVertexPositionsBuffer(),
+							   _cursorMask->getIndexBuffer());
+
+		_targetBuffer->enableBlend(Framebuffer::kBlendModeAdditive);
+	} else
+		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
+	MTL::Viewport viewport;
+	viewport.originX = _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x;
+	viewport.originY = _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y;
+	viewport.width = _cursorWidthScaled;
+	viewport.height = _cursorHeightScaled;
+
+	_pipeline->setViewport(&viewport);
+	_pipeline->drawTexture(*_cursor->getMetalTexture(), _cursor->getVertexPositionsBuffer(), _cursor->getIndexBuffer());
+}
+
 void MetalGraphicsManager::updateScreen() {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBufferWithUnretainedReferences();
 
 	// Update changes to textures.
-#if 0
 	_gameScreen->updateMetalTexture();
 	if (_cursorVisible && _cursor) {
 		_cursor->updateMetalTexture();
@@ -519,7 +554,7 @@ void MetalGraphicsManager::updateScreen() {
 	if (_cursorVisible && _cursorMask) {
 		_cursorMask->updateMetalTexture();
 	}
-#endif
+
 	_overlay->updateMetalTexture();
 	
 	_pipeline->activate(commandBuffer);
@@ -541,19 +576,26 @@ void MetalGraphicsManager::updateScreen() {
 	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
 
 	// First step: Draw the (virtual) game screen.
-	//_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
+	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 	
 	// Third step: Draw the overlay if visible.
 	if (_overlayVisible) {
+		MTL::Viewport viewport;
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
+		viewport.originX = dstX;
+		viewport.originY = dstY;
+		viewport.width = _windowWidth;
+		viewport.height = _windowHeight;
+		_pipeline->setViewport(&viewport);
+
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
 	}
 
 	// Fourth step: Draw the cursor if we didn't before.
-	//if (drawCursor)
-	//	renderCursor();
+	if (drawCursor)
+		renderCursor();
 
 	if (!_overlayVisible) {
 		_targetBuffer->enableScissorTest(false);

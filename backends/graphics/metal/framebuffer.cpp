@@ -39,7 +39,7 @@ void Framebuffer::activate(Pipeline *pipeline) {
 	assert(pipeline);
 	_pipeline = pipeline;
 
-	//applyViewport();
+	applyViewport();
 	//applyProjectionMatrix();
 	//applyClearColor();
 	//applyBlendState();
@@ -100,6 +100,7 @@ void Framebuffer::setScissorBox(int x, int y, int w, int h) {
 }
 
 void Framebuffer::applyViewport() {
+	_pipeline->setViewport(_viewport);
 	//assert(_renderCommandEncoder);
 	//_renderCommandEncoder->setViewport(*_viewport);
 }
@@ -117,9 +118,11 @@ void Framebuffer::applyClearColor() {
 void Framebuffer::applyBlendState() {
 	switch (_blendState) {
 		case kBlendModeDisabled:
+			_pipeline->disableBlendMode();
 			//GL_CALL(glDisable(GL_BLEND));
 			break;
 		case kBlendModeOpaque:
+			_pipeline->setBlendModeOpaque();
 			//GL_CALL(glEnable(GL_BLEND));
 			//GL_CALL(glBlendColor(1.f, 1.f, 1.f, 0.f));
 			//GL_CALL(glBlendFunc(GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR));
@@ -137,6 +140,7 @@ void Framebuffer::applyBlendState() {
 			//GL_CALL(glBlendFunc(GL_ONE, GL_ONE));
 			break;
 		case kBlendModeMaskAlphaAndInvertByColor:
+			_pipeline->setBlendModeMaskAlphaAndInvertByColor();
 			//GL_CALL(glEnable(GL_BLEND));
 			//GL_CALL(glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA));
 			break;
