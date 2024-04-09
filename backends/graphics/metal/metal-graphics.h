@@ -297,6 +297,8 @@ private:
 	int _screenChangeID;
 	
 	Pipeline *_pipeline;
+	
+	MTL::CommandQueue *_commandQueue;
 };
 
 } // end namespace Metal

@@ -176,18 +176,18 @@ public:
 	 */
 	void deactivate();
 	
-	virtual void refreshScreen();
+	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer);
 	
-	MTL::RenderCommandEncoder *getRenderCommandEncoder() { return _renderCommandEncoder; }
-	MTL::Device *getMetalDevice() { return _metalDevice; }
-	
+	MTL::CommandQueue *getCommandQueue() { return _commandQueue; }
+	MTL::Texture *getTargetTexture() { return _targetTexture; };
+
 protected:
 	MTL::Device *_metalDevice;
 	MTL::Texture *_texture;
-	MTL::CommandBuffer *_commandBuffer;
+	MTL::Texture *_targetTexture;
 	MTL::CommandQueue *_commandQueue;
-	MTL::RenderCommandEncoder *_renderCommandEncoder;
-	MTL::RenderPassColorAttachmentDescriptor *_renderPassColorAttachmentDescriptor;
+	MTL::RenderPassDescriptor *_renderPassDescriptor;
+
 	
 	float _clearColor[4];
 

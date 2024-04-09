@@ -35,11 +35,12 @@ CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
 void CLUT8LookUpPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
 
-	MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
+	
+	//MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
 	// Set the palette texture.
 	if (_paletteTexture) {
 		// This texture can now be referred to by index with the attribute [[texture(1)]] in a shader function’s parameter list.
-		encoder->setFragmentTexture(_paletteTexture, 1);
+		//encoder->setFragmentTexture(_paletteTexture, 1);
 	}
 	//encoder->release();
 

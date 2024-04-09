@@ -32,42 +32,21 @@ namespace Metal {
 //
 MetalRenderbufferTarget::MetalRenderbufferTarget(CA::MetalLayer *metalLayer)
 	: Framebuffer(metalLayer->device()),  _metalLayer(metalLayer) {
-		_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	//	_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
 MetalRenderbufferTarget::~MetalRenderbufferTarget() {
 	_metalLayer->release();
-	_renderPassDescriptor->release();
+	//_renderPassDescriptor->release();
+
 }
 
 void MetalRenderbufferTarget::activateInternal() {
 	_drawable = _metalLayer->nextDrawable();
-	// draw to drawable
-	auto *attachment = _renderPassDescriptor->colorAttachments()->object(0);
-	attachment->setClearColor(MTL::ClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]));
-	attachment->setLoadAction(MTL::LoadActionClear);
-	attachment->setStoreAction(MTL::StoreActionStore);
-	attachment->setTexture(_drawable->texture());
-	_renderCommandEncoder = _commandBuffer->renderCommandEncoder(_renderPassDescriptor);
-	// Allocate framebuffer object if necessary.
-	//if (!_glFBO) {
-	//	GL_CALL(glGenFramebuffers(1, &_glFBO));
-	//	needUpdate = true;
-	//}
-
-	// Attach FBO to rendering context.
-	//GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, _glFBO));
-
-	// Attach render buffer to newly created FBO.
-	//if (needUpdate) {
-	//	GL_CALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _glRBO));
-	//}
+	_targetTexture = _drawable->texture();
 }
 
 void MetalRenderbufferTarget::deactivateInternal() {
-	_drawable->texture()->release();
-	_drawable->release();
-	_renderCommandEncoder->release();
 }
 
 bool MetalRenderbufferTarget::setSize(uint width, uint height) {
@@ -77,27 +56,6 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 	_viewport->width = width;
 	_viewport->height = height;
 
-	// Setup orthogonal projection matrix.
-//	_projectionMatrix(0, 0) =  2.0f / width;
-//	_projectionMatrix(0, 1) =  0.0f;
-//	_projectionMatrix(0, 2) =  0.0f;
-//	_projectionMatrix(0, 3) =  0.0f;
-
-//	_projectionMatrix(1, 0) =  0.0f;
-//	_projectionMatrix(1, 1) = -2.0f / height;
-//	_projectionMatrix(1, 2) =  0.0f;
-//	_projectionMatrix(1, 3) =  0.0f;
-
-//	_projectionMatrix(2, 0) =  0.0f;
-//	_projectionMatrix(2, 1) =  0.0f;
-//	_projectionMatrix(2, 2) =  0.0f;
-//	_projectionMatrix(2, 3) =  0.0f;
-
-//	_projectionMatrix(3, 0) = -1.0f;
-//	_projectionMatrix(3, 1) =  1.0f;
-//	_projectionMatrix(3, 2) =  0.0f;
-//	_projectionMatrix(3, 3) =  1.0f;
-
 	// Directly apply changes when we are active.
 	if (isActive()) {
 		applyViewport();
@@ -106,10 +64,13 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 	return true;
 }
 
-void MetalRenderbufferTarget::refreshScreen() {
-	_renderCommandEncoder->endEncoding();
-	_commandBuffer->presentDrawable(_drawable);
-	Framebuffer::refreshScreen();
+void MetalRenderbufferTarget::refreshScreen(MTL::CommandBuffer *commandBuffer) {
+	commandBuffer->presentDrawable(_drawable);
+	Framebuffer::refreshScreen(commandBuffer);
+	//_renderCommandEncoder->release();
+	//_commandBuffer->release();
+	//_autoreleasePool->release();
+
 }
 
 } // End of namespace Metal

@@ -30,14 +30,16 @@ Pipeline::Pipeline()
 	: _activeFramebuffer(nullptr) {
 }
 
-void Pipeline::activate() {
-	if (activePipeline == this) {
-		return;
-	}
+void Pipeline::activate(MTL::CommandBuffer *commandBuffer) {
+	_commandBuffer = commandBuffer;
 
-	if (activePipeline) {
-		activePipeline->deactivate();
-	}
+	//if (activePipeline == this) {
+	//	return;
+	//}
+
+	//if (activePipeline) {
+	//	activePipeline->deactivate();
+	//}
 
 	activePipeline = this;
 

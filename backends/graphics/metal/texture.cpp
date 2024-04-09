@@ -91,11 +91,9 @@ Common::Rect Surface::getDirtyArea() const {
 }
 
 const MTL::Buffer *Surface::getVertexPositionsBuffer() const {
-	_vertexPositionsBuffer->retain();
 	return _vertexPositionsBuffer;
 }
 const MTL::Buffer *Surface::getIndexBuffer() const {
-	_indexBuffer->retain();
 	return _indexBuffer;
 }
 
@@ -133,9 +131,6 @@ void Texture::enableLinearFiltering(bool enable) {
 }
 
 void Texture::allocate(uint width, uint height) {
-	if (_metalTexture) {
-		_metalTexture->release();
-	}
 	// Assure the texture can contain our user data.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
@@ -410,7 +405,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 
 void TextureCLUT8GPU::lookUpColors() {
 	// Setup pipeline to do color look up.
-	_clut8Pipeline->activate();
+	_clut8Pipeline->activate(nullptr);
 
 	// Do color look up.
 	_clut8Pipeline->drawTexture(*_clut8Texture, _vertexPositionsBuffer, _indexBuffer);

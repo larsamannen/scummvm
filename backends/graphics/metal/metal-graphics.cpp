@@ -74,6 +74,8 @@ void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
 	_pipeline = nullptr;
 
 	_device = metalLayer->device();
+	_commandQueue = _device->newCommandQueue();
+
 	ShaderMan.notifyCreate(_device);
 	_pipeline = new ShaderPipeline(_device, ShaderMan.query(ShaderManager::kDefaultFragmentShader));
 	
@@ -138,6 +140,7 @@ void MetalGraphicsManager::notifyContextDestroy() {
 	delete _targetBuffer;
 	_targetBuffer = nullptr;
 
+	_commandQueue->release();
 }
 
 // Windowed
@@ -503,7 +506,12 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::updateScreen() {
+	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+
+	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBufferWithUnretainedReferences();
+
 	// Update changes to textures.
+#if 0
 	_gameScreen->updateMetalTexture();
 	if (_cursorVisible && _cursor) {
 		_cursor->updateMetalTexture();
@@ -511,9 +519,10 @@ void MetalGraphicsManager::updateScreen() {
 	if (_cursorVisible && _cursorMask) {
 		_cursorMask->updateMetalTexture();
 	}
+#endif
 	_overlay->updateMetalTexture();
 	
-	_pipeline->activate();
+	_pipeline->activate(commandBuffer);
 	
 	// Clear the screen buffer.
 	// TODO LARS, clear the screen?
@@ -532,7 +541,7 @@ void MetalGraphicsManager::updateScreen() {
 	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
 
 	// First step: Draw the (virtual) game screen.
-	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
+	//_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 	
 	// Third step: Draw the overlay if visible.
 	if (_overlayVisible) {
@@ -552,13 +561,14 @@ void MetalGraphicsManager::updateScreen() {
 	
 	_cursorNeedsRedraw = false;
 	_forceRedraw = false;
-	_targetBuffer->refreshScreen();
+	_targetBuffer->refreshScreen(commandBuffer);
 	
-	_pipeline->deactivate();
+	//_pipeline->deactivate();
 	
 	//CA::MetalDrawable *drawable = getNextDrawable();
 	//_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
 	//drawable->release();
+	pPool->release();
 }
 
 void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {

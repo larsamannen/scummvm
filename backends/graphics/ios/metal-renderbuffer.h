@@ -33,6 +33,10 @@ namespace MTL {
 class RenderPassDescriptor;
 }
 
+namespace NS {
+class AutoreleasePool;
+}
+
 namespace Metal {
 
 /**
@@ -50,7 +54,7 @@ public:
 	 * Set size of the render target.
 	 */
 	bool setSize(uint width, uint height) override;
-	void refreshScreen() override;
+	void refreshScreen(MTL::CommandBuffer *commandBuffer) override;
 	
 protected:
 	void activateInternal() override;
@@ -59,7 +63,6 @@ protected:
 private:
 	CA::MetalLayer *_metalLayer;
 	CA::MetalDrawable *_drawable;
-	MTL::RenderPassDescriptor *_renderPassDescriptor;
 };
 
 } // End of namespace Metal

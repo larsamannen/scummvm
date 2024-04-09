@@ -29,6 +29,7 @@
 
 namespace MTL {
 class Buffer;
+class CommandBuffer;
 class RenderPipelineDescriptor;
 class RenderPipelineState;
 class Texture;
@@ -52,7 +53,7 @@ public:
 	 * This sets the Metal state to make use of drawing with the given
 	 * Metal pipeline.
 	 */
-	void activate();
+	void activate(MTL::CommandBuffer *commandBuffer);
 
 	/**
 	 * Deactivate the pipeline.
@@ -95,7 +96,7 @@ public:
 	 * This is intended to be only ever be used by Framebuffer subclasses.
 	 */
 	virtual void setProjectionMatrix(const Math::Matrix4 &projectionMatrix) = 0;
-
+	
 protected:
 	/**
 	 * Activate the pipeline.
@@ -113,10 +114,12 @@ protected:
 	virtual void drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) = 0;
 
 	bool isActive() const { return activePipeline == this; }
+	
 
 	Framebuffer *_activeFramebuffer;
 	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
 	MTL::RenderPipelineState *_pipeLineState;
+	MTL::CommandBuffer *_commandBuffer;
 
 private:
 	/** Currently active rendering pipeline. */
