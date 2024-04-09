@@ -132,7 +132,7 @@ public:
 	/**
 	 * Update underlying Metal texture to reflect current state.
 	 */
-	virtual void updateMetalTexture() = 0;
+	virtual void updateMetalTexture(MTL::CommandBuffer *commandBuffer) = 0;
 
 	/**
 	 * Obtain underlying Metal texture.
@@ -191,7 +191,7 @@ public:
 	Graphics::Surface *getSurface() override { return &_userPixelData; }
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
-	void updateMetalTexture() override;
+	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
 	const MTL::Texture *getMetalTexture() const override { return _metalTexture; }
 protected:
 	const Graphics::PixelFormat _format;
@@ -237,21 +237,20 @@ public:
 	Graphics::Surface *getSurface() override { return &_userPixelData; }
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
-	void updateMetalTexture() override;
+	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
 	const MTL::Texture *getMetalTexture() const override;
 
 	static bool isSupportedByContext() {
 		return true;
 	}
 private:
-	void lookUpColors();
+	void lookUpColors(MTL::CommandBuffer *commandBuffer);
 
 	MTL::Device *_device;
 	MTL::Texture *_clut8Texture;
 	MTL::Texture *_paletteTexture;
 	TextureTarget *_target;
 	CLUT8LookUpPipeline *_clut8Pipeline;
-	Renderer *_renderer;
 
 	Graphics::Surface _clut8Data;
 	Graphics::Surface _userPixelData;

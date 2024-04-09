@@ -100,6 +100,8 @@ public:
 	
 	void setViewport(MTL::Viewport *viewport) { _viewport = viewport; }
 	
+	void setLoadAction(int action) { _loadAction = action; }
+	
 	void disableBlendMode();
 	
 	void setBlendModeOpaque();
@@ -130,6 +132,8 @@ protected:
 	MTL::RenderPipelineState *_pipeLineState;
 	MTL::CommandBuffer *_commandBuffer;
 	MTL::Viewport *_viewport;
+	int _loadAction;
+	const MTL::Texture *_paletteTexture;
 
 private:
 	/** Currently active rendering pipeline. */

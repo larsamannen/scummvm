@@ -544,18 +544,18 @@ void MetalGraphicsManager::renderCursor() {
 void MetalGraphicsManager::updateScreen() {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
-	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBufferWithUnretainedReferences();
+	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
 	// Update changes to textures.
-	_gameScreen->updateMetalTexture();
+	_gameScreen->updateMetalTexture(commandBuffer);
 	if (_cursorVisible && _cursor) {
-		_cursor->updateMetalTexture();
+		_cursor->updateMetalTexture(commandBuffer);
 	}
 	if (_cursorVisible && _cursorMask) {
-		_cursorMask->updateMetalTexture();
+		_cursorMask->updateMetalTexture(commandBuffer);
 	}
 
-	_overlay->updateMetalTexture();
+	_overlay->updateMetalTexture(commandBuffer);
 	
 	_pipeline->activate(commandBuffer);
 	
@@ -575,20 +575,24 @@ void MetalGraphicsManager::updateScreen() {
 	// Alpha blending is disabled when drawing the screen
 	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
 
+	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
-	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
+	MTL::Viewport viewport;
+	int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
+	int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
+	viewport.originX = dstX;
+	viewport.originY = dstY;
+	viewport.width = _windowWidth;
+	viewport.height = _windowHeight;
+	_pipeline->setViewport(&viewport);
+
 	
+	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
+
+	_pipeline->setLoadAction(MTL::LoadActionLoad);
+
 	// Third step: Draw the overlay if visible.
 	if (_overlayVisible) {
-		MTL::Viewport viewport;
-		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
-		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
-		viewport.originX = dstX;
-		viewport.originY = dstY;
-		viewport.width = _windowWidth;
-		viewport.height = _windowHeight;
-		_pipeline->setViewport(&viewport);
-
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
 	}

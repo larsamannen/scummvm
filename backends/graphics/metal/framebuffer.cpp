@@ -51,10 +51,10 @@ void Framebuffer::activate(Pipeline *pipeline) {
 
 void Framebuffer::deactivate() {
 	deactivateInternal();
-	if (_texture)
-		_texture->release();
-	if (_commandQueue)
-		_commandQueue->release();
+	//if (_texture)
+	//	_texture->release();
+	//if (_commandQueue)
+	//	_commandQueue->release();
 }
 
 void Framebuffer::setClearColor(float r, float g, float b, float a) {
@@ -253,6 +253,7 @@ TextureTarget::~TextureTarget() {
 }
 
 void TextureTarget::activateInternal() {
+	_targetTexture = _texture;
 	// Allocate framebuffer object if necessary.
 	//if (!_glFBO) {
 	//	GL_CALL(glGenFramebuffers(1, &_glFBO));
@@ -281,14 +282,15 @@ void TextureTarget::create() {
 }
 
 bool TextureTarget::setSize(uint width, uint height) {
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(width);
-	d->setHeight(height);
-	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	d->setUsage(MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead);
-	_texture = _metalDevice->newTexture(d);
-	d->release();
-
+	if (_texture == nullptr) {
+		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+		d->setWidth(width);
+		d->setHeight(height);
+		d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
+		d->setUsage(MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead);
+		_texture = _metalDevice->newTexture(d);
+		d->release();
+	}
 	const uint texWidth  = _texture->width();
 	const uint texHeight = _texture->height();
 
@@ -297,7 +299,7 @@ bool TextureTarget::setSize(uint width, uint height) {
 	_viewport->originY = 0;
 	_viewport->width = texWidth;
 	_viewport->height = texHeight;
-
+	
 	//_renderPassColorAttachmentDescriptor->setTexture(_texture);
 	//_renderCommandEncoder = _commandBuffer->renderCommandEncoder(_renderPassDescriptor);
 

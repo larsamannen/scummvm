@@ -35,8 +35,6 @@ public:
 protected:
 	void drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) override;
 
-private:
-	const MTL::Texture *_paletteTexture;
 };
 
 } // End of namespace Metal

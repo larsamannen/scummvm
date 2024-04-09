@@ -170,7 +170,7 @@ void Texture::allocate(uint width, uint height) {
 	flagDirty();
 }
 
-void Texture::updateMetalTexture() {
+void Texture::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 	if (!isDirty()) {
 		return;
 	}
@@ -224,7 +224,7 @@ TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device)
 	: _device(device), _clut8Texture(nullptr), _paletteTexture(nullptr),
 	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(device)),
 	  _clut8Data(), _userPixelData(), _palette(),
-	  _paletteDirty(false), _renderer(new Renderer(device)) {
+	  _paletteDirty(false) {
 	_paletteTexture->release();
 	// Allocate space for 256 colors.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
@@ -233,7 +233,6 @@ TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device)
 	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
 	_paletteTexture = _device->newTexture(d);
 	d->release();
-
 	// Setup pipeline
 	_clut8Pipeline->setFramebuffer(_target);
 	_clut8Pipeline->setPaletteTexture(_paletteTexture);
@@ -246,8 +245,6 @@ TextureCLUT8GPU::~TextureCLUT8GPU() {
 	_clut8Data.free();
 	if (_clut8Texture)
 		_clut8Texture->release();
-
-	delete _renderer;
 }
 
 void TextureCLUT8GPU::destroy() {
@@ -288,15 +285,18 @@ void TextureCLUT8GPU::enableLinearFiltering(bool enable) {
 }
 
 void TextureCLUT8GPU::allocate(uint width, uint height) {
-	_clut8Texture->release();	
 	// Assure the texture can contain our user data.
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(width);
-	d->setHeight(height);
-	d->setPixelFormat(MTL::PixelFormatA8Unorm);
-	_clut8Texture = _device->newTexture(d);
-	d->release();
-
+	if (_clut8Texture == nullptr ||
+		_clut8Texture->width() != width ||
+		_clut8Texture->height() != height) {
+		_clut8Texture->release();
+		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+		d->setWidth(width);
+		d->setHeight(height);
+		d->setPixelFormat(MTL::PixelFormatA8Unorm);
+		_clut8Texture = _device->newTexture(d);
+		d->release();
+	}
 	_target->setSize(width, height);
 
 	// In case the needed texture dimension changed we will reinitialize the
@@ -369,7 +369,7 @@ const MTL::Texture *TextureCLUT8GPU::getMetalTexture() const {
 	return _target->getTexture();
 }
 
-void TextureCLUT8GPU::updateMetalTexture() {
+void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 	const bool needLookUp = Surface::isDirty() || _paletteDirty;
 
 	// Update CLUT8 texture if necessary.
@@ -399,13 +399,13 @@ void TextureCLUT8GPU::updateMetalTexture() {
 
 	// In case any data changed, do color look up and store result in _target.
 	if (needLookUp) {
-		lookUpColors();
+		lookUpColors(commandBuffer);
 	}
 }
 
-void TextureCLUT8GPU::lookUpColors() {
+void TextureCLUT8GPU::lookUpColors(MTL::CommandBuffer *commandBuffer) {
 	// Setup pipeline to do color look up.
-	_clut8Pipeline->activate(nullptr);
+	_clut8Pipeline->activate(commandBuffer);
 
 	// Do color look up.
 	_clut8Pipeline->drawTexture(*_clut8Texture, _vertexPositionsBuffer, _indexBuffer);

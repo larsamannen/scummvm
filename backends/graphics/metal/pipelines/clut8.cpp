@@ -29,12 +29,11 @@
 namespace Metal {
 
 CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
-	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)), _paletteTexture(nullptr) {
+	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)) {
 }
 
 void CLUT8LookUpPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
-
 	
 	//MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
 	// Set the palette texture.
