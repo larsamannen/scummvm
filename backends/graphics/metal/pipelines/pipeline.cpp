@@ -75,14 +75,10 @@ void Pipeline::disableBlendMode() {
 }
 
 void Pipeline::setBlendModeOpaque() {
-	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
-	renderbufferAttachment->setBlendingEnabled(true);
-	renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
-	renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
-	renderbufferAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
-	renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
-	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
-	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+	_colorAttributes[0] = 1.0f;
+	_colorAttributes[1] = 1.0f;
+	_colorAttributes[2] = 1.0f;
+	_colorAttributes[3] = 0.0f;
 }
 
 void Pipeline::setBlendModeMaskAlphaAndInvertByColor() {

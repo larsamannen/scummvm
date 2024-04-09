@@ -49,9 +49,6 @@ protected:
 	//GLuint _coordsVBO;
 	//GLuint _texcoordsVBO;
 	//GLuint _colorVBO;
-
-	float _colorAttributes[4*4];
-
 	MTL::Function *const _activeShader;
 	MTL::Device *_metalDevice;
 };

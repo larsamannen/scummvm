@@ -32,7 +32,7 @@ namespace Metal {
 static const int kCoordinatesSize = 4 * 2 * sizeof(float);
 
 ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
-	: _metalDevice(metalDevice), _activeShader(shader), _colorAttributes() {
+	: _metalDevice(metalDevice), _activeShader(shader) {
 	NS::Error* error = nullptr;
 
 	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();

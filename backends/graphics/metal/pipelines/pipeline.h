@@ -134,6 +134,8 @@ protected:
 	MTL::Viewport *_viewport;
 	int _loadAction;
 	const MTL::Texture *_paletteTexture;
+	float _colorAttributes[4*4];
+
 
 private:
 	/** Currently active rendering pipeline. */

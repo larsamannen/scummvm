@@ -578,21 +578,22 @@ void MetalGraphicsManager::updateScreen() {
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
 	MTL::Viewport viewport;
-	int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
-	int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
-	viewport.originX = dstX;
-	viewport.originY = dstY;
+	viewport.originX = 0;
+	viewport.originY = 0;
 	viewport.width = _windowWidth;
 	viewport.height = _windowHeight;
 	_pipeline->setViewport(&viewport);
-
-	
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
 
 	// Third step: Draw the overlay if visible.
 	if (_overlayVisible) {
+		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
+		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
+		viewport.originX = dstX;
+		viewport.originY = dstY;
+		_pipeline->setViewport(&viewport);
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
 	}
