@@ -106,6 +106,8 @@ public:
 	
 	void setBlendModeOpaque();
 	
+	void setBlendModeTraditionalTransparency();
+	
 	void setBlendModeMaskAlphaAndInvertByColor();
 	
 protected:

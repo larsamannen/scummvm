@@ -59,31 +59,31 @@ const char* shaderSrc = R"(
 		return out;
 	}
 
-	fragment float4 fragmentFunction(VertexOut in [[stage_in]],
+	fragment half4 fragmentFunction(VertexOut in [[stage_in]],
 		texture2d<float> colorTexture [[texture(0)]])
 	{
-		constexpr sampler colorSampler (mip_filter::linear, mag_filter::linear, min_filter::linear);
+		constexpr sampler colorSampler (filter::nearest);
 		// Sample the texture to obtain a color
 		float4 color = colorTexture.sample(colorSampler, in.texCoord);
 
 		// return the color of the texture
-		return color;
+		return half4(color);
 	}
 
-	fragment float4 clut8FragmentFunction(VertexOut in [[stage_in]],
+	fragment half4 clut8FragmentFunction(VertexOut in [[stage_in]],
 		texture2d<float> colorTexture [[texture(0)]],
 		texture2d<float> palette [[texture(1)]])
 	{
-		constexpr sampler colorSampler (address::clamp_to_edge, filter::linear);
+		constexpr sampler colorSampler (filter::nearest);
 
 		const float adjustFactor = 255.0 / 256.0 + 1.0 / (2.0 * 256.0);
 
 		// Sample the texture to obtain a color
 		float4 index = colorTexture.sample(colorSampler, in.texCoord);
 		float4 color = palette.sample(colorSampler, float2(index.a * adjustFactor, 0.0f));
-
+		//half4 color = palette.read(gid);
 		// return the color of the texture
-		return color;
+		return half4(color);
 	})";
 } // End of anonymous namespace
 

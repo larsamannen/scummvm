@@ -33,8 +33,6 @@ static const int kCoordinatesSize = 4 * 2 * sizeof(float);
 
 ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 	: _metalDevice(metalDevice), _activeShader(shader) {
-	NS::Error* error = nullptr;
-
 	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
 	vertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
 	vertexDescriptor->layouts()->object(30)->setStepRate(1);
@@ -55,21 +53,7 @@ ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 		
 	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
 	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
-		
-		renderbufferAttachment->setBlendingEnabled(true);
-		renderbufferAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
-		renderbufferAttachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
-		renderbufferAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
-		renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
-		renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
-		renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 
-	_pipeLineState = _metalDevice->newRenderPipelineState(_pipelineDescriptor, &error);
-	if (!_pipeLineState)
-	{
-		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
-		assert( false );
-	}
 	vertexDescriptor->release();
 	_activeShader->release();
 }
@@ -85,6 +69,15 @@ ShaderPipeline::~ShaderPipeline() {
 
 void ShaderPipeline::activateInternal() {
 	Pipeline::activateInternal();
+	
+	NS::Error* error = nullptr;
+
+	_pipeLineState = _metalDevice->newRenderPipelineState(_pipelineDescriptor, &error);
+	if (!_pipeLineState)
+	{
+		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
+		assert( false );
+	}
 
 	//if (OpenGLContext.multitextureSupported) {
 	//	GL_CALL(glActiveTexture(GL_TEXTURE0));
@@ -98,7 +91,7 @@ void ShaderPipeline::activateInternal() {
 }
 
 void ShaderPipeline::deactivateInternal() {
-
+	//_pipeLineState->release();
 	Pipeline::deactivateInternal();
 }
 

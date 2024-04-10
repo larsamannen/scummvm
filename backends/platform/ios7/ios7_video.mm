@@ -444,6 +444,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 - (void)dealloc {
 	[_keyboardView release];
 
+
 	[_eventLock release];
 	[super dealloc];
 }

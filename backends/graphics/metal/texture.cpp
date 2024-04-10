@@ -131,6 +131,7 @@ void Texture::enableLinearFiltering(bool enable) {
 }
 
 void Texture::allocate(uint width, uint height) {
+	_metalTexture->release();
 	// Assure the texture can contain our user data.
 	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 	d->setWidth(width);
@@ -393,7 +394,7 @@ void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 					   );
 
 		//_paletteTexture.updateArea(Common::Rect(256, 1), palSurface);
-		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), palSurface.pitch*4);
+		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), _paletteTexture->bufferBytesPerRow());
 		_paletteDirty = false;
 	}
 
