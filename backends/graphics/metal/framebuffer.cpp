@@ -100,7 +100,7 @@ void Framebuffer::setScissorBox(int x, int y, int w, int h) {
 }
 
 void Framebuffer::applyViewport() {
-	_pipeline->setViewport(_viewport);
+	//_pipeline->setViewport(_viewport);
 	//assert(_renderCommandEncoder);
 	//_renderCommandEncoder->setViewport(*_viewport);
 }
@@ -297,8 +297,8 @@ bool TextureTarget::setSize(uint width, uint height) {
 	// Set viewport dimensions.
 	_viewport->originX = 0;
 	_viewport->originY = 0;
-	_viewport->width = texWidth;
-	_viewport->height = texHeight;
+	_viewport->width = width;
+	_viewport->height = height;
 	
 	//_renderPassColorAttachmentDescriptor->setTexture(_texture);
 	//_renderCommandEncoder = _commandBuffer->renderCommandEncoder(_renderPassDescriptor);

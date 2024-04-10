@@ -81,7 +81,6 @@ const char* shaderSrc = R"(
 		// Sample the texture to obtain a color
 		float4 index = colorTexture.sample(colorSampler, in.texCoord);
 		float4 color = palette.sample(colorSampler, float2(index.a * adjustFactor, 0.0f));
-		//half4 color = palette.read(gid);
 		// return the color of the texture
 		return half4(color);
 	})";

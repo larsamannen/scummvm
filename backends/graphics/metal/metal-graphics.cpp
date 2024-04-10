@@ -38,7 +38,7 @@ namespace Metal {
 MetalGraphicsManager::MetalGraphicsManager() :
 	_pipeline(nullptr), _currentState(), _oldState(), _defaultFormat(), _defaultFormatAlpha(),
 	_gameScreen(nullptr), _overlay(nullptr), _cursor(nullptr), _cursorMask(nullptr),
-	_cursorHotspotX(0), _cursorHotspotY(0),
+	_cursorHotspotX(0), _cursorHotspotY(0), _targetBuffer(nullptr),
 	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
 	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false),
 	_screenChangeID(0)
@@ -66,7 +66,7 @@ void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
 											   const Graphics::PixelFormat &defaultFormat,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
 	// Set up the target: backbuffer usually
-//	delete _targetBuffer;
+	delete _targetBuffer;
 	_targetBuffer = target;
 
 	// Initialize pipeline.
@@ -150,6 +150,9 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
+	// Setup backbuffer size.
+	_targetBuffer->setSize(width, height);
+
 	uint overlayWidth = width;
 	uint overlayHeight = height;
 	
@@ -539,6 +542,7 @@ void MetalGraphicsManager::renderCursor() {
 
 	_pipeline->setViewport(&viewport);
 	_pipeline->drawTexture(*_cursor->getMetalTexture(), _cursor->getVertexPositionsBuffer(), _cursor->getIndexBuffer());
+	_pipeline->setViewport(nullptr);
 }
 
 void MetalGraphicsManager::updateScreen() {
@@ -577,12 +581,7 @@ void MetalGraphicsManager::updateScreen() {
 
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
-	MTL::Viewport viewport;
-	viewport.originX = 0;
-	viewport.originY = 0;
-	viewport.width = _windowWidth;
-	viewport.height = _windowHeight;
-	_pipeline->setViewport(&viewport);
+
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
@@ -591,9 +590,7 @@ void MetalGraphicsManager::updateScreen() {
 	if (_overlayVisible) {
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
-		viewport.originX = dstX;
-		viewport.originY = dstY;
-		_pipeline->setViewport(&viewport);
+
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
 	}

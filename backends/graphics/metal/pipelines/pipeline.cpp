@@ -30,7 +30,7 @@ namespace Metal {
 Pipeline *Pipeline::activePipeline = nullptr;
 
 Pipeline::Pipeline()
-	: _activeFramebuffer(nullptr) {
+	: _activeFramebuffer(nullptr), _viewport(nullptr) {
 }
 
 void Pipeline::activate(MTL::CommandBuffer *commandBuffer) {
