@@ -67,6 +67,8 @@ void iOSMetalGraphicsManager::deinitSurface() {
 }
 
 void iOSMetalGraphicsManager::notifyResize(const int width, const int height) {
+	CGSize size = CGSizeMake(width, height);
+	_metalLayer->setDrawableSize(size);
 	handleResize(width, height);
 }
 
