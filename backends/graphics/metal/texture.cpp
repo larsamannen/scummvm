@@ -29,6 +29,194 @@
 
 namespace Metal {
 
+MetalTexture::MetalTexture(MTL::Device *device, uint pixelFormat, uint usage)
+	: _device(device), _pixelFormat(pixelFormat),
+	  _width(0), _height(0), _logicalWidth(0), _logicalHeight(0),
+	  _texCoords(), _usage(usage), //_glFilter(GL_NEAREST),
+	  _texture(nullptr) {
+	create();
+}
+
+MetalTexture::~MetalTexture() {
+	_texture->release();
+	//GL_CALL_SAFE(glDeleteTextures, (1, &_glTexture));
+}
+
+void MetalTexture::enableLinearFiltering(bool enable) {
+	if (enable) {
+//		_glFilter = GL_LINEAR;
+	} else {
+//		_glFilter = GL_NEAREST;
+	}
+
+//	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
+//	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
+}
+
+/*
+void MetalTexture::setWrapMode(WrapMode wrapMode) {
+	GLuint glwrapMode;
+
+	switch(wrapMode) {
+		case kWrapModeBorder:
+#if !USE_FORCED_GLES && !USE_FORCED_GLES2
+			if (OpenGLContext.textureBorderClampSupported) {
+				glwrapMode = GL_CLAMP_TO_BORDER;
+				break;
+			}
+#endif
+		// fall through
+		case kWrapModeEdge:
+			if (OpenGLContext.textureEdgeClampSupported) {
+				glwrapMode = GL_CLAMP_TO_EDGE;
+				break;
+			} else {
+#if !USE_FORCED_GLES && !USE_FORCED_GLES2
+				// Fallback on clamp
+				glwrapMode = GL_CLAMP;
+#else
+				// This fallback should never happen in real life (GLES/GLES2 have border/edge clamp)
+				glwrapMode = GL_REPEAT;
+#endif
+				break;
+			}
+		case kWrapModeMirroredRepeat:
+#if !USE_FORCED_GLES
+			if (OpenGLContext.textureMirrorRepeatSupported) {
+				glwrapMode = GL_MIRRORED_REPEAT;
+				break;
+			}
+#endif
+		// fall through
+		case kWrapModeRepeat:
+		default:
+			glwrapMode = GL_REPEAT;
+	}
+
+
+	bind();
+
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glwrapMode));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glwrapMode));
+}
+*/
+void MetalTexture::destroy() {
+	_texture->release();
+	//GL_CALL(glDeleteTextures(1, &_glTexture));
+	_texture = nullptr;
+}
+
+void MetalTexture::create() {
+	// Release old texture name in case it exists.
+	destroy();
+#if 0
+	// Get a new texture name.
+	GL_CALL(glGenTextures(1, &_glTexture));
+
+	// Set up all texture parameters.
+	bind();
+	GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
+	if (OpenGLContext.textureEdgeClampSupported) {
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	} else {
+#if !USE_FORCED_GLES && !USE_FORCED_GLES2
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP));
+#endif
+	}
+#endif
+	// If a size is specified, allocate memory for it.
+	if (_width != 0 && _height != 0) {
+		// Allocate storage for Metal texture.
+		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+		d->setWidth(_width);
+		d->setHeight(_height);
+		d->setPixelFormat((MTL::PixelFormat)_pixelFormat);
+		d->setUsage((MTL::TextureUsage)_usage);
+		_texture = _device->newTexture(d);
+		d->release();
+	}
+}
+
+bool MetalTexture::setSize(uint width, uint height) {
+	const uint oldWidth  = _width;
+	const uint oldHeight = _height;
+
+	_logicalWidth  = width;
+	_logicalHeight = height;
+
+	//if (!OpenGLContext.NPOTSupported) {
+	//	_width  = Common::nextHigher2(width);
+	//	_height = Common::nextHigher2(height);
+	//} else {
+		_width  = width;
+		_height = height;
+	//}
+
+	// If a size is specified, allocate memory for it.
+	if (width != 0 && height != 0) {
+		const float texWidth = (float)width / _width;
+		const float texHeight = (float)height / _height;
+
+		_texCoords[0] = 0;
+		_texCoords[1] = 0;
+
+		_texCoords[2] = texWidth;
+		_texCoords[3] = 0;
+
+		_texCoords[4] = 0;
+		_texCoords[5] = texHeight;
+
+		_texCoords[6] = texWidth;
+		_texCoords[7] = texHeight;
+
+		// Allocate storage for OpenGL texture if necessary.
+		if (oldWidth != _width || oldHeight != _height) {
+			// Allocate storage for Metal texture.
+			MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+			d->setWidth(_width);
+			d->setHeight(_height);
+			d->setPixelFormat((MTL::PixelFormat)_pixelFormat);
+			d->setUsage((MTL::TextureUsage)_usage);
+			_texture = _device->newTexture(d);
+			d->release();
+		}
+	}
+	return true;
+}
+
+void MetalTexture::updateArea(const Common::Rect &area, const Graphics::Surface &src) {
+	// Set the texture on the active texture unit.
+//	bind();
+
+	// Update the actual texture.
+	// Although we have the area of the texture buffer we want to update we
+	// cannot take advantage of the left/right boundaries here because it is
+	// not possible to specify a pitch to glTexSubImage2D. To be precise, with
+	// plain OpenGL we could set GL_UNPACK_ROW_LENGTH to achieve this. However,
+	// OpenGL ES 1.0 does not support GL_UNPACK_ROW_LENGTH. Thus, we are left
+	// with the following options:
+	//
+	// 1) (As we do right now) Simply always update the whole texture lines of
+	//    rect changed. This is simplest to implement. In case performance is
+	//    really an issue we can think of switching to another method.
+	//
+	// 2) Copy the dirty rect to a temporary buffer and upload that by using
+	//    glTexSubImage2D. This is what the Android backend does. It is more
+	//    complicated though.
+	//
+	// 3) Use glTexSubImage2D per line changed. This is what the old OpenGL
+	//    graphics manager did but it is much slower! Thus, we do not use it.
+//	GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, area.top, src.w, area.height(),
+	//					   _glFormat, _glType, src.getBasePtr(0, area.top)));
+	_texture->replaceRegion(MTL::Region(area.left, area.top, 0, src.w - area.left, area.height(), 1), 0, src.getBasePtr(area.left, area.top), src.pitch);
+
+}
+
+
 Surface::Surface()
 	: _allDirty(false), _dirtyArea() {
 }
@@ -102,22 +290,21 @@ const MTL::Buffer *Surface::getIndexBuffer() const {
 //
 
 Texture::Texture(/*GLenum glIntFormat, GLenum glFormat, GLenum glType,*/ MTL::Device *device, const Graphics::PixelFormat &format)
-	: Surface(), _format(format), _device(device),/*_glTexture(glIntFormat, glFormat, glType),*/
+	: Surface(), _format(format), _device(device), _metalTexture(new MetalTexture(device, MTL::PixelFormatRGBA8Unorm)),
 	  _textureData(), _userPixelData() {
 }
 
 Texture::~Texture() {
 	_textureData.free();
-	_metalTexture->release();
+	_metalTexture->destroy();
 }
 
 void Texture::destroy() {
-	_metalTexture->release();
+	_metalTexture->destroy();
 }
 
 void Texture::recreate() {
-	_metalTexture->release();
-	//_glTexture.create();
+	_metalTexture->create();
 
 	// In case image date exists assure it will be completely refreshed next
 	// time.
@@ -131,24 +318,24 @@ void Texture::enableLinearFiltering(bool enable) {
 }
 
 void Texture::allocate(uint width, uint height) {
-	_metalTexture->release();
 	// Assure the texture can contain our user data.
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(width);
-	d->setHeight(height);
-	_metalTexture = _device->newTexture(d);
-	d->release();
+	_metalTexture->setSize(width, height);
+//	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
+//	d->setWidth(width);
+//	d->setHeight(height);
+//	_metalTexture = _device->newTexture(d);
+//	d->release();
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
-	if (_metalTexture->width() != (uint)_textureData.w || _metalTexture->height() != (uint)_textureData.h) {
+	if (_metalTexture->getWidth() != (uint)_textureData.w || _metalTexture->getHeight() != (uint)_textureData.h) {
 		// Create a buffer for the texture data.
-		_textureData.create(_metalTexture->width(), _metalTexture->height(), _format);
+		_textureData.create(_metalTexture->getWidth(), _metalTexture->getHeight(), _format);
 	}
 
 	// Create a sub-buffer for raw access.
 	_userPixelData = _textureData.getSubArea(Common::Rect(width, height));
-	
+
 	Vertex vertices[] = {
 		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0
 		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
@@ -210,8 +397,7 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 		++dirtyArea.bottom;
 	}
 
-	_metalTexture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _textureData.w - dirtyArea.left, dirtyArea.height(), 1), 0, _textureData.getBasePtr(dirtyArea.left, dirtyArea.top), _textureData.pitch);
-
+	_metalTexture->updateArea(dirtyArea, _textureData);
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();
 }
@@ -222,18 +408,14 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 // problems, we need to switch to GL_R8 and GL_RED, but that is only supported
 // for ARB_texture_rg and GLES3+ (EXT_rexture_rg does not support GL_R8).
 TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device)
-	: _device(device), _clut8Texture(nullptr), _paletteTexture(nullptr),
+	: _device(device), _clut8Texture(new MetalTexture(device, MTL::PixelFormatA8Unorm)), _paletteTexture(nullptr),
 	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(device)),
 	  _clut8Data(), _userPixelData(), _palette(),
 	  _paletteDirty(false) {
-	_paletteTexture->release();
 	// Allocate space for 256 colors.
-	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-	d->setWidth(256);
-	d->setHeight(1);
-	d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-	_paletteTexture = _device->newTexture(d);
-	d->release();
+    _paletteTexture = new MetalTexture(device, MTL::PixelFormatRGBA8Unorm);
+    _paletteTexture->setSize(256, 1);
+
 	// Setup pipeline
 	_clut8Pipeline->setFramebuffer(_target);
 	_clut8Pipeline->setPaletteTexture(_paletteTexture);
@@ -245,12 +427,12 @@ TextureCLUT8GPU::~TextureCLUT8GPU() {
 	delete _target;
 	_clut8Data.free();
 	if (_clut8Texture)
-		_clut8Texture->release();
+		_clut8Texture->destroy();
 }
 
 void TextureCLUT8GPU::destroy() {
-	_clut8Texture->release();
-	_paletteTexture->release();
+	_clut8Texture->destroy();
+	_paletteTexture->destroy();
 	_target->destroy();
 	delete _clut8Pipeline;
 	_clut8Pipeline = nullptr;
@@ -259,10 +441,8 @@ void TextureCLUT8GPU::destroy() {
 }
 
 void TextureCLUT8GPU::recreate() {
-	//_clut8Texture.create();
-	//_paletteTexture.create();
-	_clut8Texture->release();
-	_paletteTexture->release();
+	_clut8Texture->create();
+	_paletteTexture->create();
 	_target->create();
 
 	// In case image date exists assure it will be completely refreshed next
@@ -287,24 +467,14 @@ void TextureCLUT8GPU::enableLinearFiltering(bool enable) {
 
 void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// Assure the texture can contain our user data.
-	if (_clut8Texture == nullptr ||
-		_clut8Texture->width() != width ||
-		_clut8Texture->height() != height) {
-		_clut8Texture->release();
-		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-		d->setWidth(width);
-		d->setHeight(height);
-		d->setPixelFormat(MTL::PixelFormatA8Unorm);
-		_clut8Texture = _device->newTexture(d);
-		d->release();
-	}
+	_clut8Texture->setSize(width, height);
 	_target->setSize(width, height);
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
-	if (_clut8Texture->width() != (uint)_clut8Data.w || _clut8Texture->height() != (uint)_clut8Data.h) {
+	if (_clut8Texture->getWidth() != (uint)_clut8Data.w || _clut8Texture->getHeight() != (uint)_clut8Data.h) {
 		// Create a buffer for the texture data.
-		_clut8Data.create(_clut8Texture->width(), _clut8Texture->height(), Graphics::PixelFormat::createFormatCLUT8());
+		_clut8Data.create(_clut8Texture->getWidth(), _clut8Texture->getHeight(), Graphics::PixelFormat::createFormatCLUT8());
 	}
 
 	// Create a sub-buffer for raw access.
@@ -366,7 +536,7 @@ void TextureCLUT8GPU::setPalette(uint start, uint colors, const byte *palData) {
 	_paletteDirty = true;
 }
 
-const MTL::Texture *TextureCLUT8GPU::getMetalTexture() const {
+const MetalTexture *TextureCLUT8GPU::getMetalTexture() const {
 	return _target->getTexture();
 }
 
@@ -378,14 +548,14 @@ void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 	// representation, hence *4.
 	if (Surface::isDirty()) {
 		Common::Rect dirtyArea = getDirtyArea();
-		_clut8Texture->replaceRegion(MTL::Region(dirtyArea.left, dirtyArea.top, 0, _clut8Data.w - dirtyArea.left, dirtyArea.height(), 1), 0, _clut8Data.getBasePtr(dirtyArea.left, dirtyArea.top), _clut8Data.pitch);
+		_clut8Texture->updateArea(dirtyArea, _clut8Data);
 		clearDirty();
 	}
 
 	// Update palette if necessary.
 	if (_paletteDirty) {
 		Graphics::Surface palSurface;
-		palSurface.init(256, 1, 256, _palette,
+		palSurface.init(256, 1, 256*4, _palette,
 #ifdef SCUMM_LITTLE_ENDIAN
 						Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24) // ABGR8888
 #else
@@ -393,8 +563,7 @@ void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 #endif
 					   );
 
-		//_paletteTexture.updateArea(Common::Rect(256, 1), palSurface);
-		_paletteTexture->replaceRegion(MTL::Region(0, 0, 0, 256, 1, 1), 0, palSurface.getBasePtr(0, 0), _paletteTexture->bufferBytesPerRow());
+		_paletteTexture->updateArea(Common::Rect(256, 1), palSurface);
 		_paletteDirty = false;
 	}
 

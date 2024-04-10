@@ -32,7 +32,7 @@ CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
 	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)) {
 }
 
-void CLUT8LookUpPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
+void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
 	
 	//MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();

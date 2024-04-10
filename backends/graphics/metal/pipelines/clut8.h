@@ -30,10 +30,10 @@ class CLUT8LookUpPipeline : public ShaderPipeline {
 public:
 	CLUT8LookUpPipeline(MTL::Device *metalDevice);
 
-	void setPaletteTexture(const MTL::Texture *paletteTexture) { _paletteTexture = paletteTexture; }
+	void setPaletteTexture(const MetalTexture *paletteTexture) { _paletteTexture = paletteTexture; }
 
 protected:
-	void drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) override;
+	void drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) override;
 
 };
 

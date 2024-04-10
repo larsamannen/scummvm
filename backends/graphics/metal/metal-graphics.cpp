@@ -991,6 +991,36 @@ Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format
 	return new Texture(_device, format);
 }
 
+int MetalGraphicsManager::getGameRenderScale() const {
+	return _currentState.scaleFactor;
+}
+
+void MetalGraphicsManager::recalculateDisplayAreas() {
+	if (!_gameScreen) {
+		return;
+	}
+
+	WindowedGraphicsManager::recalculateDisplayAreas();
+
+	// Setup drawing limitation for game graphics.
+	// This involves some trickery because OpenGL's viewport coordinate system
+	// is upside down compared to ours.
+	_targetBuffer->setScissorBox(_gameDrawRect.left,
+							  _windowHeight - _gameDrawRect.height() - _gameDrawRect.top,
+							  _gameDrawRect.width(),
+							  _gameDrawRect.height());
+
+	_shakeOffsetScaled = Common::Point(_gameScreenShakeXOffset * _gameDrawRect.width() / (int)_currentState.gameWidth,
+		_gameScreenShakeYOffset * _gameDrawRect.height() / (int)_currentState.gameHeight);
+
+	// Update the cursor position to adjust for new display area.
+	setMousePosition(_cursorX, _cursorY);
+
+	// Force a redraw to assure screen is properly redrawn.
+	_forceRedraw = true;
+}
+
+
 void MetalGraphicsManager::updateCursorPalette() {
 	if (!_cursor || !_cursor->hasPalette()) {
 		return;

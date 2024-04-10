@@ -188,72 +188,18 @@ void Framebuffer::refreshScreen(MTL::CommandBuffer *commandBuffer) {
 }
 
 //
-// Backbuffer implementation
-//
-
-void Backbuffer::activateInternal() {
-//	if (OpenGLContext.framebufferObjectSupported) {
-//		GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-//	}
-}
-
-bool Backbuffer::setSize(uint width, uint height) {
-	// Set viewport dimensions.
-	_viewport->originX = 0;
-	_viewport->originY = 0;
-	_viewport->width = width;
-	_viewport->height = height;
-
-#if 0
-	// Setup orthogonal projection matrix.
-	_projectionMatrix(0, 0) =  2.0f / width;
-	_projectionMatrix(0, 1) =  0.0f;
-	_projectionMatrix(0, 2) =  0.0f;
-	_projectionMatrix(0, 3) =  0.0f;
-
-	_projectionMatrix(1, 0) =  0.0f;
-	_projectionMatrix(1, 1) = -2.0f / height;
-	_projectionMatrix(1, 2) =  0.0f;
-	_projectionMatrix(1, 3) =  0.0f;
-
-	_projectionMatrix(2, 0) =  0.0f;
-	_projectionMatrix(2, 1) =  0.0f;
-	_projectionMatrix(2, 2) =  0.0f;
-	_projectionMatrix(2, 3) =  0.0f;
-
-	_projectionMatrix(3, 0) = -1.0f;
-	_projectionMatrix(3, 1) =  1.0f;
-	_projectionMatrix(3, 2) =  0.0f;
-	_projectionMatrix(3, 3) =  1.0f;
-#endif
-	// Directly apply changes when we are active.
-	if (isActive()) {
-		applyViewport();
-		applyProjectionMatrix();
-	}
-	return true;
-}
-
-//
 // Render to texture target implementation
 //
 
-TextureTarget::TextureTarget(MTL::Device *device) : Framebuffer(device), _texture(nullptr), _needUpdate(true) {
-	//_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	//_renderPassColorAttachmentDescriptor = _renderPassDescriptor->colorAttachments()->object(0);
-	//_renderPassColorAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
-	//_renderPassColorAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
+TextureTarget::TextureTarget(MTL::Device *device) : _texture(new MetalTexture(device, MTL::PixelFormatRGBA8Unorm, (MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead))), Framebuffer(device), _needUpdate(true) {
 }
 
 TextureTarget::~TextureTarget() {
-	//_texture->release();
-	//_renderCommandEncoder->release();
-	//_renderPassDescriptor->release();
-	//_renderPassColorAttachmentDescriptor->release();
+	_texture->destroy();
 }
 
 void TextureTarget::activateInternal() {
-	_targetTexture = _texture;
+	_targetTexture = _texture->getMetalTexture();
 	// Allocate framebuffer object if necessary.
 	//if (!_glFBO) {
 	//	GL_CALL(glGenFramebuffers(1, &_glFBO));
@@ -271,10 +217,8 @@ void TextureTarget::activateInternal() {
 }
 
 void TextureTarget::destroy() {
-	_texture->release();
-	//_renderCommandEncoder->release();
-	//_renderPassDescriptor->release();
-	//_renderPassColorAttachmentDescriptor->release();
+	_texture->destroy();
+
 }
 
 void TextureTarget::create() {
@@ -282,28 +226,17 @@ void TextureTarget::create() {
 }
 
 bool TextureTarget::setSize(uint width, uint height) {
-	if (_texture == nullptr) {
-		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-		d->setWidth(width);
-		d->setHeight(height);
-		d->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-		d->setUsage(MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead);
-		_texture = _metalDevice->newTexture(d);
-		d->release();
-	}
-	const uint texWidth  = _texture->width();
-	const uint texHeight = _texture->height();
+	_texture->setSize(width, height);
+
+	const uint texWidth  = _texture->getWidth();
+	const uint texHeight = _texture->getHeight();
 
 	// Set viewport dimensions.
 	_viewport->originX = 0;
 	_viewport->originY = 0;
 	_viewport->width = width;
 	_viewport->height = height;
-	
-	//_renderPassColorAttachmentDescriptor->setTexture(_texture);
-	//_renderCommandEncoder = _commandBuffer->renderCommandEncoder(_renderPassDescriptor);
 
-#if 0
 	// Setup orthogonal projection matrix.
 	_projectionMatrix(0, 0) =  2.0f / texWidth;
 	_projectionMatrix(0, 1) =  0.0f;
@@ -324,7 +257,7 @@ bool TextureTarget::setSize(uint width, uint height) {
 	_projectionMatrix(3, 1) = -1.0f;
 	_projectionMatrix(3, 2) =  0.0f;
 	_projectionMatrix(3, 3) =  1.0f;
-#endif
+
 	// Directly apply changes when we are active.
 	if (isActive()) {
 		applyViewport();

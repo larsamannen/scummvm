@@ -179,14 +179,13 @@ public:
 	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer);
 	
 	MTL::CommandQueue *getCommandQueue() { return _commandQueue; }
-	MTL::Texture *getTargetTexture() { return _targetTexture; };
+	MTL::Texture *getTargetTexture() { return _targetTexture; }
 
 protected:
 	MTL::Device *_metalDevice;
-	MTL::Texture *_texture;
-	MTL::Texture *_targetTexture;
 	MTL::CommandQueue *_commandQueue;
 	MTL::RenderPassDescriptor *_renderPassDescriptor;
+	MTL::Texture *_targetTexture;
 
 	
 	float _clearColor[4];
@@ -206,19 +205,7 @@ private:
 	void applyScissorBox();
 };
 
-/**
- * Default back buffer implementation.
- */
-class Backbuffer : public Framebuffer {
-public:
-	/**
-	 * Set the size of the back buffer.
-	 */
-	bool setSize(uint width, uint height) override;
-
-protected:
-	void activateInternal() override;
-};
+class MetalTexture;
 
 /**
  * Render to texture framebuffer implementation.
@@ -249,13 +236,13 @@ public:
 	/**
 	 * Query pointer to underlying Metal texture.
 	 */
-	MTL::Texture *getTexture() const { return _texture; }
+	MetalTexture *getTexture() const { return _texture; }
 
 protected:
 	void activateInternal() override;
 
 private:
-	MTL::Texture *_texture;
+	MetalTexture *_texture;
 	MTL::RenderPassDescriptor *_renderPassDescriptor;
 	//GLuint _glFBO;
 	bool _needUpdate;

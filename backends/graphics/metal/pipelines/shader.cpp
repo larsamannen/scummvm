@@ -105,7 +105,7 @@ void ShaderPipeline::setColor(float r, float g, float b, float a) {
 	}
 }
 
-void ShaderPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
+void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 	assert(isActive());
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
@@ -121,9 +121,9 @@ void ShaderPipeline::drawTextureInternal(const MTL::Texture &texture, const MTL:
 	// reference to the layout buffer in vertexDescriptor
 	encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	encoder->setFragmentTexture(&texture, 0);
+	encoder->setFragmentTexture(texture.getMetalTexture(), 0);
 	if (_paletteTexture) {
-		encoder->setFragmentTexture(_paletteTexture, 1);
+		encoder->setFragmentTexture(_paletteTexture->getMetalTexture(), 1);
 	}
 	if (_viewport) {
 		encoder->setViewport(*_viewport);

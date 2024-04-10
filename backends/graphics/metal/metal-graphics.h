@@ -66,6 +66,8 @@ public:
 	
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
+	int getGameRenderScale() const override;
+	void recalculateDisplayAreas() override;
 	void handleResizeImpl(const int width, const int height) override;
 	
 	// GraphicsManager

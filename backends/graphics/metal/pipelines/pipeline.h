@@ -87,8 +87,18 @@ public:
 	 * @param texture     Texture to use for drawing.
 	 * @param coordinates x1, y1, x2, y2 coordinates where to draw the texture.
 	 */
-	inline void drawTexture(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
+	inline void drawTexture(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
 		drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
+	}
+	
+	inline void drawTexture(const MetalTexture &texture, float x, float y, float w, float h) {
+		const float coordinates[4*2] = {
+			x,     y,
+			x + w, y,
+			x,     y + h,
+			x + w, y + h
+		};
+		//drawTextureInternal(texture, coordinates, texture.getTexCoords());
 	}
 	
 	/**
@@ -124,7 +134,7 @@ protected:
 	 */
 	virtual void deactivateInternal();
 
-	virtual void drawTextureInternal(const MTL::Texture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) = 0;
+	virtual void drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) = 0;
 
 	bool isActive() const { return activePipeline == this; }
 	
@@ -135,7 +145,7 @@ protected:
 	MTL::CommandBuffer *_commandBuffer;
 	MTL::Viewport *_viewport;
 	int _loadAction;
-	const MTL::Texture *_paletteTexture;
+	const MetalTexture *_paletteTexture;
 	float _colorAttributes[4*4];
 
 

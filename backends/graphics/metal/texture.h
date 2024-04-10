@@ -36,6 +36,128 @@ class Texture;
 namespace Metal {
 
 /**
+ * A simple GL texture object abstraction.
+ *
+ * This is used for low-level GL texture handling.
+ */
+class MetalTexture {
+public:
+	/**
+	 * Constrcut a new GL texture object.
+	 *
+	 * @param glIntFormat The internal format to use.
+	 * @param glFormat    The input format.
+	 * @param glType      The input type.
+	 */
+	MetalTexture(MTL::Device *device, uint pixelFormat, uint usage = 0);
+	~MetalTexture();
+
+	/**
+	 * Enable or disable linear texture filtering.
+	 *
+	 * @param enable true to enable and false to disable.
+	 */
+	void enableLinearFiltering(bool enable);
+
+	/**
+	 * Test whether linear filtering is enabled.
+	 */
+	//bool isLinearFilteringEnabled() const { return (_glFilter == GL_LINEAR); }
+
+	/**
+	 * Enable or disable linear texture filtering.
+	 *
+	 * @param enable true to enable and false to disable.
+	 */
+	//void setWrapMode(WrapMode wrapMode);
+
+	/**
+	 * Destroy the OpenGL texture name.
+	 */
+	void destroy();
+
+	/**
+	 * Create the OpenGL texture name.
+	 */
+	void create();
+
+	/**
+	 * Bind the texture to the active texture unit.
+	 */
+	//void bind() const;
+
+	/**
+	 * Sets the size of the texture in pixels.
+	 *
+	 * The internal OpenGL texture might have a different size. To query the
+	 * actual size use getWidth()/getHeight().
+	 *
+	 * @param width  The desired logical width.
+	 * @param height The desired logical height.
+	 * @return Whether the call was successful
+	 */
+	bool setSize(uint width, uint height);
+
+	/**
+	 * Copy image data to the texture.
+	 *
+	 * @param area     The area to update.
+	 * @param src      Surface for the whole texture containing the pixel data
+	 *                 to upload. Only the area described by area will be
+	 *                 uploaded.
+	 */
+	void updateArea(const Common::Rect &area, const Graphics::Surface &src);
+
+	/**
+	 * Query the GL texture's width.
+	 */
+	uint getWidth() const { return _width; }
+
+	/**
+	 * Query the GL texture's height.
+	 */
+	uint getHeight() const { return _height; }
+
+	/**
+	 * Query the logical texture's width.
+	 */
+	uint getLogicalWidth() const { return _logicalWidth; }
+
+	/**
+	 * Query the logical texture's height.
+	 */
+	uint getLogicalHeight() const { return _logicalHeight; }
+
+	/**
+	 * Obtain texture coordinates for rectangular drawing.
+	 */
+	const float *getTexCoords() const { return _texCoords; }
+
+	/**
+	 * Obtain texture name.
+	 *
+	 * Beware that the texture name changes whenever create is used.
+	 * destroy will invalidate the texture name.
+	 */
+	MTL::Texture *getMetalTexture() const { return _texture; }
+private:
+	uint _pixelFormat;
+	uint _usage;
+	//const GLenum _glIntFormat;
+	//const GLenum _glFormat;
+	//const GLenum _glType;
+
+	uint _width, _height;
+	uint _logicalWidth, _logicalHeight;
+	float _texCoords[4*2];
+
+	//GLint _glFilter;
+
+	MTL::Texture *_texture;
+	MTL::Device *_device;
+};
+
+/**
  * Interface for Metal implementations of a 2D surface.
  */
 class Surface {
@@ -137,7 +259,7 @@ public:
 	/**
 	 * Obtain underlying Metal texture.
 	 */
-	virtual const MTL::Texture *getMetalTexture() const = 0;
+	virtual const MetalTexture *getMetalTexture() const = 0;
 	
 	const MTL::Buffer *getVertexPositionsBuffer() const;
 	const MTL::Buffer *getIndexBuffer() const;
@@ -192,14 +314,14 @@ public:
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
 	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
-	const MTL::Texture *getMetalTexture() const override { return _metalTexture; }
+	const MetalTexture *getMetalTexture() const override { return _metalTexture; }
 protected:
 	const Graphics::PixelFormat _format;
 
 	void updateMetalTexture(Common::Rect &dirtyArea);
 
 private:
-	MTL::Texture *_metalTexture;
+	MetalTexture *_metalTexture;
 	MTL::Device *_device;
 
 	Graphics::Surface _textureData;
@@ -238,7 +360,7 @@ public:
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
 	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
-	const MTL::Texture *getMetalTexture() const override;
+	const MetalTexture *getMetalTexture() const override;
 
 	static bool isSupportedByContext() {
 		return true;
@@ -247,8 +369,8 @@ private:
 	void lookUpColors(MTL::CommandBuffer *commandBuffer);
 
 	MTL::Device *_device;
-	MTL::Texture *_clut8Texture;
-	MTL::Texture *_paletteTexture;
+	MetalTexture *_clut8Texture;
+	MetalTexture *_paletteTexture;
 	TextureTarget *_target;
 	CLUT8LookUpPipeline *_clut8Pipeline;
 
