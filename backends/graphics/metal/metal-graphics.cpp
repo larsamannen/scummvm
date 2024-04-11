@@ -276,6 +276,14 @@ int MetalGraphicsManager::getGraphicsMode() const {
 	return _currentState.graphicsMode;
 }
 
+int MetalGraphicsManager::getDefaultStretchMode() const {
+	return STRETCH_FIT;
+}
+
+int MetalGraphicsManager::getStretchMode() const {
+	return STRETCH_FIT;
+}
+
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	Graphics::PixelFormat requestedFormat;
 #ifdef USE_RGB_COLOR
@@ -582,6 +590,14 @@ void MetalGraphicsManager::updateScreen() {
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
 
+	MTL::Viewport viewport;
+	viewport.originX = _activeArea.drawRect.left;
+	viewport.originY = _activeArea.drawRect.top;
+	viewport.width = _activeArea.drawRect.width();//_gameScreen->getMetalTexture()->getWidth();
+	viewport.height = _activeArea.drawRect.height();//_gameScreen->getMetalTexture()->getHeight();
+
+	_pipeline->setViewport(&viewport);
+
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
@@ -590,7 +606,12 @@ void MetalGraphicsManager::updateScreen() {
 	if (_overlayVisible) {
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
+	//	viewport.originX = dstX;
+	//	viewport.originY = dstY;
+	//	viewport.width = _overlayDrawRect.width();
+	//	viewport.height = _overlayDrawRect.height();
 
+	//	_pipeline->setViewport(&viewport);
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
 	}

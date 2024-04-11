@@ -84,6 +84,9 @@ public:
 	Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
 #endif
 	
+	int getDefaultStretchMode() const override;
+	int getStretchMode() const override;
+	
 	void initSize(uint width, uint height, const Graphics::PixelFormat *format = NULL) override;
 	int getScreenChangeID() const override;
 	

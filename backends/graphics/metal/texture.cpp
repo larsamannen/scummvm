@@ -160,6 +160,13 @@ bool MetalTexture::setSize(uint width, uint height) {
 	if (width != 0 && height != 0) {
 		const float texWidth = (float)width / _width;
 		const float texHeight = (float)height / _height;
+		
+		Vertex vertices[] = {
+			{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0 map the position to a coord
+			{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
+			{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
+			{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
+		};
 
 		_texCoords[0] = 0;
 		_texCoords[1] = 0;
@@ -336,13 +343,23 @@ void Texture::allocate(uint width, uint height) {
 	// Create a sub-buffer for raw access.
 	_userPixelData = _textureData.getSubArea(Common::Rect(width, height));
 
+#if 0
 	Vertex vertices[] = {
 		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0
 		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
 		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
 		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
 	};
-	
+#endif
+	const float texWidth = (float)width / _metalTexture->getWidth();
+	const float texHeight = (float)height / _metalTexture->getHeight();
+
+	Vertex vertices[] = {
+		{{-texWidth, -texHeight}, {0.0f, 1.0f}}, // Vertex 0
+		{{ texWidth, -texHeight}, {1.0f, 1.0f}}, // Vertex 1
+		{{ texWidth,  texHeight}, {1.0f, 0.0f}}, // Vertex 2
+		{{-texWidth,  texHeight}, {0.0f, 0.0f}}  // Vertex 3
+	};
 	unsigned short indices[] = {
 		0, 1, 2,
 		0, 2, 3
@@ -479,6 +496,8 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 
 	// Create a sub-buffer for raw access.
 	_userPixelData = _clut8Data.getSubArea(Common::Rect(width, height));
+	float hwidth = width/2;
+	float hheight = height/2;
 	
 	Vertex vertices[] = {
 		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0

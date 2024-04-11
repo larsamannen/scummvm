@@ -42,6 +42,11 @@ void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const
 		//encoder->setFragmentTexture(_paletteTexture, 1);
 	}
 	//encoder->release();
+	_viewport = new MTL::Viewport();
+	_viewport->originX = 0;
+	_viewport->originY = 0;
+	_viewport->width = texture.getWidth();
+	_viewport->height = texture.getHeight();
 
 	ShaderPipeline::drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
 }
