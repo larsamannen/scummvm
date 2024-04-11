@@ -116,6 +116,8 @@ public:
 	 */
 	void setScissorBox(int x, int y, int w, int h);
 	
+	void setViewport(int x, int y, int w, int h);
+
 	/**
 	 * Obtain projection matrix of the framebuffer.
 	 */

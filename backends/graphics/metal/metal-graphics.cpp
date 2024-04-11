@@ -542,15 +542,12 @@ void MetalGraphicsManager::renderCursor() {
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeAdditive);
 	} else
 		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
-	MTL::Viewport viewport;
-	viewport.originX = _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x;
-	viewport.originY = _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y;
-	viewport.width = _cursorWidthScaled;
-	viewport.height = _cursorHeightScaled;
 
-	_pipeline->setViewport(&viewport);
+	_pipeline->setViewport(_cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
+							   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
+							   _cursorWidthScaled, _cursorHeightScaled);
+
 	_pipeline->drawTexture(*_cursor->getMetalTexture(), _cursor->getVertexPositionsBuffer(), _cursor->getIndexBuffer());
-	_pipeline->setViewport(nullptr);
 }
 
 void MetalGraphicsManager::updateScreen() {
@@ -590,13 +587,13 @@ void MetalGraphicsManager::updateScreen() {
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
 
-	MTL::Viewport viewport;
-	viewport.originX = _activeArea.drawRect.left;
-	viewport.originY = _activeArea.drawRect.top;
-	viewport.width = _activeArea.drawRect.width();//_gameScreen->getMetalTexture()->getWidth();
-	viewport.height = _activeArea.drawRect.height();//_gameScreen->getMetalTexture()->getHeight();
+//	MTL::Viewport viewport;
+//	viewport.originX = _activeArea.drawRect.left;
+//	viewport.originY = _activeArea.drawRect.top;
+//	viewport.width = _activeArea.drawRect.width();//_gameScreen->getMetalTexture()->getWidth();
+//	viewport.height = _activeArea.drawRect.height();//_gameScreen->getMetalTexture()->getHeight();
 
-	_pipeline->setViewport(&viewport);
+//	_pipeline->setViewport(&viewport);
 
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
 
@@ -1030,6 +1027,8 @@ void MetalGraphicsManager::recalculateDisplayAreas() {
 							  _windowHeight - _gameDrawRect.height() - _gameDrawRect.top,
 							  _gameDrawRect.width(),
 							  _gameDrawRect.height());
+	
+	_targetBuffer->setViewport(_activeArea.drawRect.left, _activeArea.drawRect.top, _activeArea.drawRect.width(), _activeArea.drawRect.height());
 
 	_shakeOffsetScaled = Common::Point(_gameScreenShakeXOffset * _gameDrawRect.width() / (int)_currentState.gameWidth,
 		_gameScreenShakeYOffset * _gameDrawRect.height() / (int)_currentState.gameHeight);

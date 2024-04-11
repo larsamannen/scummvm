@@ -108,7 +108,7 @@ public:
 	 */
 	virtual void setProjectionMatrix(const Math::Matrix4 &projectionMatrix) = 0;
 	
-	void setViewport(MTL::Viewport *viewport) { _viewport = viewport; }
+	void setViewport(int x, int y, int w, int h);
 	
 	void setLoadAction(int action) { _loadAction = action; }
 	

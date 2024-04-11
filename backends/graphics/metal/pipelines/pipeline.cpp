@@ -61,6 +61,7 @@ void Pipeline::deactivate() {
 	deactivateInternal();
 
 	activePipeline = nullptr;
+	delete _viewport;
 }
 
 void Pipeline::deactivateInternal() {
@@ -107,6 +108,14 @@ void Pipeline::setBlendModeMaskAlphaAndInvertByColor() {
 	renderbufferAttachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
 	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+}
+
+void Pipeline::setViewport(int x, int y, int w, int h) {
+	_viewport = new MTL::Viewport();
+	_viewport->originX = x;
+	_viewport->originY = y;
+	_viewport->width = w;
+	_viewport->height = h;
 }
 
 Framebuffer *Pipeline::setFramebuffer(Framebuffer *framebuffer) {

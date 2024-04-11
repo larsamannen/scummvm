@@ -99,8 +99,20 @@ void Framebuffer::setScissorBox(int x, int y, int w, int h) {
 	}
 }
 
+void Framebuffer::setViewport(int x, int y, int w, int h) {
+	_viewport->originX = x;
+	_viewport->originY = y;
+	_viewport->width = w;
+	_viewport->height = h;
+
+	// Directly apply changes when we are active.
+	if (isActive()) {
+		applyViewport();
+	}
+}
+
 void Framebuffer::applyViewport() {
-	//_pipeline->setViewport(_viewport);
+	_pipeline->setViewport(_viewport->originX, _viewport->originY, _viewport->width, _viewport->height);
 	//assert(_renderCommandEncoder);
 	//_renderCommandEncoder->setViewport(*_viewport);
 }
