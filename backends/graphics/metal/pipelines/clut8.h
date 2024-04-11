@@ -33,7 +33,7 @@ public:
 	void setPaletteTexture(const MetalTexture *paletteTexture) { _paletteTexture = paletteTexture; }
 
 protected:
-	void drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) override;
+	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
 
 };
 

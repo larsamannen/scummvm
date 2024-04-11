@@ -238,6 +238,8 @@ void TextureTarget::create() {
 }
 
 bool TextureTarget::setSize(uint width, uint height) {
+	_width = width;
+	_height = height;
 	_texture->setSize(width, height);
 
 	const uint texWidth  = _texture->getWidth();

@@ -32,7 +32,7 @@ CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
 	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)) {
 }
 
-void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
+void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
 	assert(isActive());
 	
 	//MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
@@ -43,7 +43,7 @@ void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const
 	}
 	//encoder->release();
 
-	ShaderPipeline::drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
+	ShaderPipeline::drawTextureInternal(texture, coordinates, texcoords);
 }
 
 } // End of namespace OpenGL

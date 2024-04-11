@@ -87,18 +87,32 @@ public:
 	 * @param texture     Texture to use for drawing.
 	 * @param coordinates x1, y1, x2, y2 coordinates where to draw the texture.
 	 */
-	inline void drawTexture(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
-		drawTextureInternal(texture, vertexPositionsBuffer, indexBuffer);
+	inline void drawTexture(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
+		drawTextureInternal(texture, coordinates, texcoords);
 	}
-	
+
+	inline void drawTexture(const MetalTexture &texture, const float *coordinates) {
+		drawTextureInternal(texture, coordinates, texture.getTexCoords());
+	}
+
 	inline void drawTexture(const MetalTexture &texture, float x, float y, float w, float h) {
 		const float coordinates[4*2] = {
-			x,     y,
-			x + w, y,
-			x,     y + h,
-			x + w, y + h
+			//-1.0f + x/_activeFramebuffer->getWidth(), -1.0f + y/_activeFramebuffer->getHeight(),
+			// 1.0f - x/_activeFramebuffer->getWidth(), -1.0f + y/_activeFramebuffer->getHeight(),
+			// 1.0f - x/_activeFramebuffer->getWidth(),  1.0f - y/_activeFramebuffer->getHeight(),
+			//-1.0f + x/_activeFramebuffer->getWidth(),  1.0f - y/_activeFramebuffer->getHeight()
+			-1.0f + x/w, -1.0f + y/h,
+			1.0f, -1.0f,
+			1.0f,  1.0f,
+			-1.0f,  1.0f
 		};
-		//drawTextureInternal(texture, coordinates, texture.getTexCoords());
+#if 0
+		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0 map the position to a coord
+		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
+		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
+		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
+#endif
+		drawTextureInternal(texture, coordinates, texture.getTexCoords());
 	}
 	
 	/**
@@ -134,7 +148,7 @@ protected:
 	 */
 	virtual void deactivateInternal();
 
-	virtual void drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) = 0;
+	virtual void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) = 0;
 
 	bool isActive() const { return activePipeline == this; }
 	

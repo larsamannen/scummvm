@@ -373,6 +373,8 @@ private:
 	MetalTexture *_paletteTexture;
 	TextureTarget *_target;
 	CLUT8LookUpPipeline *_clut8Pipeline;
+	
+	float _clut8Vertices[4*2];
 
 	Graphics::Surface _clut8Data;
 	Graphics::Surface _userPixelData;

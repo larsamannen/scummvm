@@ -536,18 +536,23 @@ void MetalGraphicsManager::renderCursor() {
 	if (_cursorMask) {
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeMaskAlphaAndInvertByColor);
 
-		_pipeline->drawTexture(*_cursorMask->getMetalTexture(), _cursorMask->getVertexPositionsBuffer(),
-							   _cursorMask->getIndexBuffer());
+		_pipeline->drawTexture(*_cursorMask->getMetalTexture(),
+							   _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
+							   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
+							   _cursorWidthScaled, _cursorHeightScaled);
 
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeAdditive);
 	} else
 		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
 
-	_pipeline->setViewport(_cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
-							   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
-							   _cursorWidthScaled, _cursorHeightScaled);
+	//_pipeline->setViewport(_cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
+	//						   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
+	//						   _cursorWidthScaled, _cursorHeightScaled);
 
-	_pipeline->drawTexture(*_cursor->getMetalTexture(), _cursor->getVertexPositionsBuffer(), _cursor->getIndexBuffer());
+	_pipeline->drawTexture(*_cursor->getMetalTexture(), 
+						   _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
+						   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
+							  _cursorWidthScaled, _cursorHeightScaled);
 }
 
 void MetalGraphicsManager::updateScreen() {
@@ -593,9 +598,9 @@ void MetalGraphicsManager::updateScreen() {
 //	viewport.width = _activeArea.drawRect.width();//_gameScreen->getMetalTexture()->getWidth();
 //	viewport.height = _activeArea.drawRect.height();//_gameScreen->getMetalTexture()->getHeight();
 
-//	_pipeline->setViewport(&viewport);
+	//_pipeline->setViewport(&viewport);
 
-	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameScreen->getVertexPositionsBuffer(), _gameScreen->getIndexBuffer());
+	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
 
@@ -610,7 +615,7 @@ void MetalGraphicsManager::updateScreen() {
 
 	//	_pipeline->setViewport(&viewport);
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
-		_pipeline->drawTexture(*_overlay->getMetalTexture(), _overlay->getVertexPositionsBuffer(), _overlay->getIndexBuffer());
+		_pipeline->drawTexture(*_overlay->getMetalTexture(), dstX, dstY, _overlayDrawRect.width(), _overlayDrawRect.height());
 	}
 
 	// Fourth step: Draw the cursor if we didn't before.
@@ -1028,7 +1033,7 @@ void MetalGraphicsManager::recalculateDisplayAreas() {
 							  _gameDrawRect.width(),
 							  _gameDrawRect.height());
 	
-	_targetBuffer->setViewport(_activeArea.drawRect.left, _activeArea.drawRect.top, _activeArea.drawRect.width(), _activeArea.drawRect.height());
+	//_targetBuffer->setViewport(_activeArea.drawRect.left, _activeArea.drawRect.top, _activeArea.drawRect.width(), _activeArea.drawRect.height());
 
 	_shakeOffsetScaled = Common::Point(_gameScreenShakeXOffset * _gameDrawRect.width() / (int)_currentState.gameWidth,
 		_gameScreenShakeYOffset * _gameDrawRect.height() / (int)_currentState.gameHeight);

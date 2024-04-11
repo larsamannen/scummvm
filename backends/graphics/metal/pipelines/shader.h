@@ -44,7 +44,7 @@ public:
 protected:
 	void activateInternal() override;
 	void deactivateInternal() override;
-	void drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *_indexBuffer) override;
+	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
 
 	//GLuint _coordsVBO;
 	//GLuint _texcoordsVBO;

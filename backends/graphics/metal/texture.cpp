@@ -160,25 +160,26 @@ bool MetalTexture::setSize(uint width, uint height) {
 	if (width != 0 && height != 0) {
 		const float texWidth = (float)width / _width;
 		const float texHeight = (float)height / _height;
-		
+#if 0
 		Vertex vertices[] = {
 			{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0 map the position to a coord
 			{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
 			{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
 			{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
 		};
+#endif
 
-		_texCoords[0] = 0;
-		_texCoords[1] = 0;
+		_texCoords[0] = 0.0f;
+		_texCoords[1] = texHeight;
 
 		_texCoords[2] = texWidth;
-		_texCoords[3] = 0;
+		_texCoords[3] = texHeight;
 
-		_texCoords[4] = 0;
-		_texCoords[5] = texHeight;
+		_texCoords[4] = texWidth;
+		_texCoords[5] = 0.0f;
 
-		_texCoords[6] = texWidth;
-		_texCoords[7] = texHeight;
+		_texCoords[6] = 0.0f;
+		_texCoords[7] = 0.0f;
 
 		// Allocate storage for OpenGL texture if necessary.
 		if (oldWidth != _width || oldHeight != _height) {
@@ -343,8 +344,22 @@ void Texture::allocate(uint width, uint height) {
 	// Create a sub-buffer for raw access.
 	_userPixelData = _textureData.getSubArea(Common::Rect(width, height));
 
+#if 0
 	const float texWidth = (float)width / _metalTexture->getWidth();
 	const float texHeight = (float)height / _metalTexture->getHeight();
+	
+	// Setup structures for internal rendering to _glTexture.
+	_[0] = 0;
+	_clut8Vertices[1] = texHeight;
+
+	_clut8Vertices[2] = texWidth;
+	_clut8Vertices[3] = texHeight;
+
+	_clut8Vertices[4] = texWidth;
+	_clut8Vertices[5] = 0.0f;
+
+	_clut8Vertices[6] = 0.0f;
+	_clut8Vertices[7] = 0.0f;
 
 	Vertex vertices[] = {
 		{{-texWidth, -texHeight}, {0.0f, 1.0f}}, // Vertex 0
@@ -359,7 +374,7 @@ void Texture::allocate(uint width, uint height) {
 
 	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
 	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-
+#endif
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
 	// Without this we might try to write a too big texture into the GL
@@ -488,10 +503,21 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 
 	// Create a sub-buffer for raw access.
 	_userPixelData = _clut8Data.getSubArea(Common::Rect(width, height));
+	
+	// Setup structures for internal rendering to _metalTexture.
+	_clut8Vertices[0] = 0;
+	_clut8Vertices[1] = 1.0f;
 
-	const float texWidth = (float)width / _clut8Texture->getWidth();
-	const float texHeight = (float)height / _clut8Texture->getHeight();
+	_clut8Vertices[2] = 1.0f;
+	_clut8Vertices[3] = 1.0f;
 
+	_clut8Vertices[4] = 1.0f;
+	_clut8Vertices[5] = 0.0f;
+
+	_clut8Vertices[6] = 0.0f;
+	_clut8Vertices[7] = 0.0f;
+
+#if 0
 	Vertex vertices[] = {
 		{{-texWidth, -texHeight}, {0.0f, 1.0f}}, // Vertex 0
 		{{ texWidth, -texHeight}, {1.0f, 1.0f}}, // Vertex 1
@@ -506,6 +532,7 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	
 	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
 	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
+#endif
 
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
@@ -590,7 +617,7 @@ void TextureCLUT8GPU::lookUpColors(MTL::CommandBuffer *commandBuffer) {
 	_clut8Pipeline->activate(commandBuffer);
 
 	// Do color look up.
-	_clut8Pipeline->drawTexture(*_clut8Texture, _vertexPositionsBuffer, _indexBuffer);
+	_clut8Pipeline->drawTexture(*_clut8Texture, _clut8Vertices);
 
 	_clut8Pipeline->deactivate();
 }

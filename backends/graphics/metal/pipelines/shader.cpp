@@ -105,7 +105,7 @@ void ShaderPipeline::setColor(float r, float g, float b, float a) {
 	}
 }
 
-void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const MTL::Buffer *vertexPositionsBuffer, const MTL::Buffer *indexBuffer) {
+void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
 	assert(isActive());
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
@@ -114,6 +114,21 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const MTL:
 	attachment->setLoadAction((MTL::LoadAction)_loadAction);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(_activeFramebuffer->getTargetTexture());
+	
+	Vertex vertices[] = {
+		{{coordinates[0], coordinates[1]}, {texcoords[0], texcoords[1]}}, // Vertex 0
+		{{coordinates[2], coordinates[3]}, {texcoords[2], texcoords[3]}}, // Vertex 1
+		{{coordinates[4], coordinates[5]}, {texcoords[4], texcoords[5]}}, // Vertex 2
+		{{coordinates[6], coordinates[7]}, {texcoords[6], texcoords[7]}}  // Vertex 3
+	};
+
+	unsigned short indices[] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+	
+	MTL::Buffer *vertexPositionsBuffer = _metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+	MTL::Buffer *indexBuffer = _metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 
 	MTL::RenderCommandEncoder *encoder = _commandBuffer->renderCommandEncoder(renderPassDescriptor);
 	encoder->setRenderPipelineState(_pipeLineState);
@@ -131,6 +146,8 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const MTL:
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();
+	vertexPositionsBuffer->release();
+	indexBuffer->release();
 	pPool->release();
 }
 
