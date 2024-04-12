@@ -67,6 +67,15 @@ ShaderPipeline::~ShaderPipeline() {
 	//OpenGL::Shader::freeBuffer(_colorVBO);
 }
 
+matrix_float4x4 ShaderPipeline::matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ) {
+	return (matrix_float4x4) { {
+		{ 2 / (right - left), 0, 0, 0 },
+		{ 0, 2 / (top - bottom), 0, 0 },
+		{ 0, 0, 1 / (farZ - nearZ), 0 },
+		{ (left + right) / (left - right), (top + bottom) / (bottom - top), nearZ / (nearZ - farZ), 1}
+	} };
+}
+
 void ShaderPipeline::activateInternal() {
 	Pipeline::activateInternal();
 	
@@ -127,15 +136,19 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 		0, 2, 3
 	};
 	
-	MTL::Buffer *vertexPositionsBuffer = _metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+	//MTL::Buffer *vertexPositionsBuffer = _metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
 	MTL::Buffer *indexBuffer = _metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
+	
+	matrix_float4x4 projection = matrix_ortho(0, _activeFramebuffer->getTargetTexture()->width(), _activeFramebuffer->getTargetTexture()->height(), 0, 0, 1);
 
 	MTL::RenderCommandEncoder *encoder = _commandBuffer->renderCommandEncoder(renderPassDescriptor);
 	encoder->setRenderPipelineState(_pipeLineState);
 	encoder->setBlendColor(_colorAttributes[0], _colorAttributes[1], _colorAttributes[2], _colorAttributes[3]);
 	// reference to the layout buffer in vertexDescriptor
-	encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
+	//encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
+	encoder->setVertexBytes(vertices, sizeof(vertices), 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	encoder->setVertexBytes(&projection, sizeof(projection), 1);
 	encoder->setFragmentTexture(texture.getMetalTexture(), 0);
 	if (_paletteTexture) {
 		encoder->setFragmentTexture(_paletteTexture->getMetalTexture(), 1);
@@ -146,14 +159,13 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();
-	vertexPositionsBuffer->release();
+	//vertexPositionsBuffer->release();
 	indexBuffer->release();
 	pPool->release();
 }
 
 void ShaderPipeline::setProjectionMatrix(const Math::Matrix4 &projectionMatrix) {
 	//assert(isActive());
-
 	//_activeShader->setUniform("projection", projectionMatrix);
 }
 

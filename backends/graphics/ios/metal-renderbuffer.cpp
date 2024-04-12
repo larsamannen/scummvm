@@ -50,6 +50,8 @@ void MetalRenderbufferTarget::deactivateInternal() {
 }
 
 bool MetalRenderbufferTarget::setSize(uint width, uint height) {
+	_width = width;
+	_height = height;
 	// Set viewport dimensions.
 	_viewport->originX = 0;
 	_viewport->originY = 0;

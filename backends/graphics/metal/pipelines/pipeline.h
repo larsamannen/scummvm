@@ -97,21 +97,12 @@ public:
 
 	inline void drawTexture(const MetalTexture &texture, float x, float y, float w, float h) {
 		const float coordinates[4*2] = {
-			//-1.0f + x/_activeFramebuffer->getWidth(), -1.0f + y/_activeFramebuffer->getHeight(),
-			// 1.0f - x/_activeFramebuffer->getWidth(), -1.0f + y/_activeFramebuffer->getHeight(),
-			// 1.0f - x/_activeFramebuffer->getWidth(),  1.0f - y/_activeFramebuffer->getHeight(),
-			//-1.0f + x/_activeFramebuffer->getWidth(),  1.0f - y/_activeFramebuffer->getHeight()
-			-1.0f + x/w, -1.0f + y/h,
-			1.0f, -1.0f,
-			1.0f,  1.0f,
-			-1.0f,  1.0f
+			x,     y + h, // Left Bottom point
+			x + w, y + h, // Right Bottom point
+			x + w, y,     // Right Top point
+			x,     y      // Left Top point
 		};
-#if 0
-		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0 map the position to a coord
-		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
-		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
-		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
-#endif
+
 		drawTextureInternal(texture, coordinates, texture.getTexCoords());
 	}
 	

@@ -40,11 +40,11 @@ void Framebuffer::activate(Pipeline *pipeline) {
 	_pipeline = pipeline;
 
 	applyViewport();
-	//applyProjectionMatrix();
-	//applyClearColor();
-	//applyBlendState();
-	//applyScissorTestState();
-	//applyScissorBox();
+	applyProjectionMatrix();
+	applyClearColor();
+	applyBlendState();
+	applyScissorTestState();
+	applyScissorBox();
 
 	activateInternal();
 }
@@ -211,14 +211,16 @@ TextureTarget::~TextureTarget() {
 }
 
 void TextureTarget::activateInternal() {
-	_targetTexture = _texture->getMetalTexture();
 	// Allocate framebuffer object if necessary.
-	//if (!_glFBO) {
+	if (!_targetTexture) {
+//		_targetTexture = _metalDevice->
 	//	GL_CALL(glGenFramebuffers(1, &_glFBO));
 		_needUpdate = true;
-	//}
+	}
 
 	// Attach destination texture to FBO.
+	_targetTexture = _texture->getMetalTexture();
+
 	//GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, _glFBO));
 
 	// If required attach texture to FBO.

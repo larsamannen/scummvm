@@ -51,10 +51,11 @@ const char* shaderSrc = R"(
 		float2 texCoord;
 	};
 
-	vertex VertexOut vertexFunction(Vertex in [[stage_in]])
+	vertex VertexOut vertexFunction(Vertex in [[stage_in]],
+		constant float4x4 &projection [[buffer(1)]])
 	{
 		VertexOut out;
-		out.position = in.position;
+		out.position = projection * in.position;
 		out.texCoord = in.texCoord;
 		return out;
 	}

@@ -45,6 +45,7 @@ protected:
 	void activateInternal() override;
 	void deactivateInternal() override;
 	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
+	matrix_float4x4 matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ);
 
 	//GLuint _coordsVBO;
 	//GLuint _texcoordsVBO;

@@ -503,36 +503,19 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 
 	// Create a sub-buffer for raw access.
 	_userPixelData = _clut8Data.getSubArea(Common::Rect(width, height));
-	
+
 	// Setup structures for internal rendering to _metalTexture.
-	_clut8Vertices[0] = 0;
-	_clut8Vertices[1] = 1.0f;
+	_clut8Vertices[0] = 0;//-1.0f;
+	_clut8Vertices[1] = height;//-1.0f;
 
-	_clut8Vertices[2] = 1.0f;
-	_clut8Vertices[3] = 1.0f;
+	_clut8Vertices[2] = width; //1.0f;
+	_clut8Vertices[3] = height;
 
-	_clut8Vertices[4] = 1.0f;
-	_clut8Vertices[5] = 0.0f;
+	_clut8Vertices[4] = width;
+	_clut8Vertices[5] = 0;
 
-	_clut8Vertices[6] = 0.0f;
-	_clut8Vertices[7] = 0.0f;
-
-#if 0
-	Vertex vertices[] = {
-		{{-texWidth, -texHeight}, {0.0f, 1.0f}}, // Vertex 0
-		{{ texWidth, -texHeight}, {1.0f, 1.0f}}, // Vertex 1
-		{{ texWidth,  texHeight}, {1.0f, 0.0f}}, // Vertex 2
-		{{-texWidth,  texHeight}, {0.0f, 0.0f}}  // Vertex 3
-	};
-
-	unsigned short indices[] = {
-		0, 1, 2,
-		0, 2, 3
-	};
-	
-	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
-	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-#endif
+	_clut8Vertices[6] = 0;
+	_clut8Vertices[7] = 0;
 
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
