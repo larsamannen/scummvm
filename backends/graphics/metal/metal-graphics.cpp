@@ -30,6 +30,9 @@
 #include "backends/graphics/metal/pipelines/shader.h"
 #include "backends/graphics/metal/shader.h"
 #include "common/translation.h"
+
+#include "graphics/blit.h"
+
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
@@ -648,8 +651,7 @@ void MetalGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 
 	const byte *src = (const byte *)overlayData->getPixels();
 	byte *dst = (byte *)surface.getPixels();
-	// LARs TODO
-	//Graphics::copyBlit(dst, src, surface.pitch, overlayData->pitch, overlayData->w, overlayData->h, overlayData->format.bytesPerPixel);
+	Graphics::copyBlit(dst, src, surface.pitch, overlayData->pitch, overlayData->w, overlayData->h, overlayData->format.bytesPerPixel);
 }
 
 void MetalGraphicsManager::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
