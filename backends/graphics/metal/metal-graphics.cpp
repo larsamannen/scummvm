@@ -330,7 +330,6 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 	// In case the requested format is not usable we will fall back to CLUT8.
 	if (Common::find(supportedFormats.begin(), supportedFormats.end(), _currentState.gameFormat) == supportedFormats.end()) {
 		_currentState.gameFormat = Graphics::PixelFormat::createFormatCLUT8();
-		//transactionError |= OSystem::kTransactionFormatNotSupported;
 	}
 #endif
 #if 0
@@ -517,22 +516,6 @@ void MetalGraphicsManager::fillScreen(const Common::Rect &r, uint32 col) {
 }
 
 void MetalGraphicsManager::renderCursor() {
-	/*
-	Windows and Mac cursor XOR works by drawing the cursor to the screen with the formula (Destination AND Mask XOR Color)
-
-	OpenGL does not have an XOR blend mode though.  Full inversions can be accomplished by using blend modes with
-	ONE_MINUS_DST_COLOR but the problem is how to do that in a way that handles linear filtering properly.
-
-	To avoid color fringing, we need to produce an output of 3 separately-modulated inputs: The framebuffer modulated by
-	(1 - inversion)*(1 - alpha), the inverted framebuffer modulated by inversion*(1 - alpha), and the cursor colors modulated by alpha.
-	The last part is additive and not framebuffer dependent so it can just be a separate draw call.  The first two are the problem
-	because we can't use the unmodified framebuffer value twice if we do it in two separate draw calls, and if we do it in a single
-	draw call, we can only supply one RGB input even though the inversion mask should be RGB.
-
-	If we only allow grayscale inversions though, then we can put inversion*(1 - alpha) in the RGB channel and
-	(1 - inversion)*(1 - alpha) in the alpha channel and use and use ((1-dstColor)*src+(1-srcAlpha)*dest) blend formula to do
-	the inversion and opacity mask at once.  We use 1-srcAlpha instead of srcAlpha so zero-fill is transparent.
-	*/
 	if (_cursorMask) {
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeMaskAlphaAndInvertByColor);
 
@@ -544,10 +527,6 @@ void MetalGraphicsManager::renderCursor() {
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeAdditive);
 	} else
 		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
-
-	//_pipeline->setViewport(_cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
-	//						   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
-	//						   _cursorWidthScaled, _cursorHeightScaled);
 
 	_pipeline->drawTexture(*_cursor->getMetalTexture(), 
 						   _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
@@ -574,8 +553,8 @@ void MetalGraphicsManager::updateScreen() {
 	_pipeline->activate(commandBuffer);
 	
 	// Clear the screen buffer.
-	// TODO LARS, clear the screen?
-	
+	_pipeline->setLoadAction(MTL::LoadActionClear);
+
 	if (!_overlayVisible) {
 		// The scissor test is enabled to:
 		// - Clip the cursor to the game screen
@@ -589,17 +568,7 @@ void MetalGraphicsManager::updateScreen() {
 	// Alpha blending is disabled when drawing the screen
 	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
 
-	_pipeline->setLoadAction(MTL::LoadActionClear);
 	// First step: Draw the (virtual) game screen.
-
-//	MTL::Viewport viewport;
-//	viewport.originX = _activeArea.drawRect.left;
-//	viewport.originY = _activeArea.drawRect.top;
-//	viewport.width = _activeArea.drawRect.width();//_gameScreen->getMetalTexture()->getWidth();
-//	viewport.height = _activeArea.drawRect.height();//_gameScreen->getMetalTexture()->getHeight();
-
-	//_pipeline->setViewport(&viewport);
-
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
@@ -608,12 +577,6 @@ void MetalGraphicsManager::updateScreen() {
 	if (_overlayVisible) {
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
-	//	viewport.originX = dstX;
-	//	viewport.originY = dstY;
-	//	viewport.width = _overlayDrawRect.width();
-	//	viewport.height = _overlayDrawRect.height();
-
-	//	_pipeline->setViewport(&viewport);
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
 		_pipeline->drawTexture(*_overlay->getMetalTexture(), dstX, dstY, _overlayDrawRect.width(), _overlayDrawRect.height());
 	}
@@ -629,12 +592,7 @@ void MetalGraphicsManager::updateScreen() {
 	_cursorNeedsRedraw = false;
 	_forceRedraw = false;
 	_targetBuffer->refreshScreen(commandBuffer);
-	
-	//_pipeline->deactivate();
-	
-	//CA::MetalDrawable *drawable = getNextDrawable();
-	//_renderer->draw(drawable, _gameScreen->getMetalTexture(), _overlay->getMetalTexture(), drawCursor ? _cursor->getMetalTexture() : nullptr);
-	//drawable->release();
+
 	pPool->release();
 }
 

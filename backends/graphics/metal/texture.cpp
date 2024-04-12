@@ -102,32 +102,13 @@ void MetalTexture::setWrapMode(WrapMode wrapMode) {
 */
 void MetalTexture::destroy() {
 	_texture->release();
-	//GL_CALL(glDeleteTextures(1, &_glTexture));
 	_texture = nullptr;
 }
 
 void MetalTexture::create() {
 	// Release old texture name in case it exists.
 	destroy();
-#if 0
-	// Get a new texture name.
-	GL_CALL(glGenTextures(1, &_glTexture));
 
-	// Set up all texture parameters.
-	bind();
-	GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
-	if (OpenGLContext.textureEdgeClampSupported) {
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	} else {
-#if !USE_FORCED_GLES && !USE_FORCED_GLES2
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP));
-#endif
-	}
-#endif
 	// If a size is specified, allocate memory for it.
 	if (_width != 0 && _height != 0) {
 		// Allocate storage for Metal texture.
@@ -147,27 +128,14 @@ bool MetalTexture::setSize(uint width, uint height) {
 
 	_logicalWidth  = width;
 	_logicalHeight = height;
-
-	//if (!OpenGLContext.NPOTSupported) {
-	//	_width  = Common::nextHigher2(width);
-	//	_height = Common::nextHigher2(height);
-	//} else {
-		_width  = width;
-		_height = height;
-	//}
+	
+	_width = width;
+	_height = height;
 
 	// If a size is specified, allocate memory for it.
 	if (width != 0 && height != 0) {
 		const float texWidth = (float)width / _width;
 		const float texHeight = (float)height / _height;
-#if 0
-		Vertex vertices[] = {
-			{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0 map the position to a coord
-			{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
-			{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
-			{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
-		};
-#endif
 
 		_texCoords[0] = 0.0f;
 		_texCoords[1] = texHeight;
@@ -197,29 +165,7 @@ bool MetalTexture::setSize(uint width, uint height) {
 }
 
 void MetalTexture::updateArea(const Common::Rect &area, const Graphics::Surface &src) {
-	// Set the texture on the active texture unit.
-//	bind();
-
 	// Update the actual texture.
-	// Although we have the area of the texture buffer we want to update we
-	// cannot take advantage of the left/right boundaries here because it is
-	// not possible to specify a pitch to glTexSubImage2D. To be precise, with
-	// plain OpenGL we could set GL_UNPACK_ROW_LENGTH to achieve this. However,
-	// OpenGL ES 1.0 does not support GL_UNPACK_ROW_LENGTH. Thus, we are left
-	// with the following options:
-	//
-	// 1) (As we do right now) Simply always update the whole texture lines of
-	//    rect changed. This is simplest to implement. In case performance is
-	//    really an issue we can think of switching to another method.
-	//
-	// 2) Copy the dirty rect to a temporary buffer and upload that by using
-	//    glTexSubImage2D. This is what the Android backend does. It is more
-	//    complicated though.
-	//
-	// 3) Use glTexSubImage2D per line changed. This is what the old OpenGL
-	//    graphics manager did but it is much slower! Thus, we do not use it.
-//	GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, area.top, src.w, area.height(),
-	//					   _glFormat, _glType, src.getBasePtr(0, area.top)));
 	_texture->replaceRegion(MTL::Region(area.left, area.top, 0, src.w - area.left, area.height(), 1), 0, src.getBasePtr(area.left, area.top), src.pitch);
 
 }
@@ -286,13 +232,6 @@ Common::Rect Surface::getDirtyArea() const {
 	}
 }
 
-const MTL::Buffer *Surface::getVertexPositionsBuffer() const {
-	return _vertexPositionsBuffer;
-}
-const MTL::Buffer *Surface::getIndexBuffer() const {
-	return _indexBuffer;
-}
-
 //
 // Surface implementations
 //
@@ -328,11 +267,6 @@ void Texture::enableLinearFiltering(bool enable) {
 void Texture::allocate(uint width, uint height) {
 	// Assure the texture can contain our user data.
 	_metalTexture->setSize(width, height);
-//	MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
-//	d->setWidth(width);
-//	d->setHeight(height);
-//	_metalTexture = _device->newTexture(d);
-//	d->release();
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
@@ -344,37 +278,6 @@ void Texture::allocate(uint width, uint height) {
 	// Create a sub-buffer for raw access.
 	_userPixelData = _textureData.getSubArea(Common::Rect(width, height));
 
-#if 0
-	const float texWidth = (float)width / _metalTexture->getWidth();
-	const float texHeight = (float)height / _metalTexture->getHeight();
-	
-	// Setup structures for internal rendering to _glTexture.
-	_[0] = 0;
-	_clut8Vertices[1] = texHeight;
-
-	_clut8Vertices[2] = texWidth;
-	_clut8Vertices[3] = texHeight;
-
-	_clut8Vertices[4] = texWidth;
-	_clut8Vertices[5] = 0.0f;
-
-	_clut8Vertices[6] = 0.0f;
-	_clut8Vertices[7] = 0.0f;
-
-	Vertex vertices[] = {
-		{{-texWidth, -texHeight}, {0.0f, 1.0f}}, // Vertex 0
-		{{ texWidth, -texHeight}, {1.0f, 1.0f}}, // Vertex 1
-		{{ texWidth,  texHeight}, {1.0f, 0.0f}}, // Vertex 2
-		{{-texWidth,  texHeight}, {0.0f, 0.0f}}  // Vertex 3
-	};
-	unsigned short indices[] = {
-		0, 1, 2,
-		0, 2, 3
-	};
-
-	_vertexPositionsBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
-	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-#endif
 	// The whole texture is dirty after we changed the size. This fixes
 	// multiple texture size changes without any actual update in between.
 	// Without this we might try to write a too big texture into the GL
@@ -460,8 +363,6 @@ void TextureCLUT8GPU::destroy() {
 	_target->destroy();
 	delete _clut8Pipeline;
 	_clut8Pipeline = nullptr;
-	//_vertexPositionsBuffer->release();
-	//_indexBuffer->release();
 }
 
 void TextureCLUT8GPU::recreate() {
@@ -522,9 +423,6 @@ void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// Without this we might try to write a too big texture into the GL
 	// texture.
 	flagDirty();
-	
-	//vertexBuffer->release();
-	//indexBuffer->release();
 }
 
 Graphics::PixelFormat TextureCLUT8GPU::getFormat() const {

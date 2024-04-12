@@ -143,9 +143,6 @@ public:
 private:
 	uint _pixelFormat;
 	uint _usage;
-	//const GLenum _glIntFormat;
-	//const GLenum _glFormat;
-	//const GLenum _glType;
 
 	uint _width, _height;
 	uint _logicalWidth, _logicalHeight;
@@ -260,17 +257,12 @@ public:
 	 * Obtain underlying Metal texture.
 	 */
 	virtual const MetalTexture *getMetalTexture() const = 0;
-	
-	const MTL::Buffer *getVertexPositionsBuffer() const;
-	const MTL::Buffer *getIndexBuffer() const;
+
 protected:
 	void clearDirty() { _allDirty = false; _dirtyArea = Common::Rect(); }
 
 	void addDirtyArea(const Common::Rect &r);
 	Common::Rect getDirtyArea() const;
-	
-	MTL::Buffer *_vertexPositionsBuffer;
-	MTL::Buffer *_indexBuffer;
 
 private:
 	bool _allDirty;

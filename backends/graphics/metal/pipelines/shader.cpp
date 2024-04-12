@@ -153,9 +153,9 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	if (_paletteTexture) {
 		encoder->setFragmentTexture(_paletteTexture->getMetalTexture(), 1);
 	}
-	if (_viewport) {
-		encoder->setViewport(*_viewport);
-	}
+	//if (_viewport) {
+	//	encoder->setViewport(*_viewport);
+	//}
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();

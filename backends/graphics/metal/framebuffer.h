@@ -177,10 +177,7 @@ public:
 	 * Accessor to deactivate framebuffer from pipeline.
 	 */
 	void deactivate();
-	
-	uint getWidth() const { return _width; }
-	uint getHeight() const { return _height; }
-	
+
 	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer);
 	
 	MTL::CommandQueue *getCommandQueue() { return _commandQueue; }
@@ -191,8 +188,6 @@ protected:
 	MTL::CommandQueue *_commandQueue;
 	MTL::RenderPassDescriptor *_renderPassDescriptor;
 	MTL::Texture *_targetTexture;
-	uint _width; uint _height;
-
 	
 	float _clearColor[4];
 
