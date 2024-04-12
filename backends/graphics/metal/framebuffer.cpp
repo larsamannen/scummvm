@@ -51,10 +51,6 @@ void Framebuffer::activate(Pipeline *pipeline) {
 
 void Framebuffer::deactivate() {
 	deactivateInternal();
-	//if (_texture)
-	//	_texture->release();
-	//if (_commandQueue)
-	//	_commandQueue->release();
 }
 
 void Framebuffer::setClearColor(float r, float g, float b, float a) {
@@ -113,8 +109,6 @@ void Framebuffer::setViewport(int x, int y, int w, int h) {
 
 void Framebuffer::applyViewport() {
 	_pipeline->setViewport(_viewport->originX, _viewport->originY, _viewport->width, _viewport->height);
-	//assert(_renderCommandEncoder);
-	//_renderCommandEncoder->setViewport(*_viewport);
 }
 
 void Framebuffer::applyProjectionMatrix() {
@@ -242,9 +236,6 @@ void TextureTarget::create() {
 bool TextureTarget::setSize(uint width, uint height) {
 	_texture->setSize(width, height);
 
-	const uint texWidth  = _texture->getWidth();
-	const uint texHeight = _texture->getHeight();
-
 	// Set viewport dimensions.
 	_viewport->originX = 0;
 	_viewport->originY = 0;
@@ -252,13 +243,13 @@ bool TextureTarget::setSize(uint width, uint height) {
 	_viewport->height = height;
 
 	// Setup orthogonal projection matrix.
-	_projectionMatrix(0, 0) =  2.0f / texWidth;
+	_projectionMatrix(0, 0) =  2.0f / (float)width;
 	_projectionMatrix(0, 1) =  0.0f;
 	_projectionMatrix(0, 2) =  0.0f;
 	_projectionMatrix(0, 3) =  0.0f;
 
 	_projectionMatrix(1, 0) =  0.0f;
-	_projectionMatrix(1, 1) =  2.0f / texHeight;
+	_projectionMatrix(1, 1) = -2.0f / (float)height;
 	_projectionMatrix(1, 2) =  0.0f;
 	_projectionMatrix(1, 3) =  0.0f;
 
@@ -268,10 +259,70 @@ bool TextureTarget::setSize(uint width, uint height) {
 	_projectionMatrix(2, 3) =  0.0f;
 
 	_projectionMatrix(3, 0) = -1.0f;
-	_projectionMatrix(3, 1) = -1.0f;
+	_projectionMatrix(3, 1) =  1.0f;
+	_projectionMatrix(3, 2) =  0.0f;
+	_projectionMatrix(3, 3) =  1.0f;
+#if 0
+	_projectionMatrix = { {
+		{2.0f / (width), 0.0f, 0.0f, 0.0f},
+		{0.0f, 2.0f / -height, 0, 0},
+		{0.0f, 0.0f, 0.0f, 0.0f},
+		{-1.0f, 1.0f, 0.0f, 1.0f}
+	} };
+	
+	//matrix_float4x4 projection = matrix_ortho(0, _activeFramebuffer->getTargetTexture()->width(), _activeFramebuffer->getTargetTexture()->height(), 0, 0, 1);
+
+	
+	matrix_float4x4 ShaderPipeline::matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ) {
+		return (matrix_float4x4) { {
+			{ 2 / (right - left), 0, 0, 0 },
+			{ 0, 2 / (top - bottom), 0, 0 },
+			{ 0, 0, 1 / (farZ - nearZ), 0 },
+			{ (left + right) / (left - right), (top + bottom) / (bottom - top), nearZ / (nearZ - farZ), 1}
+		} };
+	}
+	
+	_projectionMatrix(0, 0) =  2.0f / (texWidth - 0);
+	_projectionMatrix(0, 1) =  0.0f;
+	_projectionMatrix(0, 2) =  0.0f;
+	_projectionMatrix(0, 3) =  0.0f;
+
+	_projectionMatrix(1, 0) =  0.0f;
+	_projectionMatrix(1, 1) =  2.0f / (0 - texHeight);
+	_projectionMatrix(1, 2) =  0.0f;
+	_projectionMatrix(1, 3) =  0.0f;
+
+	_projectionMatrix(2, 0) =  0.0f;
+	_projectionMatrix(2, 1) =  0.0f;
+	_projectionMatrix(2, 2) =  0.0f;
+	_projectionMatrix(2, 3) =  0.0f;
+
+	_projectionMatrix(3, 0) = (0 + texWidth) / (0 - texWidth);
+	_projectionMatrix(3, 1) = (0 + texHeight) / (texWidth - 0);
 	_projectionMatrix(3, 2) =  0.0f;
 	_projectionMatrix(3, 3) =  1.0f;
 
+	_projectionMatrix(0, 0) =  2.0f / texWidth;
+	_projectionMatrix(0, 1) =  0.0f;
+	_projectionMatrix(0, 2) =  0.0f;
+	_projectionMatrix(0, 3) =  0.0f;
+
+	_projectionMatrix(1, 0) =  0.0f;
+	_projectionMatrix(1, 1) = -2.0f / texHeight;
+	_projectionMatrix(1, 2) =  0.0f;
+	_projectionMatrix(1, 3) =  0.0f;
+
+	_projectionMatrix(2, 0) =  0.0f;
+	_projectionMatrix(2, 1) =  0.0f;
+	_projectionMatrix(2, 2) =  0.0f;
+	_projectionMatrix(2, 3) =  0.0f;
+
+	_projectionMatrix(3, 0) = 2.0f;
+	_projectionMatrix(3, 1) = -2.0f;
+	_projectionMatrix(3, 2) =  0.0f;
+	_projectionMatrix(3, 3) =  1.0f;
+	
+#endif
 	// Directly apply changes when we are active.
 	if (isActive()) {
 		applyViewport();

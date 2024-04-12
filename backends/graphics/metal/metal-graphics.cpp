@@ -145,13 +145,23 @@ void MetalGraphicsManager::notifyContextDestroy() {
 
 // Windowed
 bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
-	// TODO
+	if (_currentState.aspectRatioCorrection) {
+		const uint width = getWidth();
+		const uint height = getHeight();
+
+		// In case we enable aspect ratio correction we force a 4/3 ratio.
+		// But just for 320x200 and 640x400 games, since other games do not need
+		// this.
+		return (width == 320 && height == 200) || (width == 640 && height == 400);
+	}
+
 	return false;
 }
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	// Setup backbuffer size.
-	_targetBuffer->setSize(width, height);
+	// TODO!! Always utilize the whole window?
+	_targetBuffer->setSize(_windowWidth, _windowHeight);
 
 	uint overlayWidth = width;
 	uint overlayHeight = height;
@@ -551,7 +561,6 @@ void MetalGraphicsManager::updateScreen() {
 	_overlay->updateMetalTexture(commandBuffer);
 	
 	_pipeline->activate(commandBuffer);
-	
 	// Clear the screen buffer.
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 
@@ -592,6 +601,8 @@ void MetalGraphicsManager::updateScreen() {
 	_cursorNeedsRedraw = false;
 	_forceRedraw = false;
 	_targetBuffer->refreshScreen(commandBuffer);
+	
+	_pipeline->deactivate();
 
 	pPool->release();
 }
@@ -991,8 +1002,6 @@ void MetalGraphicsManager::recalculateDisplayAreas() {
 							  _gameDrawRect.width(),
 							  _gameDrawRect.height());
 	
-	//_targetBuffer->setViewport(_activeArea.drawRect.left, _activeArea.drawRect.top, _activeArea.drawRect.width(), _activeArea.drawRect.height());
-
 	_shakeOffsetScaled = Common::Point(_gameScreenShakeXOffset * _gameDrawRect.width() / (int)_currentState.gameWidth,
 		_gameScreenShakeYOffset * _gameDrawRect.height() / (int)_currentState.gameHeight);
 

@@ -55,6 +55,27 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 	_viewport->originY = 0;
 	_viewport->width = width;
 	_viewport->height = height;
+	
+	// Setup orthogonal projection matrix.
+	_projectionMatrix(0, 0) =  2.0f / (float)width;
+	_projectionMatrix(0, 1) =  0.0f;
+	_projectionMatrix(0, 2) =  0.0f;
+	_projectionMatrix(0, 3) =  0.0f;
+
+	_projectionMatrix(1, 0) =  0.0f;
+	_projectionMatrix(1, 1) = -2.0f / (float)height;
+	_projectionMatrix(1, 2) =  0.0f;
+	_projectionMatrix(1, 3) =  0.0f;
+
+	_projectionMatrix(2, 0) =  0.0f;
+	_projectionMatrix(2, 1) =  0.0f;
+	_projectionMatrix(2, 2) =  0.0f;
+	_projectionMatrix(2, 3) =  0.0f;
+
+	_projectionMatrix(3, 0) = -1.0f;
+	_projectionMatrix(3, 1) =  1.0f;
+	_projectionMatrix(3, 2) =  0.0f;
+	_projectionMatrix(3, 3) =  1.0f;
 
 	// Directly apply changes when we are active.
 	if (isActive()) {
@@ -66,6 +87,7 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 
 void MetalRenderbufferTarget::refreshScreen(MTL::CommandBuffer *commandBuffer) {
 	commandBuffer->presentDrawable(_drawable);
+	//commandBuffer->commit();
 	Framebuffer::refreshScreen(commandBuffer);
 	//_renderCommandEncoder->release();
 	//_commandBuffer->release();

@@ -28,6 +28,14 @@
 
 namespace Metal {
 
+struct Vertex {
+	// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
+	simd_float2 position;
+	// 2D texture coordinate
+	simd_float2 texCoord;
+};
+
+
 // A 4 elements with 2 components vector of floats
 static const int kCoordinatesSize = 4 * 2 * sizeof(float);
 
@@ -55,26 +63,22 @@ ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 
 	vertexDescriptor->release();
-	_activeShader->release();
 }
 
 ShaderPipeline::~ShaderPipeline() {
 	_activeShader->release();
 	_pipelineDescriptor->vertexDescriptor()->release();
 	//_pipelineDescriptor->release();
-	//OpenGL::Shader::freeBuffer(_coordsVBO);
-	//OpenGL::Shader::freeBuffer(_texcoordsVBO);
-	//OpenGL::Shader::freeBuffer(_colorVBO);
 }
 
-matrix_float4x4 ShaderPipeline::matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ) {
-	return (matrix_float4x4) { {
-		{ 2 / (right - left), 0, 0, 0 },
-		{ 0, 2 / (top - bottom), 0, 0 },
-		{ 0, 0, 1 / (farZ - nearZ), 0 },
-		{ (left + right) / (left - right), (top + bottom) / (bottom - top), nearZ / (nearZ - farZ), 1}
-	} };
-}
+//matrix_float4x4 ShaderPipeline::matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ) {
+//	return (matrix_float4x4) { {
+//		{ 2 / (right - left), 0, 0, 0 },
+//		{ 0, 2 / (top - bottom), 0, 0 },
+//		{ 0, 0, 1 / (farZ - nearZ), 0 },
+//		{ (left + right) / (left - right), (top + bottom) / (bottom - top), nearZ / (nearZ - farZ), 1}
+//	} };
+//}
 
 void ShaderPipeline::activateInternal() {
 	Pipeline::activateInternal();
@@ -135,11 +139,10 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 		0, 1, 2,
 		0, 2, 3
 	};
-	
-	//MTL::Buffer *vertexPositionsBuffer = _metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+
 	MTL::Buffer *indexBuffer = _metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 	
-	matrix_float4x4 projection = matrix_ortho(0, _activeFramebuffer->getTargetTexture()->width(), _activeFramebuffer->getTargetTexture()->height(), 0, 0, 1);
+	//matrix_float4x4 projection = matrix_ortho(0, _activeFramebuffer->getTargetTexture()->width(), _activeFramebuffer->getTargetTexture()->height(), 0, 0, 1);
 
 	MTL::RenderCommandEncoder *encoder = _commandBuffer->renderCommandEncoder(renderPassDescriptor);
 	encoder->setRenderPipelineState(_pipeLineState);
@@ -148,18 +151,17 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	//encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
 	encoder->setVertexBytes(vertices, sizeof(vertices), 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	encoder->setVertexBytes(&projection, sizeof(projection), 1);
+	encoder->setVertexBytes(&_projectionMatrix, sizeof(_projectionMatrix), 1);
 	encoder->setFragmentTexture(texture.getMetalTexture(), 0);
 	if (_paletteTexture) {
 		encoder->setFragmentTexture(_paletteTexture->getMetalTexture(), 1);
 	}
-	//if (_viewport) {
-	//	encoder->setViewport(*_viewport);
-	//}
+	if (_viewport) {
+		encoder->setViewport(*_viewport);
+	}
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();
-	//vertexPositionsBuffer->release();
 	indexBuffer->release();
 	pPool->release();
 }
@@ -167,6 +169,12 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 void ShaderPipeline::setProjectionMatrix(const Math::Matrix4 &projectionMatrix) {
 	//assert(isActive());
 	//_activeShader->setUniform("projection", projectionMatrix);
+	_projectionMatrix = { {
+		{projectionMatrix(0, 0), projectionMatrix(0, 1), projectionMatrix(0, 2), projectionMatrix(0, 3)},
+		{projectionMatrix(1, 0), projectionMatrix(1, 1), projectionMatrix(1, 2), projectionMatrix(1, 3)},
+		{projectionMatrix(2, 0), projectionMatrix(2, 1), projectionMatrix(2, 2), projectionMatrix(2, 3)},
+		{projectionMatrix(3, 0), projectionMatrix(3, 1), projectionMatrix(3, 2), projectionMatrix(3, 3)}
+	} };
 }
 
 } // End of namespace OpenGL

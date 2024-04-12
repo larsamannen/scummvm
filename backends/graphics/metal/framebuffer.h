@@ -22,7 +22,6 @@
 #ifndef BACKENDS_GRAPHICS_METAL_FRAMEBUFFER_H
 #define BACKENDS_GRAPHICS_METAL_FRAMEBUFFER_H
 
-#include <simd/simd.h>
 #include "math/matrix4.h"
 
 namespace MTL {
@@ -39,13 +38,6 @@ class Viewport;
 namespace Metal {
 
 class Pipeline;
-
-struct Vertex {
-	// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
-	simd_float2 position;
-	// 2D texture coordinate
-	simd_float2 texCoord;
-};
 
 /**
  * Object describing a framebuffer Metal can render to.
@@ -244,7 +236,6 @@ protected:
 
 private:
 	MetalTexture *_texture;
-	MTL::RenderPassDescriptor *_renderPassDescriptor;
 	//GLuint _glFBO;
 	bool _needUpdate;
 };
