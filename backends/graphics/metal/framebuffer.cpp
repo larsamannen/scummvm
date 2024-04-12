@@ -122,37 +122,7 @@ void Framebuffer::applyClearColor() {
 }
 
 void Framebuffer::applyBlendState() {
-	switch (_blendState) {
-		case kBlendModeDisabled:
-			_pipeline->disableBlendMode();
-			//GL_CALL(glDisable(GL_BLEND));
-			break;
-		case kBlendModeOpaque:
-			_pipeline->setBlendModeOpaque();
-			//GL_CALL(glEnable(GL_BLEND));
-			//GL_CALL(glBlendColor(1.f, 1.f, 1.f, 0.f));
-			//GL_CALL(glBlendFunc(GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR));
-			break;
-		case kBlendModeTraditionalTransparency:
-			//GL_CALL(glEnable(GL_BLEND));
-			//GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-			break;
-		case kBlendModePremultipliedTransparency:
-			//GL_CALL(glEnable(GL_BLEND));
-			//GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
-			break;
-		case kBlendModeAdditive:
-			//GL_CALL(glEnable(GL_BLEND));
-			//GL_CALL(glBlendFunc(GL_ONE, GL_ONE));
-			break;
-		case kBlendModeMaskAlphaAndInvertByColor:
-			_pipeline->setBlendModeMaskAlphaAndInvertByColor();
-			//GL_CALL(glEnable(GL_BLEND));
-			//GL_CALL(glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA));
-			break;
-		default:
-			break;
-	}
+	_pipeline->setBlendMode(_blendState);
 }
 
 void Framebuffer::applyScissorTestState() {

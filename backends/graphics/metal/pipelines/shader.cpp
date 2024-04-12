@@ -35,12 +35,15 @@ struct Vertex {
 	simd_float2 texCoord;
 };
 
-
-// A 4 elements with 2 components vector of floats
-static const int kCoordinatesSize = 4 * 2 * sizeof(float);
+unsigned short indices[] = {
+	0, 1, 2,
+	0, 2, 3
+};
 
 ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 	: _metalDevice(metalDevice), _activeShader(shader) {
+	NS::Error* error = nullptr;
+
 	MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
 	vertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
 	vertexDescriptor->layouts()->object(30)->setStepRate(1);
@@ -58,32 +61,13 @@ ShaderPipeline::ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader)
 	_pipelineDescriptor->setVertexFunction(ShaderMan.query(ShaderManager::kDefaultVertexShader));
 	_pipelineDescriptor->setFragmentFunction(_activeShader);
 	_pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
+
+	_colorAttachmentDescriptor = _pipelineDescriptor->colorAttachments()->object(0);
+	_colorAttachmentDescriptor->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 		
-	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = _pipelineDescriptor->colorAttachments()->object(0);
-	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
-
-	vertexDescriptor->release();
-}
-
-ShaderPipeline::~ShaderPipeline() {
-	_activeShader->release();
-	_pipelineDescriptor->vertexDescriptor()->release();
-	//_pipelineDescriptor->release();
-}
-
-//matrix_float4x4 ShaderPipeline::matrix_ortho(float left, float right, float bottom, float top, float nearZ, float farZ) {
-//	return (matrix_float4x4) { {
-//		{ 2 / (right - left), 0, 0, 0 },
-//		{ 0, 2 / (top - bottom), 0, 0 },
-//		{ 0, 0, 1 / (farZ - nearZ), 0 },
-//		{ (left + right) / (left - right), (top + bottom) / (bottom - top), nearZ / (nearZ - farZ), 1}
-//	} };
-//}
-
-void ShaderPipeline::activateInternal() {
-	Pipeline::activateInternal();
-	
-	NS::Error* error = nullptr;
+	// TODO, how to change blend mode on the fly - perhaps create multiple pipelinestates, one for each blend mode?
+	_blendMode = Framebuffer::kBlendModeOpaque;
+	setBlendMode();
 
 	_pipeLineState = _metalDevice->newRenderPipelineState(_pipelineDescriptor, &error);
 	if (!_pipeLineState)
@@ -92,19 +76,23 @@ void ShaderPipeline::activateInternal() {
 		assert( false );
 	}
 
-	//if (OpenGLContext.multitextureSupported) {
-	//	GL_CALL(glActiveTexture(GL_TEXTURE0));
-	//}
+	_indexBuffer = _metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
 
-	//_activeShader->use();
+	vertexDescriptor->release();
+}
 
-	//GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, _colorVBO));
-	//GL_CALL(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(_colorAttributes), _colorAttributes));
-	//GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+ShaderPipeline::~ShaderPipeline() {
+	_activeShader->release();
+	_pipeLineState->release();
+	_indexBuffer->release();
+	_pipelineDescriptor->vertexDescriptor()->release();
+}
+
+void ShaderPipeline::activateInternal() {
+	Pipeline::activateInternal();
 }
 
 void ShaderPipeline::deactivateInternal() {
-	//_pipeLineState->release();
 	Pipeline::deactivateInternal();
 }
 
@@ -118,9 +106,30 @@ void ShaderPipeline::setColor(float r, float g, float b, float a) {
 	}
 }
 
+void ShaderPipeline::setBlendMode() {
+	switch (_blendMode) {
+	case Framebuffer::kBlendModeDisabled:
+		_colorAttachmentDescriptor->setBlendingEnabled(false);
+		break;
+	case Framebuffer::kBlendModeOpaque:
+	case Framebuffer::kBlendModeAdditive:
+	case Framebuffer::kBlendModeTraditionalTransparency:
+	case Framebuffer::kBlendModePremultipliedTransparency:
+	case Framebuffer::kBlendModeMaskAlphaAndInvertByColor:
+		_colorAttachmentDescriptor->setBlendingEnabled(true);
+		_colorAttachmentDescriptor->setRgbBlendOperation(MTL::BlendOperationAdd);
+		_colorAttachmentDescriptor->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+		_colorAttachmentDescriptor->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+		break;
+	default:
+		break;
+	}
+}
+
 void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
 	assert(isActive());
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
@@ -135,14 +144,7 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 		{{coordinates[6], coordinates[7]}, {texcoords[6], texcoords[7]}}  // Vertex 3
 	};
 
-	unsigned short indices[] = {
-		0, 1, 2,
-		0, 2, 3
-	};
-
-	MTL::Buffer *indexBuffer = _metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-	
-	//matrix_float4x4 projection = matrix_ortho(0, _activeFramebuffer->getTargetTexture()->width(), _activeFramebuffer->getTargetTexture()->height(), 0, 0, 1);
+	setBlendMode();
 
 	MTL::RenderCommandEncoder *encoder = _commandBuffer->renderCommandEncoder(renderPassDescriptor);
 	encoder->setRenderPipelineState(_pipeLineState);
@@ -153,16 +155,16 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
 	encoder->setVertexBytes(&_projectionMatrix, sizeof(_projectionMatrix), 1);
 	encoder->setFragmentTexture(texture.getMetalTexture(), 0);
+
 	if (_paletteTexture) {
 		encoder->setFragmentTexture(_paletteTexture->getMetalTexture(), 1);
 	}
-	if (_viewport) {
-		encoder->setViewport(*_viewport);
-	}
-	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, indexBuffer, 0);
+
+	encoder->setViewport(*_viewport);
+
+	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 	encoder->endEncoding();
 	renderPassDescriptor->release();
-	indexBuffer->release();
 	pPool->release();
 }
 

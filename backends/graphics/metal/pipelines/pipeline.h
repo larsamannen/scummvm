@@ -28,11 +28,7 @@
 #include "math/matrix4.h"
 
 namespace MTL {
-class Buffer;
 class CommandBuffer;
-class RenderPipelineDescriptor;
-class RenderPipelineState;
-class Texture;
 class Viewport;
 }
 
@@ -117,13 +113,7 @@ public:
 	
 	void setLoadAction(int action) { _loadAction = action; }
 	
-	void disableBlendMode();
-	
-	void setBlendModeOpaque();
-	
-	void setBlendModeTraditionalTransparency();
-	
-	void setBlendModeMaskAlphaAndInvertByColor();
+	void setBlendMode(Framebuffer::BlendMode blendMode) { _blendMode = blendMode; }
 	
 protected:
 	/**
@@ -145,14 +135,13 @@ protected:
 	
 
 	Framebuffer *_activeFramebuffer;
-	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
-	MTL::RenderPipelineState *_pipeLineState;
 	MTL::CommandBuffer *_commandBuffer;
 	MTL::Viewport *_viewport;
 	int _loadAction;
 	const MetalTexture *_paletteTexture;
 	float _colorAttributes[4*4];
 
+	Framebuffer::BlendMode _blendMode;
 
 private:
 	/** Currently active rendering pipeline. */

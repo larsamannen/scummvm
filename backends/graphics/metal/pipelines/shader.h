@@ -27,6 +27,9 @@
 namespace MTL {
 class Device;
 class Function;
+class RenderPipelineColorAttachmentDescriptor;
+class RenderPipelineDescriptor;
+class RenderPipelineState;
 class Viewport;
 }
 
@@ -46,8 +49,15 @@ protected:
 	void deactivateInternal() override;
 	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
 
+private:
+	void setBlendMode();
+	
 	MTL::Function *const _activeShader;
 	MTL::Device *_metalDevice;
+	MTL::Buffer *_indexBuffer;
+	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
+	MTL::RenderPipelineState *_pipeLineState;
+	MTL::RenderPipelineColorAttachmentDescriptor *_colorAttachmentDescriptor;
 	matrix_float4x4 _projectionMatrix;
 };
 
