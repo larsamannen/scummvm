@@ -510,11 +510,11 @@ void MetalGraphicsManager::copyRectToScreen(const void *buf, int pitch, int x, i
 }
 
 Graphics::Surface *MetalGraphicsManager::lockScreen() {
-	return nullptr;
+	return _gameScreen->getSurface();
 }
 
 void MetalGraphicsManager::unlockScreen() {
-	
+	_gameScreen->flagDirty();
 }
 
 void MetalGraphicsManager::fillScreen(uint32 col) {
@@ -979,8 +979,15 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
 	if (format.bytesPerPixel == 1) {
 		return new TextureCLUT8GPU(_device);
+#ifdef SCUMM_LITTLE_ENDIAN
+	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
+#else
+	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) { // ABGR8888
+#endif
+		return new TextureRGBA8888Swap(_device);
+	} else {
+		return new Texture(_device, format);
 	}
-	return new Texture(_device, format);
 }
 
 int MetalGraphicsManager::getGameRenderScale() const {

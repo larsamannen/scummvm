@@ -24,6 +24,9 @@
 #include "backends/graphics/metal/pipelines/pipeline.h"
 #include "backends/graphics/metal/pipelines/clut8.h"
 #include "backends/graphics/metal/framebuffer.h"
+
+#include "graphics/blit.h"
+
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
@@ -327,6 +330,170 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 	_metalTexture->updateArea(dirtyArea, _textureData);
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();
+}
+
+FakeTexture::FakeTexture(MTL::Device *device, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat)
+	: Texture(device, format),
+	  _fakeFormat(fakeFormat),
+	  _rgbData(),
+	  _palette(nullptr),
+	  _mask(nullptr) {
+	if (_fakeFormat.isCLUT8()) {
+		_palette = new uint32[256]();
+	}
+}
+
+FakeTexture::~FakeTexture() {
+	delete[] _palette;
+	delete[] _mask;
+	_palette = nullptr;
+	_rgbData.free();
+}
+
+void FakeTexture::allocate(uint width, uint height) {
+	Texture::allocate(width, height);
+
+	// We only need to reinitialize our surface when the output size
+	// changed.
+	if (width == (uint)_rgbData.w && height == (uint)_rgbData.h) {
+		return;
+	}
+
+	_rgbData.create(width, height, getFormat());
+}
+
+void FakeTexture::setMask(const byte *mask) {
+	if (mask) {
+		const uint numPixels = _rgbData.w * _rgbData.h;
+
+		if (!_mask)
+			_mask = new byte[numPixels];
+
+		memcpy(_mask, mask, numPixels);
+	} else {
+		delete[] _mask;
+		_mask = nullptr;
+	}
+
+	flagDirty();
+}
+
+void FakeTexture::setColorKey(uint colorKey) {
+	if (!_palette)
+		return;
+
+	// The key color is set to black so the color value is pre-multiplied with the alpha value
+	// to avoid color fringes due to filtering.
+	// Erasing the color data is not a problem as the palette is always fully re-initialized
+	// before setting the key color.
+	uint32 *palette = _palette + colorKey;
+	*palette = 0;
+
+	// A palette changes means we need to refresh the whole surface.
+	flagDirty();
+}
+
+void FakeTexture::setPalette(uint start, uint colors, const byte *palData) {
+	if (!_palette)
+		return;
+
+	Graphics::convertPaletteToMap(_palette + start, palData, colors, _format);
+
+	// A palette changes means we need to refresh the whole surface.
+	flagDirty();
+}
+
+void FakeTexture::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+	if (!isDirty()) {
+		return;
+	}
+
+	// Convert color space.
+	Graphics::Surface *outSurf = Texture::getSurface();
+
+	const Common::Rect dirtyArea = getDirtyArea();
+
+	byte *dst = (byte *)outSurf->getBasePtr(dirtyArea.left, dirtyArea.top);
+	const byte *src = (const byte *)_rgbData.getBasePtr(dirtyArea.left, dirtyArea.top);
+
+	applyPaletteAndMask(dst, src, outSurf->pitch, _rgbData.pitch, _rgbData.w, dirtyArea, outSurf->format, _rgbData.format);
+
+	// Do generic handling of updating the texture.
+	Texture::updateMetalTexture(commandBuffer);
+}
+
+void FakeTexture::applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch, uint srcPitch, uint srcWidth, const Common::Rect &dirtyArea, const Graphics::PixelFormat &dstFormat, const Graphics::PixelFormat &srcFormat) const {
+	if (_palette) {
+		Graphics::crossBlitMap(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), dstFormat.bytesPerPixel, _palette);
+	} else {
+		Graphics::crossBlit(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), dstFormat, srcFormat);
+	}
+
+	if (_mask) {
+		uint maskPitch = srcWidth;
+		uint dirtyWidth = dirtyArea.width();
+		byte destBPP = dstFormat.bytesPerPixel;
+
+		const byte *maskRowStart = (_mask + dirtyArea.top * maskPitch + dirtyArea.left);
+		byte *dstRowStart = dst;
+
+		for (uint y = dirtyArea.top; y < static_cast<uint>(dirtyArea.bottom); y++) {
+			if (destBPP == 2) {
+				for (uint x = 0; x < dirtyWidth; x++) {
+					if (!maskRowStart[x])
+						reinterpret_cast<uint16 *>(dstRowStart)[x] = 0;
+				}
+			} else if (destBPP == 4) {
+				for (uint x = 0; x < dirtyWidth; x++) {
+					if (!maskRowStart[x])
+						reinterpret_cast<uint32 *>(dstRowStart)[x] = 0;
+				}
+			}
+
+			dstRowStart += dstPitch;
+			maskRowStart += maskPitch;
+		}
+	}
+}
+
+TextureRGBA8888Swap::TextureRGBA8888Swap(MTL::Device *device)
+#ifdef SCUMM_LITTLE_ENDIAN
+	: FakeTexture(device, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) // RGBA8888 -> ABGR8888
+#else
+	: FakeTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) // ABGR8888 -> RGBA8888
+#endif
+	  {
+}
+
+void TextureRGBA8888Swap::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+	if (!isDirty()) {
+		return;
+	}
+
+	// Convert color space.
+	Graphics::Surface *outSurf = Texture::getSurface();
+
+	const Common::Rect dirtyArea = getDirtyArea();
+
+	uint32 *dst = (uint32 *)outSurf->getBasePtr(dirtyArea.left, dirtyArea.top);
+	const uint dstAdd = outSurf->pitch - 4 * dirtyArea.width();
+
+	const uint32 *src = (const uint32 *)_rgbData.getBasePtr(dirtyArea.left, dirtyArea.top);
+	const uint srcAdd = _rgbData.pitch - 4 * dirtyArea.width();
+
+	for (int height = dirtyArea.height(); height > 0; --height) {
+		for (int width = dirtyArea.width(); width > 0; --width) {
+			const uint32 color = *src++;
+
+			*dst++ = SWAP_BYTES_32(color);
+		}
+
+		src = (const uint32 *)((const byte *)src + srcAdd);
+		dst = (uint32 *)((byte *)dst + dstAdd);
+	}
+
+	// Do generic handling of updating the texture.
+	Texture::updateMetalTexture(commandBuffer);
 }
 
 // _clut8Texture needs 8 bits internal precision, otherwise graphics glitches
