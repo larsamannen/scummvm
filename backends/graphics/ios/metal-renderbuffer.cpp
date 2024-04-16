@@ -39,6 +39,9 @@ MetalRenderbufferTarget::~MetalRenderbufferTarget() {
 }
 
 bool MetalRenderbufferTarget::setSize(uint width, uint height) {
+	CGSize size = CGSizeMake(width, height);
+	_metalLayer->setDrawableSize(size);
+
 	// Set viewport dimensions.
 	_viewport->originX = 0;
 	_viewport->originY = 0;

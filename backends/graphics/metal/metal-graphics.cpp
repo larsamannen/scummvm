@@ -312,6 +312,7 @@ void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::Pix
 	_currentState.gameHeight = height;
 	_gameScreenShakeXOffset = 0;
 	_gameScreenShakeYOffset = 0;
+
 	handleResizeImpl(width, height);
 }
 
