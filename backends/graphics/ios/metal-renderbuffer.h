@@ -55,10 +55,11 @@ public:
 	 */
 	bool setSize(uint width, uint height) override;
 	void refreshScreen(MTL::CommandBuffer *commandBuffer) override;
+	void getDrawable() override;
 	
 protected:
-	void activateInternal() override;
-	void deactivateInternal() override;
+	void activateInternal() override {};
+	void deactivateInternal() override {};
 	
 private:
 	CA::MetalLayer *_metalLayer;

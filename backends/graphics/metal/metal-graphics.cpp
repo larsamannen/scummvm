@@ -551,6 +551,9 @@ void MetalGraphicsManager::updateScreen() {
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
+	
+	// Get new drawable
+	_targetBuffer->getDrawable();
 
 	// Update changes to textures.
 	_gameScreen->updateMetalTexture(commandBuffer);
@@ -605,7 +608,7 @@ void MetalGraphicsManager::updateScreen() {
 	_forceRedraw = false;
 	_targetBuffer->refreshScreen(commandBuffer);
 	
-	_pipeline->deactivate();
+	//_pipeline->deactivate();
 
 	pPool->release();
 }

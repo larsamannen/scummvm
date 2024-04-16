@@ -32,21 +32,10 @@ namespace Metal {
 //
 MetalRenderbufferTarget::MetalRenderbufferTarget(CA::MetalLayer *metalLayer)
 	: Framebuffer(metalLayer->device()),  _metalLayer(metalLayer) {
-	//	_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
 MetalRenderbufferTarget::~MetalRenderbufferTarget() {
 	_metalLayer->release();
-	//_renderPassDescriptor->release();
-
-}
-
-void MetalRenderbufferTarget::activateInternal() {
-	_drawable = _metalLayer->nextDrawable();
-	_targetTexture = _drawable->texture();
-}
-
-void MetalRenderbufferTarget::deactivateInternal() {
 }
 
 bool MetalRenderbufferTarget::setSize(uint width, uint height) {
@@ -87,12 +76,12 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 
 void MetalRenderbufferTarget::refreshScreen(MTL::CommandBuffer *commandBuffer) {
 	commandBuffer->presentDrawable(_drawable);
-	//commandBuffer->commit();
-	Framebuffer::refreshScreen(commandBuffer);
-	//_renderCommandEncoder->release();
-	//_commandBuffer->release();
-	//_autoreleasePool->release();
+	commandBuffer->commit();
+}
 
+void MetalRenderbufferTarget::getDrawable() {
+	_drawable = _metalLayer->nextDrawable();
+	_targetTexture = _drawable->texture();
 }
 
 } // End of namespace Metal

@@ -170,7 +170,8 @@ public:
 	 */
 	void deactivate();
 
-	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer);
+	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer) {};
+	virtual void getDrawable() {};
 	
 	MTL::CommandQueue *getCommandQueue() { return _commandQueue; }
 	MTL::Texture *getTargetTexture() { return _targetTexture; }

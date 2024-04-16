@@ -153,7 +153,7 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	//encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
 	encoder->setVertexBytes(vertices, sizeof(vertices), 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	encoder->setVertexBytes(&_projectionMatrix, sizeof(_projectionMatrix), 1);
+	encoder->setVertexBytes(&_projectionMatrix, sizeof(_projectionMatrix), 0);
 	encoder->setFragmentTexture(texture.getMetalTexture(), 0);
 
 	if (_paletteTexture) {
@@ -169,7 +169,7 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 }
 
 void ShaderPipeline::setProjectionMatrix(const Math::Matrix4 &projectionMatrix) {
-	//assert(isActive());
+	assert(isActive());
 	//_activeShader->setUniform("projection", projectionMatrix);
 	_projectionMatrix = { {
 		{projectionMatrix(0, 0), projectionMatrix(0, 1), projectionMatrix(0, 2), projectionMatrix(0, 3)},

@@ -36,13 +36,13 @@ Pipeline::Pipeline()
 void Pipeline::activate(MTL::CommandBuffer *commandBuffer) {
 	_commandBuffer = commandBuffer;
 
-	//if (activePipeline == this) {
-	//	return;
-	//}
+	if (activePipeline == this) {
+		return;
+	}
 
-//	if (activePipeline) {
-//		activePipeline->deactivate();
-//	}
+	if (activePipeline) {
+		activePipeline->deactivate();
+	}
 
 	activePipeline = this;
 
@@ -61,7 +61,6 @@ void Pipeline::deactivate() {
 	deactivateInternal();
 
 	activePipeline = nullptr;
-	//delete _viewport;
 }
 
 void Pipeline::deactivateInternal() {

@@ -52,7 +52,7 @@ const char* shaderSrc = R"(
 	};
 
 	vertex VertexOut vertexFunction(Vertex in [[stage_in]],
-		constant float4x4 &projection [[buffer(1)]])
+		constant float4x4 &projection [[buffer(0)]])
 	{
 		VertexOut out;
 		out.position = projection * in.position;
