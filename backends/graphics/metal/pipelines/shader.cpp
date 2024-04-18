@@ -35,7 +35,7 @@ struct Vertex {
 	simd_float2 texCoord;
 };
 
-unsigned short indices[] = {
+const unsigned short indices[] = {
 	0, 1, 2,
 	0, 2, 3
 };
@@ -128,6 +128,7 @@ void ShaderPipeline::setBlendMode() {
 
 void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
 	assert(isActive());
+
 	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
@@ -137,7 +138,7 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(_activeFramebuffer->getTargetTexture());
 	
-	Vertex vertices[] = {
+	const Vertex vertices[] = {
 		{{coordinates[0], coordinates[1]}, {texcoords[0], texcoords[1]}}, // Vertex 0
 		{{coordinates[2], coordinates[3]}, {texcoords[2], texcoords[3]}}, // Vertex 1
 		{{coordinates[4], coordinates[5]}, {texcoords[4], texcoords[5]}}, // Vertex 2
@@ -150,7 +151,6 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 	encoder->setRenderPipelineState(_pipeLineState);
 	encoder->setBlendColor(_colorAttributes[0], _colorAttributes[1], _colorAttributes[2], _colorAttributes[3]);
 	// reference to the layout buffer in vertexDescriptor
-	//encoder->setVertexBuffer(vertexPositionsBuffer, 0, 30);
 	encoder->setVertexBytes(vertices, sizeof(vertices), 30);
 	// This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
 	encoder->setVertexBytes(&_projectionMatrix, sizeof(_projectionMatrix), 0);

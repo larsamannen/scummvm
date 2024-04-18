@@ -19,8 +19,10 @@
  *
  */
 
-#ifndef BACKENDS_GRAPHICS_METAL_RENDERER_H
-#define BACKENDS_GRAPHICS_METAL_RENDERER_H
+#ifndef BACKENDS_GRAPHICS_METAL_RENDER2D_H
+#define BACKENDS_GRAPHICS_METAL_RENDER2D_H
+
+//#include "backends/graphics/metal/texture.h"
 
 namespace CA {
 class MetalDrawable;
@@ -35,11 +37,14 @@ class RenderPipelineState;
 class Texture;
 class Viewport;
 }
+
 #include <simd/simd.h>
 
 namespace Metal {
 
-class Renderer
+class MetalTexture;
+
+class Render2d
 {
 	
 	struct Vertex {
@@ -50,13 +55,11 @@ class Renderer
 	};
 	
 public:
-	Renderer(MTL::Device* device);
-	~Renderer();
+	Render2d(MTL::Device* device);
+	~Render2d();
 	void buildShaders();
 	void buildBuffers();
-	void draw(CA::MetalDrawable* drawable, const MTL::Texture *gameTexture, const MTL::Texture *overlayTexture, const MTL::Texture *cursorTexture);
-	void drawTexture(const MTL::Texture *inTexture, const MTL::Texture *outTexture, const MTL::Texture *paletteTexture);
-	void setCursorViewport(int x, int y, int w, int h);
+	void draw2dTexture(const MetalTexture &texture, const float *coordinates, const float *texcoords);
 	
 private:
 	MTL::Device *_device;

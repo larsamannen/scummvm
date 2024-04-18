@@ -23,6 +23,7 @@
 #define BACKENDS_GRAPHICS_METAL_PIPELINES_SHADER_H
 
 #include "backends/graphics/metal/pipelines/pipeline.h"
+#include <simd/simd.h>
 
 namespace MTL {
 class Device;

@@ -70,6 +70,7 @@ void Pipeline::deactivateInternal() {
 }
 
 void Pipeline::setViewport(int x, int y, int w, int h) {
+	delete _viewport;
 	_viewport = new MTL::Viewport();
 	_viewport->originX = x;
 	_viewport->originY = y;

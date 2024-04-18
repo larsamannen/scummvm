@@ -60,7 +60,6 @@ MetalGraphicsManager::~MetalGraphicsManager()
 	delete _overlay;
 	delete _cursor;
 	delete _cursorMask;
-	delete _renderer;
 	delete _pipeline;
 }
 
@@ -114,8 +113,6 @@ void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
 	if (_cursorMask) {
 		_cursorMask->recreate();
 	}
-
-	//_renderer = new Renderer(_device);
 }
 
 void MetalGraphicsManager::notifyContextDestroy() {

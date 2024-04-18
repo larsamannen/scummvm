@@ -94,6 +94,12 @@ ShaderManager::~ShaderManager() {
 }
 
 void ShaderManager::notifyDestroy() {
+	_defaultVertexShader->release();
+	_defaultVertexShader = nullptr;
+	_defaultFragmentShader->release();
+	_defaultFragmentShader = nullptr;
+	_lookUpFragmentShader->release();
+	_lookUpFragmentShader = nullptr;
 	_shaderLibrary->release();
 	_shaderLibrary = nullptr;
 }

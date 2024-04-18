@@ -23,7 +23,6 @@
 #define BACKENDS_GRAPHICS_METAL_METAL_GRAPHICS_H
 
 #include "backends/graphics/windowed.h"
-#include "backends/graphics/metal/renderer.h"
 #include "backends/graphics/metal/texture.h"
 #include "backends/graphics/metal/framebuffer.h"
 
@@ -295,7 +294,7 @@ private:
 	 */
 	Common::Point _shakeOffsetScaled;
 	
-	Renderer *_renderer;
+	//Render2d *_renderer;
 
 	/**
 	 * The current screen change ID.

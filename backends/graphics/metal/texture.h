@@ -24,11 +24,11 @@
 
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
-#include "backends/graphics/metal/renderer.h"
 #include "common/rect.h"
 
 namespace MTL {
 class Buffer;
+class CommandBuffer;
 class Device;
 class Texture;
 }
