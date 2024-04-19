@@ -42,9 +42,10 @@ void iOSMetalGraphicsManager::initSurface() {
 	// Create Metal Device
 	MTL::Device *device = MTL::CreateSystemDefaultDevice();
 	_metalLayer->setDevice(device);
+	MTL::CommandQueue *commandQueue = device->newCommandQueue();
 
-	notifyContextCreate(_metalLayer,
-	new Metal::MetalRenderbufferTarget(_metalLayer),
+	notifyContextCreate(commandQueue,
+	new Metal::MetalRenderbufferTarget(_metalLayer, commandQueue),
 	// Currently iOS runs the ARMs in little-endian mode but prepare if
 	// that is changed in the future.
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -56,10 +57,6 @@ void iOSMetalGraphicsManager::initSurface() {
 #endif
 	handleResize(sys->getScreenWidth(), sys->getScreenHeight());
 
-}
-
-CA::MetalDrawable *iOSMetalGraphicsManager::getNextDrawable() {
-	return _metalLayer->nextDrawable();
 }
 
 void iOSMetalGraphicsManager::deinitSurface() {

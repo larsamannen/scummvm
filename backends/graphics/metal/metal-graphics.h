@@ -28,13 +28,12 @@
 
 
 namespace CA {
-class MetalDrawable;
 class MetalLayer;
 }
 
 namespace MTL {
+class CommandQueue;
 class Device;
-class Texture;
 }
 
 enum {
@@ -43,12 +42,14 @@ enum {
 
 namespace Metal {
 
+class Renderer;
+
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:
 	MetalGraphicsManager();
 	virtual ~MetalGraphicsManager();
 	
-	void notifyContextCreate(CA::MetalLayer *metalLayer,
+	void notifyContextCreate(MTL::CommandQueue *commandQueue,
 							 Framebuffer *target,
 							 const Graphics::PixelFormat &defaultFormat,
 							 const Graphics::PixelFormat &defaultFormatAlpha);
@@ -60,8 +61,6 @@ public:
 	 * context.
 	 */
 	void notifyContextDestroy();
-	// TODO REMOVE THIS
-	virtual CA::MetalDrawable *getNextDrawable() = 0;
 	
 	// Windowed
 	bool gameNeedsAspectRatioCorrection() const override;
@@ -294,7 +293,7 @@ private:
 	 */
 	Common::Point _shakeOffsetScaled;
 	
-	//Render2d *_renderer;
+	//Renderer *_renderer;
 
 	/**
 	 * The current screen change ID.
@@ -302,6 +301,8 @@ private:
 	int _screenChangeID;
 	
 	Pipeline *_pipeline;
+
+	Renderer *_renderer;
 	
 	MTL::CommandQueue *_commandQueue;
 };

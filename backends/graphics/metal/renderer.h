@@ -19,24 +19,11 @@
  *
  */
 
-#ifndef BACKENDS_GRAPHICS_METAL_RENDER2D_H
-#define BACKENDS_GRAPHICS_METAL_RENDER2D_H
+#ifndef BACKENDS_GRAPHICS_METAL_Renderer_H
+#define BACKENDS_GRAPHICS_METAL_Renderer_H
 
-//#include "backends/graphics/metal/texture.h"
-
-namespace CA {
-class MetalDrawable;
-}
-
-namespace MTL {
-class Buffer;
-class CommandBuffer;
-class CommandQueue;
-class Device;
-class RenderPipelineState;
-class Texture;
-class Viewport;
-}
+#include "backends/graphics/metal/texture.h"
+#include <Metal/Metal.hpp>
 
 #include <simd/simd.h>
 
@@ -44,32 +31,29 @@ namespace Metal {
 
 class MetalTexture;
 
-class Render2d
+class Renderer
 {
-	
+public:
 	struct Vertex {
 		// Positions in pixel space. A value of 100 indicates 100 pixels from the origin/center.
 		simd_float2 position;
 		// 2D texture coordinate
 		simd_float2 texCoord;
 	};
-	
-public:
-	Render2d(MTL::Device* device);
-	~Render2d();
+
+	Renderer(MTL::CommandQueue *commandQueue);
+	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw2dTexture(const MetalTexture &texture, const float *coordinates, const float *texcoords);
+	void draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction);
+	void draw2dTextureWithPalette(const MTL::Texture *outTexture, const MTL::Texture *paletteTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport);
 	
 private:
 	MTL::Device *_device;
-	MTL::CommandBuffer *_commandBuffer;
 	MTL::CommandQueue *_commandQueue;
-	MTL::RenderPipelineState *_pipeLineState;
+	MTL::RenderPipelineState *_noBlendPipeLineState;
 	MTL::RenderPipelineState *_clut8PipeLineState;
-	MTL::Buffer* _vertexPositionsBuffer;
 	MTL::Buffer* _indexBuffer;
-	MTL::Viewport *_cursorViewPort;
 };
 
 } // end namespace Metal

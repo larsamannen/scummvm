@@ -23,22 +23,13 @@
 #define BACKENDS_GRAPHICS_METAL_PIPELINES_SHADER_H
 
 #include "backends/graphics/metal/pipelines/pipeline.h"
-#include <simd/simd.h>
-
-namespace MTL {
-class Device;
-class Function;
-class RenderPipelineColorAttachmentDescriptor;
-class RenderPipelineDescriptor;
-class RenderPipelineState;
-class Viewport;
-}
+#include "backends/graphics/metal/renderer.h"
 
 namespace Metal {
 
 class ShaderPipeline : public Pipeline {
 public:
-	ShaderPipeline(MTL::Device *metalDevice, MTL::Function *shader);
+	ShaderPipeline(Renderer *renderer, MTL::Function *shader);
 	~ShaderPipeline() override;
 
 	void setColor(float r, float g, float b, float a) override;
@@ -50,16 +41,13 @@ protected:
 	void deactivateInternal() override;
 	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
 
+	Renderer *_renderer;
+	matrix_float4x4 _projectionMatrix;
+
 private:
 	void setBlendMode();
 	
 	MTL::Function *const _activeShader;
-	MTL::Device *_metalDevice;
-	MTL::Buffer *_indexBuffer;
-	MTL::RenderPipelineDescriptor *_pipelineDescriptor;
-	MTL::RenderPipelineState *_pipeLineState;
-	MTL::RenderPipelineColorAttachmentDescriptor *_colorAttachmentDescriptor;
-	matrix_float4x4 _projectionMatrix;
 };
 
 } // End of namespace Metal

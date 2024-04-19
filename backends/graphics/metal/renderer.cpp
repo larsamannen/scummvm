@@ -21,32 +21,26 @@
 
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
-#include <Metal/Metal.hpp>
-#include <QuartzCore/QuartzCore.hpp>
-#include "backends/graphics/metal/render2d.h"
+#include "backends/graphics/metal/renderer.h"
 #include "backends/graphics/metal/shader.h"
-
 
 namespace Metal {
 
-Render2d::Render2d(MTL::Device* device)
-: _device(device->retain()), _cursorViewPort(new MTL::Viewport())
+Renderer::Renderer(MTL::CommandQueue *commandQueue) : _commandQueue(commandQueue), _device(commandQueue->device())
 {
-	_commandQueue = _device->newCommandQueue();
 	buildShaders();
 	buildBuffers();
 }
 
-Render2d::~Render2d()
+Renderer::~Renderer()
 {
-	_vertexPositionsBuffer->release();
 	_indexBuffer->release();
-	_pipeLineState->release();
-	_commandQueue->release();
+	_noBlendPipeLineState->release();
+	_clut8PipeLineState->release();
 	_device->release();
 }
 
-void Render2d::buildShaders()
+void Renderer::buildShaders()
 {
 	MTL::VertexDescriptor* defaultVertexDescriptor = MTL::VertexDescriptor::alloc()->init();
 	defaultVertexDescriptor->layouts()->object(30)->setStride(sizeof(Vertex));
@@ -58,20 +52,22 @@ void Render2d::buildShaders()
 	defaultVertexDescriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat2);
 	defaultVertexDescriptor->attributes()->object(1)->setOffset(sizeof(simd_float2));
 	defaultVertexDescriptor->attributes()->object(1)->setBufferIndex(30);
-	
+
+	// Default Pipeline
 	MTL::RenderPipelineDescriptor* defaultPipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
 	defaultPipelineDescriptor->setVertexFunction(ShaderMan.query(ShaderManager::kDefaultVertexShader));
 	defaultPipelineDescriptor->setFragmentFunction(ShaderMan.query(ShaderManager::kDefaultFragmentShader));
 	defaultPipelineDescriptor->setVertexDescriptor(defaultVertexDescriptor);
-	
+
+	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = defaultPipelineDescriptor->colorAttachments()->object(0);
+	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
+
+	// CLUT8 Pipeline
 	MTL::RenderPipelineDescriptor* clut8PipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
 	clut8PipelineDescriptor->setVertexFunction(ShaderMan.query(ShaderManager::kDefaultVertexShader));
 	clut8PipelineDescriptor->setFragmentFunction(ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader));
 	clut8PipelineDescriptor->setVertexDescriptor(defaultVertexDescriptor);
-	
-	MTL::RenderPipelineColorAttachmentDescriptor *renderbufferAttachment = defaultPipelineDescriptor->colorAttachments()->object(0);
-	renderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
-	
+
 	MTL::RenderPipelineColorAttachmentDescriptor *clut8RenderbufferAttachment = clut8PipelineDescriptor->colorAttachments()->object(0);
 	clut8RenderbufferAttachment->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Unorm);
 
@@ -85,8 +81,8 @@ void Render2d::buildShaders()
 	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 
 	NS::Error* error = nullptr;
-	_pipeLineState = _device->newRenderPipelineState(defaultPipelineDescriptor, &error);
-	if (!_pipeLineState)
+	_noBlendPipeLineState = _device->newRenderPipelineState(defaultPipelineDescriptor, &error);
+	if (!_noBlendPipeLineState)
 	{
 		__builtin_printf( "%s", error->localizedDescription()->utf8String() );
 		assert( false );
@@ -102,61 +98,80 @@ void Render2d::buildShaders()
 	clut8PipelineDescriptor->release();
 }
 
-void Render2d::buildBuffers()
+void Renderer::buildBuffers()
 {
-	Vertex vertices[] = {
-		{{-1.0f, -1.0f}, {0.0f, 1.0f}}, // Vertex 0
-		{{ 1.0f, -1.0f}, {1.0f, 1.0f}}, // Vertex 1
-		{{ 1.0f,  1.0f}, {1.0f, 0.0f}}, // Vertex 2
-		{{-1.0f,  1.0f}, {0.0f, 0.0f}}  // Vertex 3
-	};
-	
 	unsigned short indices[] = {
 		0, 1, 2,
 		0, 2, 3
 	};
 	
-	MTL::Buffer* vertexBuffer = _device->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
-	MTL::Buffer* indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-	_vertexPositionsBuffer = vertexBuffer;
-	_indexBuffer = indexBuffer;
+	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);;
 }
 
-void Render2d::draw2dTexture(const MetalTexture &texture, const float *coordinates, const float *texcoords)
+void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction)
 {
-	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	
-	MTL::CommandBuffer* pCmd = _commandQueue->commandBuffer();
-#if 0
+	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
+
+	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
+	attachment->setLoadAction(loadAction);
+	attachment->setStoreAction(MTL::StoreActionStore);
+	attachment->setTexture(outTexture);
+
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
+
+	encoder->setRenderPipelineState(_noBlendPipeLineState);
+	encoder->setViewport(viewport);
+
+	// reference to the layout buffer in vertexDescriptor
+	const int kCoordinatesSize = 4 * sizeof(Vertex);
+	encoder->setVertexBytes(vertices, kCoordinatesSize, 30);
+
+	encoder->setVertexBytes(&projectionMatrix, sizeof(projectionMatrix), 0);
+
+	// Texture is set to be referred as attribute [[texture(0)]] in a shader function’s parameter list.
+	encoder->setFragmentTexture(inTexture, 0);
+	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+
+	encoder->endEncoding();
+	commandBuffer->commit();
+	renderPassDescriptor->release();
+	autoreleasePool->release();
+}
+
+void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MTL::Texture *paletteTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport) {
+	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
+	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
+
 	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);
-	attachment->setTexture(drawable->texture());
+	attachment->setTexture(outTexture);
 
-	MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(renderPassDescriptor);
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
-	pEnc->setRenderPipelineState(_pipeLineState);
-	pEnc->setVertexBuffer(_vertexPositionsBuffer, 0, 30); // reference to the layout buffer in vertexDescriptor
+	encoder->setRenderPipelineState(_clut8PipeLineState);
+	encoder->setViewport(viewport);
 
-	pEnc->setFragmentTexture(gameTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+	// reference to the layout buffer in vertexDescriptor
+	const int kCoordinatesSize = 4 * sizeof(Vertex);
+	encoder->setVertexBytes(vertices, kCoordinatesSize, 30);
 
-	pEnc->setFragmentTexture(overlayTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
+	encoder->setVertexBytes(&projectionMatrix, sizeof(projectionMatrix), 0);
 
-	pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
-	if (cursorTexture) {
-		pEnc->setViewport(*_cursorViewPort);
-		pEnc->setFragmentTexture(cursorTexture, 0); // This texture can now be referred to by index with the attribute [[texture(0)]] in a shader function’s parameter list.
-		pEnc->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
-	}
-	pEnc->endEncoding();
-	pCmd->presentDrawable(drawable);
-	pCmd->commit();
+	// Texture is set to be referred as attribute [[texture(0)]] in a shader function’s parameter list.
+	encoder->setFragmentTexture(inTexture, 0);
+	encoder->setFragmentTexture(paletteTexture, 1);
+	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
+
+	encoder->endEncoding();
+	commandBuffer->commit();
 	renderPassDescriptor->release();
-#endif
-	pPool->release();
+	autoreleasePool->release();
 }
-
 } // end namespace Metal

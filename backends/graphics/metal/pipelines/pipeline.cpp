@@ -30,12 +30,10 @@ namespace Metal {
 Pipeline *Pipeline::activePipeline = nullptr;
 
 Pipeline::Pipeline()
-	: _activeFramebuffer(nullptr), _viewport(nullptr), _blendMode(Framebuffer::kBlendModeDisabled) {
+	: _activeFramebuffer(nullptr), _viewport(), _blendMode(Framebuffer::kBlendModeDisabled) {
 }
 
-void Pipeline::activate(MTL::CommandBuffer *commandBuffer) {
-	_commandBuffer = commandBuffer;
-
+void Pipeline::activate() {
 	if (activePipeline == this) {
 		return;
 	}
@@ -67,15 +65,6 @@ void Pipeline::deactivateInternal() {
 	if (_activeFramebuffer) {
 		_activeFramebuffer->deactivate();
 	}
-}
-
-void Pipeline::setViewport(int x, int y, int w, int h) {
-	delete _viewport;
-	_viewport = new MTL::Viewport();
-	_viewport->originX = x;
-	_viewport->originY = y;
-	_viewport->width = w;
-	_viewport->height = h;
 }
 
 Framebuffer *Pipeline::setFramebuffer(Framebuffer *framebuffer) {

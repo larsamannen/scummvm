@@ -30,7 +30,7 @@ class MetalLayer;
 }
 
 namespace MTL {
-class RenderPassDescriptor;
+class CommandQueue;
 }
 
 namespace NS {
@@ -47,15 +47,16 @@ namespace Metal {
  */
 class MetalRenderbufferTarget : public Framebuffer {
 public:
-	MetalRenderbufferTarget(CA::MetalLayer *_metalLayer);
+	MetalRenderbufferTarget(CA::MetalLayer *_metalLayer, MTL::CommandQueue *comandQueue);
 	~MetalRenderbufferTarget() override;
 	
 	/**
 	 * Set size of the render target.
 	 */
 	bool setSize(uint width, uint height) override;
-	void refreshScreen(MTL::CommandBuffer *commandBuffer) override;
-	void getDrawable() override;
+	void getNextDrawable() override;
+	void refreshScreen() override;
+	MTL::Texture *getTargetTexture() override;
 	
 protected:
 	void activateInternal() override {};
@@ -64,6 +65,7 @@ protected:
 private:
 	CA::MetalLayer *_metalLayer;
 	CA::MetalDrawable *_drawable;
+	MTL::CommandQueue *_commandQueue;
 };
 
 } // End of namespace Metal

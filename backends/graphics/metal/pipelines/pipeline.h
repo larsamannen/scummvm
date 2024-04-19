@@ -27,6 +27,8 @@
 
 #include "math/matrix4.h"
 
+#include <Metal/Metal.hpp>
+
 namespace MTL {
 class CommandBuffer;
 class Viewport;
@@ -50,7 +52,7 @@ public:
 	 * This sets the Metal state to make use of drawing with the given
 	 * Metal pipeline.
 	 */
-	void activate(MTL::CommandBuffer *commandBuffer);
+	void activate();
 	
 	/**
 	 * Deactivate the pipeline.
@@ -109,9 +111,9 @@ public:
 	 */
 	virtual void setProjectionMatrix(const Math::Matrix4 &projectionMatrix) = 0;
 	
-	void setViewport(int x, int y, int w, int h);
+	void setViewport(int x, int y, int w, int h) { _viewport.originX = x; _viewport.originY = y; _viewport.width = w; _viewport.height = h; _viewport.zfar = 0.0; _viewport.znear = 0.0; };
 	
-	void setLoadAction(int action) { _loadAction = action; }
+	void setLoadAction(MTL::LoadAction loadAction) { _loadAction = loadAction; }
 	
 	void setBlendMode(Framebuffer::BlendMode blendMode) { _blendMode = blendMode; }
 	
@@ -135,10 +137,8 @@ protected:
 	
 
 	Framebuffer *_activeFramebuffer;
-	MTL::CommandBuffer *_commandBuffer;
-	MTL::Viewport *_viewport;
-	int _loadAction;
-	const MetalTexture *_paletteTexture;
+	MTL::Viewport _viewport;
+	MTL::LoadAction _loadAction;
 	float _colorAttributes[4*4];
 
 	Framebuffer::BlendMode _blendMode;

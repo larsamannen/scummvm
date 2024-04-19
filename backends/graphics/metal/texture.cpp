@@ -288,7 +288,7 @@ void Texture::allocate(uint width, uint height) {
 	flagDirty();
 }
 
-void Texture::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+void Texture::updateMetalTexture() {
 	if (!isDirty()) {
 		return;
 	}
@@ -403,7 +403,7 @@ void FakeTexture::setPalette(uint start, uint colors, const byte *palData) {
 	flagDirty();
 }
 
-void FakeTexture::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+void FakeTexture::updateMetalTexture() {
 	if (!isDirty()) {
 		return;
 	}
@@ -419,7 +419,7 @@ void FakeTexture::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 	applyPaletteAndMask(dst, src, outSurf->pitch, _rgbData.pitch, _rgbData.w, dirtyArea, outSurf->format, _rgbData.format);
 
 	// Do generic handling of updating the texture.
-	Texture::updateMetalTexture(commandBuffer);
+	Texture::updateMetalTexture();
 }
 
 void FakeTexture::applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch, uint srcPitch, uint srcWidth, const Common::Rect &dirtyArea, const Graphics::PixelFormat &dstFormat, const Graphics::PixelFormat &srcFormat) const {
@@ -465,7 +465,7 @@ TextureRGBA8888Swap::TextureRGBA8888Swap(MTL::Device *device)
 	  {
 }
 
-void TextureRGBA8888Swap::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+void TextureRGBA8888Swap::updateMetalTexture() {
 	if (!isDirty()) {
 		return;
 	}
@@ -493,7 +493,7 @@ void TextureRGBA8888Swap::updateMetalTexture(MTL::CommandBuffer *commandBuffer) 
 	}
 
 	// Do generic handling of updating the texture.
-	Texture::updateMetalTexture(commandBuffer);
+	Texture::updateMetalTexture();
 }
 
 // _clut8Texture needs 8 bits internal precision, otherwise graphics glitches
@@ -501,9 +501,9 @@ void TextureRGBA8888Swap::updateMetalTexture(MTL::CommandBuffer *commandBuffer) 
 // However, in practice (according to fuzzie) it's 8bit. If we run into
 // problems, we need to switch to GL_R8 and GL_RED, but that is only supported
 // for ARB_texture_rg and GLES3+ (EXT_rexture_rg does not support GL_R8).
-TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device)
-	: _device(device), _clut8Texture(new MetalTexture(device, MTL::PixelFormatA8Unorm)), _paletteTexture(nullptr),
-	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(device)),
+TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device, Renderer *renderer)
+	: _device(device), _clut8Texture(new MetalTexture(device, MTL::PixelFormatA8Unorm)), _paletteTexture(nullptr), _renderer(renderer),
+	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(renderer)),
 	  _clut8Data(), _userPixelData(), _palette(),
 	  _paletteDirty(false) {
 	// Allocate space for 256 colors.
@@ -545,7 +545,7 @@ void TextureCLUT8GPU::recreate() {
 	}
 
 	if (_clut8Pipeline == nullptr) {
-		_clut8Pipeline = new CLUT8LookUpPipeline(_device);
+		_clut8Pipeline = new CLUT8LookUpPipeline(_renderer);
 		// Setup pipeline.
 		_clut8Pipeline->setFramebuffer(_target);
 		_clut8Pipeline->setPaletteTexture(_paletteTexture);
@@ -627,7 +627,7 @@ const MetalTexture *TextureCLUT8GPU::getMetalTexture() const {
 	return _target->getTexture();
 }
 
-void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
+void TextureCLUT8GPU::updateMetalTexture() {
 	const bool needLookUp = Surface::isDirty() || _paletteDirty;
 
 	// Update CLUT8 texture if necessary.
@@ -656,13 +656,13 @@ void TextureCLUT8GPU::updateMetalTexture(MTL::CommandBuffer *commandBuffer) {
 
 	// In case any data changed, do color look up and store result in _target.
 	if (needLookUp) {
-		lookUpColors(commandBuffer);
+		lookUpColors();
 	}
 }
 
-void TextureCLUT8GPU::lookUpColors(MTL::CommandBuffer *commandBuffer) {
+void TextureCLUT8GPU::lookUpColors() {
 	// Setup pipeline to do color look up.
-	_clut8Pipeline->activate(commandBuffer);
+	_clut8Pipeline->activate();
 
 	// Do color look up.
 	_clut8Pipeline->drawTexture(*_clut8Texture, _clut8Vertices);

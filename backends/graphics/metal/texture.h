@@ -27,13 +27,13 @@
 #include "common/rect.h"
 
 namespace MTL {
-class Buffer;
-class CommandBuffer;
 class Device;
 class Texture;
 }
 
 namespace Metal {
+
+class Renderer;
 
 /**
  * A simple GL texture object abstraction.
@@ -251,7 +251,7 @@ public:
 	/**
 	 * Update underlying Metal texture to reflect current state.
 	 */
-	virtual void updateMetalTexture(MTL::CommandBuffer *commandBuffer) = 0;
+	virtual void updateMetalTexture() = 0;
 
 	/**
 	 * Obtain underlying Metal texture.
@@ -283,7 +283,7 @@ public:
 	 * @param glType      The input type.
 	 * @param format      The format used for the texture input.
 	 */
-	Texture(/*GLenum glIntFormat, GLenum glFormat, GLenum glType,*/ MTL::Device *device, const Graphics::PixelFormat &format);
+	Texture(MTL::Device *device, const Graphics::PixelFormat &format);
 	~Texture() override;
 
 	void destroy() override;
@@ -305,7 +305,7 @@ public:
 	Graphics::Surface *getSurface() override { return &_userPixelData; }
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
-	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
+	void updateMetalTexture() override;
 	const MetalTexture *getMetalTexture() const override { return _metalTexture; }
 protected:
 	const Graphics::PixelFormat _format;
@@ -338,7 +338,7 @@ public:
 	Graphics::Surface *getSurface() override { return &_rgbData; }
 	const Graphics::Surface *getSurface() const override { return &_rgbData; }
 
-	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
+	void updateMetalTexture() override;
 protected:
 	void applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch, uint srcPitch, uint srcWidth, const Common::Rect &dirtyArea, const Graphics::PixelFormat &dstFormat, const Graphics::PixelFormat &srcFormat) const;
 
@@ -353,7 +353,7 @@ public:
 	TextureRGBA8888Swap(MTL::Device *device);
 	~TextureRGBA8888Swap() override {}
 
-	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
+	void updateMetalTexture() override;
 };
 
 class TextureTarget;
@@ -361,7 +361,7 @@ class CLUT8LookUpPipeline;
 
 class TextureCLUT8GPU : public Surface {
 public:
-	TextureCLUT8GPU(MTL::Device *device);
+	TextureCLUT8GPU(MTL::Device *device, Renderer *renderer);
 	~TextureCLUT8GPU() override;
 
 	void destroy() override;
@@ -387,20 +387,21 @@ public:
 	Graphics::Surface *getSurface() override { return &_userPixelData; }
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
-	void updateMetalTexture(MTL::CommandBuffer *commandBuffer) override;
+	void updateMetalTexture() override;
 	const MetalTexture *getMetalTexture() const override;
 
 	static bool isSupportedByContext() {
 		return true;
 	}
 private:
-	void lookUpColors(MTL::CommandBuffer *commandBuffer);
+	void lookUpColors();
 
 	MTL::Device *_device;
 	MetalTexture *_clut8Texture;
 	MetalTexture *_paletteTexture;
 	TextureTarget *_target;
 	CLUT8LookUpPipeline *_clut8Pipeline;
+	Renderer *_renderer;
 	
 	float _clut8Vertices[4*2];
 

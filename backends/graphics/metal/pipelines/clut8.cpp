@@ -24,26 +24,24 @@
 #include "backends/graphics/metal/pipelines/clut8.h"
 #include "backends/graphics/metal/shader.h"
 #include "backends/graphics/metal/framebuffer.h"
-#include <Metal/Metal.hpp>
 
 namespace Metal {
 
-CLUT8LookUpPipeline::CLUT8LookUpPipeline(MTL::Device *metalDevice)
-	: ShaderPipeline(metalDevice, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)) {
+CLUT8LookUpPipeline::CLUT8LookUpPipeline(Renderer *renderer)
+	: ShaderPipeline(renderer, ShaderMan.query(ShaderManager::kCLUT8LookUpFragmentShader)) {
 }
 
 void CLUT8LookUpPipeline::drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) {
 	assert(isActive());
-	
-	//MTL::RenderCommandEncoder *encoder = _activeFramebuffer->getRenderCommandEncoder();
-	// Set the palette texture.
-	if (_paletteTexture) {
-		// This texture can now be referred to by index with the attribute [[texture(1)]] in a shader function’s parameter list.
-		//encoder->setFragmentTexture(_paletteTexture, 1);
-	}
-	//encoder->release();
 
-	ShaderPipeline::drawTextureInternal(texture, coordinates, texcoords);
+	const Renderer::Vertex vertices[] = {
+		{{coordinates[0], coordinates[1]}, {texcoords[0], texcoords[1]}}, // Vertex 0
+		{{coordinates[2], coordinates[3]}, {texcoords[2], texcoords[3]}}, // Vertex 1
+		{{coordinates[4], coordinates[5]}, {texcoords[4], texcoords[5]}}, // Vertex 2
+		{{coordinates[6], coordinates[7]}, {texcoords[6], texcoords[7]}}  // Vertex 3
+	};
+	
+	_renderer->draw2dTextureWithPalette(_activeFramebuffer->getTargetTexture(), _paletteTexture->getMetalTexture(), texture.getMetalTexture(), vertices, _projectionMatrix, _viewport);
 }
 
 } // End of namespace OpenGL

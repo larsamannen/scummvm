@@ -43,9 +43,7 @@ public:
 	Common::Point getMousePosition() override { return Common::Point(_cursorX, _cursorY); }
 	
 	float getHiDPIScreenFactor() const override;
-	
-	CA::MetalDrawable *getNextDrawable() override;
-	
+
 protected:
 	void setSystemMousePosition(const int x, const int y) override {}
 	

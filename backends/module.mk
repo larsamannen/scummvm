@@ -223,7 +223,7 @@ MODULE_OBJS += \
 	graphics/metal/pipelines/shader.o \
 	graphics/metal/framebuffer.o \
 	graphics/metal/metal-graphics.o \
-	graphics/metal/render2d.o \
+	graphics/metal/renderer.o \
 	graphics/metal/shader.o \
 	graphics/metal/texture.o
 endif

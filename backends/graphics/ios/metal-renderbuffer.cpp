@@ -30,8 +30,8 @@ namespace Metal {
 //
 // Render to backbuffer target implementation
 //
-MetalRenderbufferTarget::MetalRenderbufferTarget(CA::MetalLayer *metalLayer)
-	: Framebuffer(metalLayer->device()),  _metalLayer(metalLayer) {
+MetalRenderbufferTarget::MetalRenderbufferTarget(CA::MetalLayer *metalLayer, MTL::CommandQueue *commandQueue)
+	: Framebuffer(metalLayer->device()), _metalLayer(metalLayer), _commandQueue(commandQueue) {
 }
 
 MetalRenderbufferTarget::~MetalRenderbufferTarget() {
@@ -77,14 +77,21 @@ bool MetalRenderbufferTarget::setSize(uint width, uint height) {
 	return true;
 }
 
-void MetalRenderbufferTarget::refreshScreen(MTL::CommandBuffer *commandBuffer) {
-	commandBuffer->presentDrawable(_drawable);
-	commandBuffer->commit();
+void MetalRenderbufferTarget::getNextDrawable() {
+	_drawable = _metalLayer->nextDrawable();
 }
 
-void MetalRenderbufferTarget::getDrawable() {
-	_drawable = _metalLayer->nextDrawable();
-	_targetTexture = _drawable->texture();
+void MetalRenderbufferTarget::refreshScreen() {
+	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
+	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
+	commandBuffer->presentDrawable(_drawable);
+	commandBuffer->commit();
+	autoreleasePool->release();
+	_drawable->release();
+}
+
+MTL::Texture *MetalRenderbufferTarget::getTargetTexture() {
+	return _drawable->texture();
 }
 
 } // End of namespace Metal

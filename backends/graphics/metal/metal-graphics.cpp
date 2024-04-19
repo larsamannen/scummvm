@@ -29,11 +29,11 @@
 #include "backends/graphics/metal/pipelines/pipeline.h"
 #include "backends/graphics/metal/pipelines/shader.h"
 #include "backends/graphics/metal/shader.h"
+#include "backends/graphics/metal/renderer.h"
 #include "common/translation.h"
 
 #include "graphics/blit.h"
 
-#include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
 namespace Metal {
@@ -41,7 +41,7 @@ namespace Metal {
 MetalGraphicsManager::MetalGraphicsManager() :
 	_pipeline(nullptr), _currentState(), _oldState(), _defaultFormat(), _defaultFormatAlpha(),
 	_gameScreen(nullptr), _overlay(nullptr), _cursor(nullptr), _cursorMask(nullptr),
-	_cursorHotspotX(0), _cursorHotspotY(0), _targetBuffer(nullptr),
+	_cursorHotspotX(0), _cursorHotspotY(0), _targetBuffer(nullptr), _renderer(nullptr),
 	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
 	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false),
 	_screenChangeID(0)
@@ -63,7 +63,7 @@ MetalGraphicsManager::~MetalGraphicsManager()
 	delete _pipeline;
 }
 
-void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
+void MetalGraphicsManager::notifyContextCreate(MTL::CommandQueue *commandQueue,
 											   Framebuffer *target,
 											   const Graphics::PixelFormat &defaultFormat,
 											   const Graphics::PixelFormat &defaultFormatAlpha) {
@@ -74,13 +74,14 @@ void MetalGraphicsManager::notifyContextCreate(CA::MetalLayer *metalLayer,
 	// Initialize pipeline.
 	delete _pipeline;
 	_pipeline = nullptr;
-
-	_device = metalLayer->device();
-	_commandQueue = _device->newCommandQueue();
+	//_commandQueue = commandQueue;
+	_device = commandQueue->device();
 
 	ShaderMan.notifyCreate(_device);
-	_pipeline = new ShaderPipeline(_device, ShaderMan.query(ShaderManager::kDefaultFragmentShader));
-	
+	_renderer = new Renderer(commandQueue);
+
+	_pipeline = new ShaderPipeline(_renderer, ShaderMan.query(ShaderManager::kDefaultFragmentShader));
+
 	_pipeline->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Setup backbuffer state.
@@ -139,8 +140,6 @@ void MetalGraphicsManager::notifyContextDestroy() {
 	// Destroy the target
 	delete _targetBuffer;
 	_targetBuffer = nullptr;
-
-	_commandQueue->release();
 }
 
 // Windowed
@@ -546,25 +545,18 @@ void MetalGraphicsManager::renderCursor() {
 }
 
 void MetalGraphicsManager::updateScreen() {
-	NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
-
-	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
-	
-	// Get new drawable
-	_targetBuffer->getDrawable();
-
 	// Update changes to textures.
-	_gameScreen->updateMetalTexture(commandBuffer);
+	_gameScreen->updateMetalTexture();
 	if (_cursorVisible && _cursor) {
-		_cursor->updateMetalTexture(commandBuffer);
+		_cursor->updateMetalTexture();
 	}
 	if (_cursorVisible && _cursorMask) {
-		_cursorMask->updateMetalTexture(commandBuffer);
+		_cursorMask->updateMetalTexture();
 	}
 
-	_overlay->updateMetalTexture(commandBuffer);
+	_overlay->updateMetalTexture();
 	
-	_pipeline->activate(commandBuffer);
+	_pipeline->activate();
 	// Clear the screen buffer.
 	_pipeline->setLoadAction(MTL::LoadActionClear);
 
@@ -572,7 +564,7 @@ void MetalGraphicsManager::updateScreen() {
 		// The scissor test is enabled to:
 		// - Clip the cursor to the game screen
 		// - Clip the game screen when the shake offset is non-zero
-		_targetBuffer->enableScissorTest(true);
+		//_targetBuffer->enableScissorTest(true);
 	}
 
 	// Don't draw cursor if it's not visible or there is none
@@ -581,6 +573,7 @@ void MetalGraphicsManager::updateScreen() {
 	// Alpha blending is disabled when drawing the screen
 	_targetBuffer->enableBlend(Framebuffer::kBlendModeOpaque);
 
+	_targetBuffer->getNextDrawable();
 	// First step: Draw the (virtual) game screen.
 	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
 
@@ -598,17 +591,13 @@ void MetalGraphicsManager::updateScreen() {
 	if (drawCursor)
 		renderCursor();
 
-	if (!_overlayVisible) {
-		_targetBuffer->enableScissorTest(false);
-	}
+	//if (!_overlayVisible) {
+	//	_targetBuffer->enableScissorTest(false);
+	//}
 	
 	_cursorNeedsRedraw = false;
 	_forceRedraw = false;
-	_targetBuffer->refreshScreen(commandBuffer);
-	
-	//_pipeline->deactivate();
-
-	pPool->release();
+	_targetBuffer->refreshScreen();
 }
 
 void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {
@@ -981,7 +970,7 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 						   
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
 	if (format.bytesPerPixel == 1) {
-		return new TextureCLUT8GPU(_device);
+		return new TextureCLUT8GPU(_device, _renderer);
 #ifdef SCUMM_LITTLE_ENDIAN
 	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
 #else

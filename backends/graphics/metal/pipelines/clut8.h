@@ -28,12 +28,15 @@ namespace Metal {
 
 class CLUT8LookUpPipeline : public ShaderPipeline {
 public:
-	CLUT8LookUpPipeline(MTL::Device *metalDevice);
+	CLUT8LookUpPipeline(Renderer *renderer);
 
 	void setPaletteTexture(const MetalTexture *paletteTexture) { _paletteTexture = paletteTexture; }
 
 protected:
 	void drawTextureInternal(const MetalTexture &texture, const float *coordinates, const float *texcoords) override;
+	
+private:
+	const MetalTexture *_paletteTexture;
 
 };
 
