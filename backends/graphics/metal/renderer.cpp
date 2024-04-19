@@ -114,8 +114,8 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 	
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
-	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(loadAction);
 	attachment->setStoreAction(MTL::StoreActionStore);
@@ -146,8 +146,8 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
-	auto *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	auto *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);

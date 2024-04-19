@@ -25,12 +25,7 @@
 #include "math/matrix4.h"
 
 namespace MTL {
-class CommandBuffer;
-class CommandQueue;
 class Device;
-class RenderCommandEncoder;
-class RenderPassColorAttachmentDescriptor;
-class RenderPassDescriptor;
 class Texture;
 class Viewport;
 }
@@ -99,11 +94,6 @@ public:
 	void enableBlend(BlendMode mode);
 	
 	/**
-	 * Enable/disable GL_SCISSOR_TEST.
-	 */
-	void enableScissorTest(bool enable);
-	
-	/**
 	 * Set scissor box dimensions.
 	 */
 	void setScissorBox(int x, int y, int w, int h);
@@ -170,18 +160,11 @@ public:
 	 */
 	void deactivate();
 
-	virtual void refreshScreen(MTL::CommandBuffer *commandBuffer) {};
-	virtual void getDrawable() {};
-	
-	MTL::CommandQueue *getCommandQueue() { return _commandQueue; }
-	MTL::Texture *getTargetTexture() { return _targetTexture; }
+	virtual void getNextDrawable() {};
+	virtual void refreshScreen() {};
+	virtual MTL::Texture *getTargetTexture() = 0;
 
-protected:
-	MTL::Device *_metalDevice;
-	MTL::CommandQueue *_commandQueue;
-	MTL::RenderPassDescriptor *_renderPassDescriptor;
-	MTL::Texture *_targetTexture;
-	
+protected:	
 	float _clearColor[4];
 
 private:
@@ -191,9 +174,6 @@ private:
 
 	BlendMode _blendState;
 	void applyBlendState();
-
-	bool _scissorTestState;
-	void applyScissorTestState();
 
 	int _scissorBox[4];
 	void applyScissorBox();
@@ -231,14 +211,15 @@ public:
 	 * Query pointer to underlying Metal texture.
 	 */
 	MetalTexture *getTexture() const { return _texture; }
+	
+	MTL::Texture *getTargetTexture() override;
+
 
 protected:
 	void activateInternal() override;
 
 private:
 	MetalTexture *_texture;
-	//GLuint _glFBO;
-	bool _needUpdate;
 };
 
 } // End of namespace Metal

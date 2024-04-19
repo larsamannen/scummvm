@@ -30,9 +30,9 @@
 namespace Metal {
 
 Framebuffer::Framebuffer(MTL::Device *device)
-	: _metalDevice(device), _viewport(new MTL::Viewport()), _projectionMatrix(),
+	: _viewport(new MTL::Viewport()), _projectionMatrix(),
 	  _pipeline(nullptr), _clearColor(),
-	  _blendState(kBlendModeDisabled), _scissorTestState(false), _scissorBox() {
+	  _blendState(kBlendModeDisabled), _scissorBox() {
 }
 
 void Framebuffer::activate(Pipeline *pipeline) {
@@ -43,7 +43,6 @@ void Framebuffer::activate(Pipeline *pipeline) {
 	applyProjectionMatrix();
 	applyClearColor();
 	applyBlendState();
-	applyScissorTestState();
 	applyScissorBox();
 
 	activateInternal();
@@ -73,15 +72,6 @@ void Framebuffer::enableBlend(BlendMode mode) {
 	// Directly apply changes when we are active.
 	if (isActive()) {
 		applyBlendState();
-	}
-}
-
-void Framebuffer::enableScissorTest(bool enable) {
-	_scissorTestState = enable;
-
-	// Directly apply changes when we are active.
-	if (isActive()) {
-		applyScissorTestState();
 	}
 }
 
@@ -119,20 +109,14 @@ void Framebuffer::applyProjectionMatrix() {
 }
 
 void Framebuffer::applyClearColor() {
+	assert(_pipeline);
+//	_pipeline->setClearColor();
 	//assert(_renderPassColorAttachmentDescriptor);
 	//_renderPassColorAttachmentDescriptor->setClearColor(MTL::ClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]));
 }
 
 void Framebuffer::applyBlendState() {
 	_pipeline->setBlendMode(_blendState);
-}
-
-void Framebuffer::applyScissorTestState() {
-	if (_scissorTestState) {
-		//GL_CALL(glEnable(GL_SCISSOR_TEST));
-	} else {
-		//GL_CALL(glDisable(GL_SCISSOR_TEST));
-	}
 }
 
 void Framebuffer::applyScissorBox() {
@@ -146,9 +130,6 @@ void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {
 	if (copyMask & kCopyMaskBlendState) {
 		_blendState = other._blendState;
 	}
-	if (copyMask & kCopyMaskScissorState) {
-		_scissorTestState = other._scissorTestState;
-	}
 	if (copyMask & kCopyMaskScissorBox) {
 		memcpy(_scissorBox, other._scissorBox, sizeof(_scissorBox));
 	}
@@ -156,7 +137,6 @@ void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {
 	if (isActive()) {
 		applyClearColor();
 		applyBlendState();
-		applyScissorTestState();
 		applyScissorBox();
 	}
 }
@@ -165,7 +145,7 @@ void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {
 // Render to texture target implementation
 //
 
-TextureTarget::TextureTarget(MTL::Device *device) : _texture(new MetalTexture(device, MTL::PixelFormatRGBA8Unorm, (MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead))), Framebuffer(device), _needUpdate(true) {
+TextureTarget::TextureTarget(MTL::Device *device) : _texture(new MetalTexture(device, MTL::PixelFormatRGBA8Unorm, (MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead))), Framebuffer(device) {
 }
 
 TextureTarget::~TextureTarget() {
@@ -173,33 +153,14 @@ TextureTarget::~TextureTarget() {
 }
 
 void TextureTarget::activateInternal() {
-	// Allocate framebuffer object if necessary.
-	if (!_targetTexture) {
-//		_targetTexture = _metalDevice->
-	//	GL_CALL(glGenFramebuffers(1, &_glFBO));
-		_needUpdate = true;
-	}
-
-	// Attach destination texture to FBO.
-	_targetTexture = _texture->getMetalTexture();
-
-	//GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, _glFBO));
-
-	// If required attach texture to FBO.
-	if (_needUpdate) {
-		//GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->getGLTexture(), 0));
-		_needUpdate = false;
-	}
 }
 
 void TextureTarget::destroy() {
 	_texture->destroy();
-
 }
 
 void TextureTarget::create() {
 	_texture->create();
-	_needUpdate = true;
 }
 
 bool TextureTarget::setSize(uint width, uint height) {
@@ -240,6 +201,10 @@ bool TextureTarget::setSize(uint width, uint height) {
 		applyProjectionMatrix();
 	}
 	return true;
+}
+
+MTL::Texture *TextureTarget::getTargetTexture() {
+	return _texture->getMetalTexture();
 }
 
 } // End of namespace Metal
