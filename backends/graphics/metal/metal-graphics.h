@@ -83,7 +83,9 @@ public:
 	Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
 #endif
 	
+	const OSystem::GraphicsMode *getSupportedStretchModes() const override;
 	int getDefaultStretchMode() const override;
+	bool setStretchMode(int mode) override;
 	int getStretchMode() const override;
 	
 	void initSize(uint width, uint height, const Graphics::PixelFormat *format = NULL) override;
@@ -302,6 +304,11 @@ private:
 	 * The current screen change ID.
 	 */
 	int _screenChangeID;
+
+	/**
+	 * The current stretch mode.
+	 */
+	int _stretchMode;
 	
 	Pipeline *_pipeline;
 
