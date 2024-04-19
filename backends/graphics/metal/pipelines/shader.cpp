@@ -87,7 +87,7 @@ void ShaderPipeline::drawTextureInternal(const MetalTexture &texture, const floa
 		{{coordinates[6], coordinates[7]}, {texcoords[6], texcoords[7]}}  // Vertex 3
 	};
 
-	_renderer->draw2dTexture(_activeFramebuffer->getTargetTexture(), texture.getMetalTexture(), vertices, _projectionMatrix, _viewport, (MTL::LoadAction)_loadAction);
+	_renderer->draw2dTexture(_activeFramebuffer->getTargetTexture(), texture.getMetalTexture(), vertices, _projectionMatrix, _viewport, (MTL::LoadAction)_loadAction, _scissorBox, _clearColor);
 }
 
 void ShaderPipeline::setProjectionMatrix(const Math::Matrix4 &projectionMatrix) {

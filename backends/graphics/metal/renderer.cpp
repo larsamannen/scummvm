@@ -108,7 +108,7 @@ void Renderer::buildBuffers()
 	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);;
 }
 
-void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction)
+void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction, const MTL::ScissorRect &scissorBox, const MTL::ClearColor &clearColor)
 {
 	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	
@@ -116,7 +116,7 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 
 	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
-	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
+	attachment->setClearColor(clearColor);
 	attachment->setLoadAction(loadAction);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(outTexture);
@@ -125,6 +125,8 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 
 	encoder->setRenderPipelineState(_noBlendPipeLineState);
 	encoder->setViewport(viewport);
+	
+	encoder->setScissorRect(scissorBox);
 
 	// reference to the layout buffer in vertexDescriptor
 	const int kCoordinatesSize = 4 * sizeof(Vertex);

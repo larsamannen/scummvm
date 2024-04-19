@@ -110,9 +110,7 @@ void Framebuffer::applyProjectionMatrix() {
 
 void Framebuffer::applyClearColor() {
 	assert(_pipeline);
-//	_pipeline->setClearColor();
-	//assert(_renderPassColorAttachmentDescriptor);
-	//_renderPassColorAttachmentDescriptor->setClearColor(MTL::ClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]));
+	_pipeline->setClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
 }
 
 void Framebuffer::applyBlendState() {
@@ -120,7 +118,8 @@ void Framebuffer::applyBlendState() {
 }
 
 void Framebuffer::applyScissorBox() {
-	//GL_CALL(glScissor(_scissorBox[0], _scissorBox[1], _scissorBox[2], _scissorBox[3]));
+	assert(_pipeline);
+	_pipeline->setScissorBox(_scissorBox[0], _scissorBox[1], _scissorBox[2], _scissorBox[3]);
 }
 
 void Framebuffer::copyRenderStateFrom(const Framebuffer &other, uint copyMask) {

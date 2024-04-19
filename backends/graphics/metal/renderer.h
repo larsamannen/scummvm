@@ -45,7 +45,7 @@ public:
 	~Renderer();
 	void buildShaders();
 	void buildBuffers();
-	void draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction);
+	void draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction, const MTL::ScissorRect &scissorBox, const MTL::ClearColor &clearColor);
 	void draw2dTextureWithPalette(const MTL::Texture *outTexture, const MTL::Texture *paletteTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport);
 	
 private:

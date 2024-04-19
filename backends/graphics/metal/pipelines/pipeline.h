@@ -113,6 +113,10 @@ public:
 	
 	void setViewport(int x, int y, int w, int h) { _viewport.originX = x; _viewport.originY = y; _viewport.width = w; _viewport.height = h; _viewport.zfar = 0.0; _viewport.znear = 0.0; };
 	
+	void setScissorBox(int x, int y, int w, int h) { _scissorBox.x = x; _scissorBox.y = y; _scissorBox.width = w; _scissorBox.height = h; }
+	
+	void setClearColor(float r, float g, float b, float a) { _clearColor.red = r; _clearColor.green = g; _clearColor.blue = b; _clearColor.alpha = a; }
+	
 	void setLoadAction(MTL::LoadAction loadAction) { _loadAction = loadAction; }
 	
 	void setBlendMode(Framebuffer::BlendMode blendMode) { _blendMode = blendMode; }
@@ -138,7 +142,9 @@ protected:
 
 	Framebuffer *_activeFramebuffer;
 	MTL::Viewport _viewport;
+	MTL::ScissorRect _scissorBox;
 	MTL::LoadAction _loadAction;
+	MTL::ClearColor _clearColor;
 	float _colorAttributes[4*4];
 
 	Framebuffer::BlendMode _blendMode;
