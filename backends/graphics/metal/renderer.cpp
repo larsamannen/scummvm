@@ -35,6 +35,7 @@ Renderer::Renderer(MTL::CommandQueue *commandQueue) : _commandQueue(commandQueue
 Renderer::~Renderer()
 {
 	_indexBuffer->release();
+	_renderPassDescriptor->release();
 	_noBlendPipeLineState->release();
 	_clut8PipeLineState->release();
 	_device->release();
@@ -105,7 +106,9 @@ void Renderer::buildBuffers()
 		0, 2, 3
 	};
 	
-	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);;
+	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
+	
+	_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
 void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction, const MTL::ScissorRect &scissorBox, const MTL::ClearColor &clearColor)
@@ -114,14 +117,13 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 	
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
-	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassColorAttachmentDescriptor *attachment = _renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(clearColor);
 	attachment->setLoadAction(loadAction);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(outTexture);
 
-	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(_renderPassDescriptor);
 
 	encoder->setRenderPipelineState(_noBlendPipeLineState);
 	encoder->setViewport(viewport);
@@ -140,7 +142,6 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 
 	encoder->endEncoding();
 	commandBuffer->commit();
-	renderPassDescriptor->release();
 	autoreleasePool->release();
 }
 
@@ -148,14 +149,13 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
-	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassColorAttachmentDescriptor *attachment = _renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(outTexture);
 
-	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(_renderPassDescriptor);
 
 	encoder->setRenderPipelineState(_clut8PipeLineState);
 	encoder->setViewport(viewport);
@@ -173,7 +173,6 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 
 	encoder->endEncoding();
 	commandBuffer->commit();
-	renderPassDescriptor->release();
 	autoreleasePool->release();
 }
 } // end namespace Metal

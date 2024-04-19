@@ -53,6 +53,7 @@ private:
 	MTL::CommandQueue *_commandQueue;
 	MTL::RenderPipelineState *_noBlendPipeLineState;
 	MTL::RenderPipelineState *_clut8PipeLineState;
+	MTL::RenderPassDescriptor *_renderPassDescriptor;
 	MTL::Buffer* _indexBuffer;
 };
 

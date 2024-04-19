@@ -42,7 +42,6 @@ MetalTexture::MetalTexture(MTL::Device *device, uint pixelFormat, uint usage)
 
 MetalTexture::~MetalTexture() {
 	_texture->release();
-	//GL_CALL_SAFE(glDeleteTextures, (1, &_glTexture));
 }
 
 void MetalTexture::enableLinearFiltering(bool enable) {
@@ -154,6 +153,8 @@ bool MetalTexture::setSize(uint width, uint height) {
 
 		// Allocate storage for OpenGL texture if necessary.
 		if (oldWidth != _width || oldHeight != _height) {
+			if (_texture)
+				_texture->release();
 			// Allocate storage for Metal texture.
 			MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 			d->setWidth(_width);

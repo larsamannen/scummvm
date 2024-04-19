@@ -33,7 +33,6 @@ ShaderPipeline::ShaderPipeline(Renderer *renderer, MTL::Function *shader)
 }
 
 ShaderPipeline::~ShaderPipeline() {
-	_activeShader->release();
 	_renderer = nullptr;
 }
 
