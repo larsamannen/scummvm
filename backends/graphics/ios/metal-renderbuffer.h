@@ -33,10 +33,6 @@ namespace MTL {
 class CommandQueue;
 }
 
-namespace NS {
-class AutoreleasePool;
-}
-
 namespace Metal {
 
 /**

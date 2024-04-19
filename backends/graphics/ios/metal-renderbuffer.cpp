@@ -87,6 +87,7 @@ void MetalRenderbufferTarget::refreshScreen() {
 	commandBuffer->presentDrawable(_drawable);
 	commandBuffer->commit();
 	autoreleasePool->release();
+	_drawable->texture()->release();
 	_drawable->release();
 }
 

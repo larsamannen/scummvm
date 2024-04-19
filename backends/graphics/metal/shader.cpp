@@ -61,9 +61,9 @@ const char* shaderSrc = R"(
 	}
 
 	fragment half4 fragmentFunction(VertexOut in [[stage_in]],
-		texture2d<float> colorTexture [[texture(0)]])
+		texture2d<float> colorTexture [[texture(0)]],
+		sampler colorSampler [[sampler(0)]])
 	{
-		constexpr sampler colorSampler (filter::nearest);
 		// Sample the texture to obtain a color
 		float4 color = colorTexture.sample(colorSampler, in.texCoord);
 
@@ -73,10 +73,9 @@ const char* shaderSrc = R"(
 
 	fragment half4 clut8FragmentFunction(VertexOut in [[stage_in]],
 		texture2d<float> colorTexture [[texture(0)]],
-		texture2d<float> palette [[texture(1)]])
+		texture2d<float> palette [[texture(1)]],
+		sampler colorSampler [[sampler(0)]])
 	{
-		constexpr sampler colorSampler (filter::nearest);
-
 		const float adjustFactor = 255.0 / 256.0 + 1.0 / (2.0 * 256.0);
 
 		// Sample the texture to obtain a color

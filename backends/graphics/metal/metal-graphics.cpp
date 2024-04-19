@@ -186,7 +186,7 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	// Re-setup the scaling and filtering for the screen and cursor
 	recalculateDisplayAreas();
 	recalculateCursorScaling();
-	//updateLinearFiltering();
+	updateLinearFiltering();
 	
 	// Something changed, so update the screen change ID.
 	++_screenChangeID;
@@ -194,8 +194,16 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 
 // GraphicsManager
 bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
-	// TODO
 	switch (f) {
+		case OSystem::kFeatureCursorPalette:
+		case OSystem::kFeatureCursorAlpha:
+		case OSystem::kFeatureFilteringMode:
+		case OSystem::kFeatureStretchMode:
+		case OSystem::kFeatureCursorMask:
+		case OSystem::kFeatureCursorMaskInvert:
+			return true;
+		case OSystem::kFeatureOverlaySupportsAlpha:
+			return _defaultFormatAlpha.aBits() > 3;
 		default:
 			return false;
 	}
@@ -204,6 +212,9 @@ bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
 void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 	// TODO
 	switch (f) {
+	case OSystem::kFeatureFilteringMode:
+		_currentState.filtering = enable;
+		break;
 	case OSystem::kFeatureCursorPalette:
 		_cursorPaletteEnabled = enable;
 		updateCursorPalette();
@@ -476,7 +487,7 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 	// aspect ratio correction and game screen changes correctly.
 	recalculateDisplayAreas();
 	recalculateCursorScaling();
-	//updateLinearFiltering();
+	updateLinearFiltering();
 
 	// Something changed, so update the screen change ID.
 	++_screenChangeID;
@@ -765,7 +776,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 		_cursor = createSurface(textureFormat, true, wantScaler, wantMask);
 		assert(_cursor);
 
-		//updateLinearFiltering();
+		updateLinearFiltering();
 
 //#ifdef USE_SCALERS
 //		if (wantScaler) {
@@ -780,7 +791,7 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 			_cursorMask = createSurface(maskFormat, true, wantScaler);
 			assert(_cursorMask);
 
-			//updateLinearFiltering();
+			updateLinearFiltering();
 
 //#ifdef USE_SCALERS
 //			if (wantScaler) {
@@ -1053,6 +1064,28 @@ void MetalGraphicsManager::recalculateCursorScaling() {
 		_cursorHotspotYScaled = fracToInt(_cursorHotspotYScaled * screenScaleFactorY);
 		_cursorHeightScaled   = fracToDouble(cursorHeight       * screenScaleFactorY);
 	}
+}
+
+void MetalGraphicsManager::updateLinearFiltering() {
+	if (_gameScreen) {
+		_gameScreen->enableLinearFiltering(_currentState.filtering);
+	}
+
+	if (_cursor) {
+		_cursor->enableLinearFiltering(_currentState.filtering);
+	}
+
+	if (_cursorMask) {
+		_cursorMask->enableLinearFiltering(_currentState.filtering);
+	}
+
+	// The overlay UI should also obey the filtering choice (managed via the Filter Graphics checkbox in Graphics Tab).
+	// Thus, when overlay filtering is disabled, scaling in OPENGL is done with GL_NEAREST (nearest neighbor scaling).
+	// It may look crude, but it should be crispier and it's left to user choice to enable filtering.
+	if (_overlay) {
+		_overlay->enableLinearFiltering(_currentState.filtering);
+	}
+
 }
 
 } // end namespace Metal

@@ -62,7 +62,7 @@ public:
 	/**
 	 * Test whether linear filtering is enabled.
 	 */
-	//bool isLinearFilteringEnabled() const { return (_glFilter == GL_LINEAR); }
+	bool isLinearFilteringEnabled() const;
 
 	/**
 	 * Enable or disable linear texture filtering.
@@ -147,8 +147,8 @@ private:
 	uint _width, _height;
 	uint _logicalWidth, _logicalHeight;
 	float _texCoords[4*2];
-
-	//GLint _glFilter;
+	
+	uint _filter;
 
 	MTL::Texture *_texture;
 	MTL::Device *_device;

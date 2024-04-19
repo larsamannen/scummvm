@@ -81,8 +81,6 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	UILongPressGestureRecognizer *twoFingerLongPressGesture;
 	CGPoint touchesBegan;
 #endif
-	CGFloat _frameWidth;
-	CGFloat _frameHeight;
 }
 
 + (Class)layerClass {
@@ -96,12 +94,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 // called in at least iOS 9.3.5.
 - (void)layoutSublayersOfLayer:(CAMetalLayer *)layer {
 	if (layer == self.layer) {
-		if (_frameWidth != layer.frame.size.width ||
-			_frameHeight != layer.frame.size.height) {
-			_frameWidth = layer.frame.size.width;
-			_frameHeight = layer.frame.size.height;
-			[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
-		}
+		[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
 	}
 	[super layoutSublayersOfLayer:layer];
 }
@@ -162,12 +155,12 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (int)getScreenWidth {
-	return _metalLayer.frame.size.width;
+	return self.window.bounds.size.width;//_metalLayer.frame.size.width;
 	//return _renderBufferWidth;
 }
 
 - (int)getScreenHeight {
-	return _metalLayer.frame.size.height;
+	return self.window.bounds.size.height;//_metalLayer.frame.size.height;
 	//return _renderBufferHeight;
 }
 
@@ -351,8 +344,6 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 - (id)initWithFrame:(struct CGRect)frame {
 	self = [super initWithFrame: frame];
-	_frameWidth = frame.size.width;
-	_frameHeight = frame.size.height;
 	_backgroundSaveStateTask = UIBackgroundTaskInvalid;
 #if TARGET_OS_IOS
 	_currentOrientation = UIInterfaceOrientationUnknown;

@@ -35,7 +35,8 @@ Renderer::Renderer(MTL::CommandQueue *commandQueue) : _commandQueue(commandQueue
 Renderer::~Renderer()
 {
 	_indexBuffer->release();
-	_renderPassDescriptor->release();
+	_samplerLinear->release();
+	_samplerNearest->release();
 	_noBlendPipeLineState->release();
 	_clut8PipeLineState->release();
 	_device->release();
@@ -81,6 +82,18 @@ void Renderer::buildShaders()
 	renderbufferAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 	renderbufferAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
 
+	// Samplers
+	MTL::SamplerDescriptor *samplerDescriptor = MTL::SamplerDescriptor::alloc()->init();
+	samplerDescriptor->setLabel(NS::String::string("Linear sampler", NS::UTF8StringEncoding));
+	samplerDescriptor->setMagFilter(MTL::SamplerMinMagFilterLinear);
+	samplerDescriptor->setMinFilter(MTL::SamplerMinMagFilterLinear);
+	_samplerLinear = _device->newSamplerState(samplerDescriptor);
+
+	samplerDescriptor->setLabel(NS::String::string("Nearest sampler", NS::UTF8StringEncoding));
+	samplerDescriptor->setMagFilter(MTL::SamplerMinMagFilterNearest);
+	samplerDescriptor->setMinFilter(MTL::SamplerMinMagFilterNearest);
+	_samplerNearest = _device->newSamplerState(samplerDescriptor);
+
 	NS::Error* error = nullptr;
 	_noBlendPipeLineState = _device->newRenderPipelineState(defaultPipelineDescriptor, &error);
 	if (!_noBlendPipeLineState)
@@ -97,6 +110,7 @@ void Renderer::buildShaders()
 
 	defaultPipelineDescriptor->release();
 	clut8PipelineDescriptor->release();
+	samplerDescriptor->release();
 }
 
 void Renderer::buildBuffers()
@@ -107,23 +121,23 @@ void Renderer::buildBuffers()
 	};
 	
 	_indexBuffer = _device->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
-	
-	_renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
-void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction, const MTL::ScissorRect &scissorBox, const MTL::ClearColor &clearColor)
+void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTexture, const Vertex vertices[4], const matrix_float4x4 &projectionMatrix, MTL::Viewport &viewport, MTL::LoadAction loadAction, const MTL::ScissorRect &scissorBox, const MTL::ClearColor &clearColor, const MTL::SamplerMinMagFilter filter)
 {
 	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
+	
+	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-	MTL::RenderPassColorAttachmentDescriptor *attachment = _renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(clearColor);
 	attachment->setLoadAction(loadAction);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(outTexture);
 
-	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(_renderPassDescriptor);
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
 	encoder->setRenderPipelineState(_noBlendPipeLineState);
 	encoder->setViewport(viewport);
@@ -138,6 +152,7 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 
 	// Texture is set to be referred as attribute [[texture(0)]] in a shader function’s parameter list.
 	encoder->setFragmentTexture(inTexture, 0);
+	encoder->setFragmentSamplerState(filter == MTL::SamplerMinMagFilterLinear ? _samplerLinear : _samplerNearest, 0);
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 
 	encoder->endEncoding();
@@ -149,13 +164,15 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 	NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 	MTL::CommandBuffer *commandBuffer = _commandQueue->commandBuffer();
 
-	MTL::RenderPassColorAttachmentDescriptor *attachment = _renderPassDescriptor->colorAttachments()->object(0);
+	MTL::RenderPassDescriptor *renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+
+	MTL::RenderPassColorAttachmentDescriptor *attachment = renderPassDescriptor->colorAttachments()->object(0);
 	attachment->setClearColor(MTL::ClearColor(0, 0, 0, 1));
 	attachment->setLoadAction(MTL::LoadActionClear);
 	attachment->setStoreAction(MTL::StoreActionStore);
 	attachment->setTexture(outTexture);
 
-	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(_renderPassDescriptor);
+	MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
 	encoder->setRenderPipelineState(_clut8PipeLineState);
 	encoder->setViewport(viewport);
@@ -169,6 +186,7 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 	// Texture is set to be referred as attribute [[texture(0)]] in a shader function’s parameter list.
 	encoder->setFragmentTexture(inTexture, 0);
 	encoder->setFragmentTexture(paletteTexture, 1);
+	encoder->setFragmentSamplerState(_samplerNearest, 0);
 	encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt16, _indexBuffer, 0);
 
 	encoder->endEncoding();

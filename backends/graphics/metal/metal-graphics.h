@@ -43,6 +43,7 @@ enum {
 namespace Metal {
 
 class Renderer;
+class Framebuffer;
 
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:
@@ -241,6 +242,8 @@ private:
 	 */
 	void recalculateCursorScaling();
 
+	
+	void updateLinearFiltering();
 	/**
 	 * The X offset for the cursor hotspot in scaled game display area
 	 * coordinates.

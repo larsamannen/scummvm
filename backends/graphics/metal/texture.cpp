@@ -46,13 +46,14 @@ MetalTexture::~MetalTexture() {
 
 void MetalTexture::enableLinearFiltering(bool enable) {
 	if (enable) {
-//		_glFilter = GL_LINEAR;
+		_filter = MTL::SamplerMinMagFilterLinear;
 	} else {
-//		_glFilter = GL_NEAREST;
+		_filter = MTL::SamplerMinMagFilterNearest;
 	}
+}
 
-//	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
-//	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
+bool MetalTexture::isLinearFilteringEnabled() const {
+	return _filter == MTL::SamplerMinMagFilterLinear;
 }
 
 /*
@@ -73,38 +74,15 @@ void MetalTexture::setWrapMode(WrapMode wrapMode) {
 				glwrapMode = GL_CLAMP_TO_EDGE;
 				break;
 			} else {
-#if !USE_FORCED_GLES && !USE_FORCED_GLES2
-				// Fallback on clamp
-				glwrapMode = GL_CLAMP;
-#else
-				// This fallback should never happen in real life (GLES/GLES2 have border/edge clamp)
-				glwrapMode = GL_REPEAT;
-#endif
-				break;
-			}
-		case kWrapModeMirroredRepeat:
-#if !USE_FORCED_GLES
-			if (OpenGLContext.textureMirrorRepeatSupported) {
-				glwrapMode = GL_MIRRORED_REPEAT;
-				break;
-			}
-#endif
 		// fall through
 		case kWrapModeRepeat:
 		default:
 			glwrapMode = GL_REPEAT;
 	}
-
-
-	bind();
-
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glwrapMode));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glwrapMode));
 }
 */
 void MetalTexture::destroy() {
 	_texture->release();
-	_texture = nullptr;
 }
 
 void MetalTexture::create() {
@@ -153,8 +131,7 @@ bool MetalTexture::setSize(uint width, uint height) {
 
 		// Allocate storage for OpenGL texture if necessary.
 		if (oldWidth != _width || oldHeight != _height) {
-			if (_texture)
-				_texture->release();
+			destroy();
 			// Allocate storage for Metal texture.
 			MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 			d->setWidth(_width);
@@ -171,7 +148,6 @@ bool MetalTexture::setSize(uint width, uint height) {
 void MetalTexture::updateArea(const Common::Rect &area, const Graphics::Surface &src) {
 	// Update the actual texture.
 	_texture->replaceRegion(MTL::Region(area.left, area.top, 0, src.w - area.left, area.height(), 1), 0, src.getBasePtr(area.left, area.top), src.pitch);
-
 }
 
 
@@ -265,7 +241,7 @@ void Texture::recreate() {
 }
 
 void Texture::enableLinearFiltering(bool enable) {
-	//_glTexture.enableLinearFiltering(enable);
+	_metalTexture->enableLinearFiltering(enable);
 }
 
 void Texture::allocate(uint width, uint height) {
@@ -302,32 +278,32 @@ void Texture::updateMetalTexture() {
 void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 	// In case we use linear filtering we might need to duplicate the last
 	// pixel row/column to avoid glitches with filtering.
-//	if (_glTexture.isLinearFilteringEnabled()) {
-	if (dirtyArea.right == _userPixelData.w && _userPixelData.w != _textureData.w) {
-		uint height = dirtyArea.height();
-
-		const byte *src = (const byte *)_textureData.getBasePtr(_userPixelData.w - 1, dirtyArea.top);
-		byte *dst = (byte *)_textureData.getBasePtr(_userPixelData.w, dirtyArea.top);
-
-		while (height-- > 0) {
-			memcpy(dst, src, _textureData.format.bytesPerPixel);
-			dst += _textureData.pitch;
-			src += _textureData.pitch;
+	if (_metalTexture->isLinearFilteringEnabled()) {
+		if (dirtyArea.right == _userPixelData.w && _userPixelData.w != _textureData.w) {
+			uint height = dirtyArea.height();
+			
+			const byte *src = (const byte *)_textureData.getBasePtr(_userPixelData.w - 1, dirtyArea.top);
+			byte *dst = (byte *)_textureData.getBasePtr(_userPixelData.w, dirtyArea.top);
+			
+			while (height-- > 0) {
+				memcpy(dst, src, _textureData.format.bytesPerPixel);
+				dst += _textureData.pitch;
+				src += _textureData.pitch;
+			}
+			
+			// Extend the dirty area.
+			++dirtyArea.right;
 		}
-
-		// Extend the dirty area.
-		++dirtyArea.right;
+		
+		if (dirtyArea.bottom == _userPixelData.h && _userPixelData.h != _textureData.h) {
+			const byte *src = (const byte *)_textureData.getBasePtr(dirtyArea.left, _userPixelData.h - 1);
+			byte *dst = (byte *)_textureData.getBasePtr(dirtyArea.left, _userPixelData.h);
+			memcpy(dst, src, dirtyArea.width() * _textureData.format.bytesPerPixel);
+			
+			// Extend the dirty area.
+			++dirtyArea.bottom;
+		}
 	}
-
-	if (dirtyArea.bottom == _userPixelData.h && _userPixelData.h != _textureData.h) {
-		const byte *src = (const byte *)_textureData.getBasePtr(dirtyArea.left, _userPixelData.h - 1);
-		byte *dst = (byte *)_textureData.getBasePtr(dirtyArea.left, _userPixelData.h);
-		memcpy(dst, src, dirtyArea.width() * _textureData.format.bytesPerPixel);
-
-		// Extend the dirty area.
-		++dirtyArea.bottom;
-	}
-
 	_metalTexture->updateArea(dirtyArea, _textureData);
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();
@@ -555,7 +531,7 @@ void TextureCLUT8GPU::recreate() {
 }
 
 void TextureCLUT8GPU::enableLinearFiltering(bool enable) {
-	//_target->getTexture()->enableLinearFiltering(enable);
+	_target->getTexture()->enableLinearFiltering(enable);
 }
 
 void TextureCLUT8GPU::allocate(uint width, uint height) {
