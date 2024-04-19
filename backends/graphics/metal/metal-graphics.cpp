@@ -161,6 +161,7 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	// Setup backbuffer size.
 	// TODO!! Always utilize the whole window?
 	_targetBuffer->setSize(_windowWidth, _windowHeight);
+	//_targetBuffer->setSize(width, height);
 
 	uint overlayWidth = width;
 	uint overlayHeight = height;
@@ -226,8 +227,12 @@ void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 
 bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	switch (f) {
+	case OSystem::kFeatureFilteringMode:
+		return _currentState.filtering;
+
 	case OSystem::kFeatureCursorPalette:
 		return _cursorPaletteEnabled;
+
 	default:
 		return false;
 	}
@@ -298,7 +303,7 @@ int MetalGraphicsManager::getGraphicsMode() const {
 
 
 namespace {
-const OSystem::GraphicsMode glStretchModes[] = {
+const OSystem::GraphicsMode metalStretchModes[] = {
 	{"center", _s("Center"), STRETCH_CENTER},
 	{"pixel-perfect", _s("Pixel-perfect scaling"), STRETCH_INTEGRAL},
 	{"even-pixels", _s("Even pixels scaling"), STRETCH_INTEGRAL_AR},
@@ -311,7 +316,7 @@ const OSystem::GraphicsMode glStretchModes[] = {
 } // End of anonymous namespace
 
 const OSystem::GraphicsMode *MetalGraphicsManager::getSupportedStretchModes() const {
-	return glStretchModes;
+	return metalStretchModes;
 }
 
 int MetalGraphicsManager::getDefaultStretchMode() const {
@@ -539,16 +544,6 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 	// Since transactionError is a ORd list of TransactionErrors this is
 	// clearly wrong. But our API is simply broken.
 	//return (OSystem::TransactionError)transactionError;
-#if 0
-	_gameScreen = createSurface(Graphics::PixelFormat::createFormatCLUT8(), false, false);
-
-	assert(_gameScreen);
-	if (_gameScreen->hasPalette()) {
-		_gameScreen->setPalette(0, 256, _gamePalette);
-	}
-	
-	_gameScreen->allocate(_windowWidth, _windowHeight);
-#endif
 	return OSystem::kTransactionSuccess;
 }
 
