@@ -283,15 +283,38 @@
 - (NSArray *)overloadKeys:(NSArray<NSString *> *)keys withSelector:(SEL)selector {
 	NSMutableArray<UIKeyCommand *> *overloadedKeys = [[NSMutableArray alloc] init];
 	for (NSString *key in keys) {
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:0 andSelector:selector]];
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierShift andSelector:selector]];
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierControl andSelector:selector]];
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierAlternate andSelector:selector]];
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierCommand andSelector:selector]];
+		UIKeyCommand *k;
+		k = [self createKeyCommandForKey:key withModifierFlags:0 andSelector:selector];
+		[overloadedKeys addObject: k];
+		[k release];
+
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierShift andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierControl andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierAlternate andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierCommand andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+	
 		// UIKeyModifierAlphaShift seems broken since iOS 13
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierAlphaShift andSelector:selector]];
-		[overloadedKeys addObject:[self createKeyCommandForKey:key withModifierFlags:UIKeyModifierNumericPad andSelector:selector]];
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierAlphaShift andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+
+		k = [self createKeyCommandForKey:key withModifierFlags:UIKeyModifierNumericPad andSelector:selector];
+		[overloadedKeys addObject:k];
+		[k release];
+		[key release];
 	}
+	[keys release];
 	return overloadedKeys;
 }
 
@@ -480,16 +503,27 @@
 
 - (NSArray *)keyCommands {
 	NSMutableArray<UIKeyCommand *> *overloadedKeys = [[NSMutableArray alloc] init];
+	NSArray *arrowKeys = [self overloadArrowKeys];
+	NSArray *romanLetters = [self overloadRomanLetters];
+	NSArray *numbers = [self overloadNumbers];
+	NSArray *fnKeys = [self overloadFnKeys];
+	NSArray *specialKeys = [self overloadSpecialKeys];
 	// Arrows
-	[overloadedKeys addObjectsFromArray:[self overloadArrowKeys]];
+	[overloadedKeys addObjectsFromArray:arrowKeys];
 	// Roman letters
-	[overloadedKeys addObjectsFromArray:[self overloadRomanLetters]];
+	[overloadedKeys addObjectsFromArray:romanLetters];
 	// Numbers
-	[overloadedKeys addObjectsFromArray:[self overloadNumbers]];
+	[overloadedKeys addObjectsFromArray:numbers];
 	// FN keys
-	[overloadedKeys addObjectsFromArray:[self overloadFnKeys]];
+	[overloadedKeys addObjectsFromArray:fnKeys];
 	// ESC, PAGE_UP, PAGE_DOWN, HOME, END
-	[overloadedKeys addObjectsFromArray:[self overloadSpecialKeys]];
+	[overloadedKeys addObjectsFromArray:specialKeys];
+	
+	[arrowKeys release];
+	[romanLetters release];
+	[numbers release];
+	[fnKeys release];
+	[specialKeys release];
 
 	return overloadedKeys;
 }
