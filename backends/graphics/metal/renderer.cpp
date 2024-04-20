@@ -157,6 +157,7 @@ void Renderer::draw2dTexture(const MTL::Texture *outTexture, MTL::Texture *inTex
 
 	encoder->endEncoding();
 	commandBuffer->commit();
+	renderPassDescriptor->release();
 	autoreleasePool->release();
 }
 
@@ -191,6 +192,7 @@ void Renderer::draw2dTextureWithPalette(const MTL::Texture *outTexture, const MT
 
 	encoder->endEncoding();
 	commandBuffer->commit();
+	renderPassDescriptor->release();
 	autoreleasePool->release();
 }
 } // end namespace Metal

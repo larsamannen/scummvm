@@ -211,7 +211,6 @@ bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
 }
 
 void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
-	// TODO
 	switch (f) {
 	case OSystem::kFeatureFilteringMode:
 		_currentState.filtering = enable;
@@ -579,7 +578,7 @@ void MetalGraphicsManager::renderCursor() {
 	if (_cursorMask) {
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeMaskAlphaAndInvertByColor);
 
-		_pipeline->drawTexture(*_cursorMask->getMetalTexture(),
+		_pipeline->drawTexture(_cursorMask->getMetalTexture(),
 							   _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
 							   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
 							   _cursorWidthScaled, _cursorHeightScaled);
@@ -588,7 +587,7 @@ void MetalGraphicsManager::renderCursor() {
 	} else
 		_targetBuffer->enableBlend(Framebuffer::kBlendModePremultipliedTransparency);
 
-	_pipeline->drawTexture(*_cursor->getMetalTexture(), 
+	_pipeline->drawTexture(_cursor->getMetalTexture(),
 						   _cursorX - _cursorHotspotXScaled + _shakeOffsetScaled.x,
 						   _cursorY - _cursorHotspotYScaled + _shakeOffsetScaled.y,
 							  _cursorWidthScaled, _cursorHeightScaled);
@@ -625,7 +624,7 @@ void MetalGraphicsManager::updateScreen() {
 
 	_targetBuffer->getNextDrawable();
 	// First step: Draw the (virtual) game screen.
-	_pipeline->drawTexture(*_gameScreen->getMetalTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
+	_pipeline->drawTexture(_gameScreen->getMetalTexture(), _gameDrawRect.left, _gameDrawRect.top, _gameDrawRect.width(), _gameDrawRect.height());
 
 	_pipeline->setLoadAction(MTL::LoadActionLoad);
 
@@ -634,7 +633,7 @@ void MetalGraphicsManager::updateScreen() {
 		int dstX = (_windowWidth - _overlayDrawRect.width()) / 2;
 		int dstY = (_windowHeight - _overlayDrawRect.height()) / 2;
 		_targetBuffer->enableBlend(Framebuffer::kBlendModeTraditionalTransparency);
-		_pipeline->drawTexture(*_overlay->getMetalTexture(), dstX, dstY, _overlayDrawRect.width(), _overlayDrawRect.height());
+		_pipeline->drawTexture(_overlay->getMetalTexture(), dstX, dstY, _overlayDrawRect.width(), _overlayDrawRect.height());
 	}
 
 	// Fourth step: Draw the cursor if we didn't before.

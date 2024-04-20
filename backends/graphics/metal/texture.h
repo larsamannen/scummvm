@@ -256,7 +256,7 @@ public:
 	/**
 	 * Obtain underlying Metal texture.
 	 */
-	virtual const MetalTexture *getMetalTexture() const = 0;
+	virtual const MetalTexture &getMetalTexture() const = 0;
 
 protected:
 	void clearDirty() { _allDirty = false; _dirtyArea = Common::Rect(); }
@@ -306,14 +306,14 @@ public:
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
 	void updateMetalTexture() override;
-	const MetalTexture *getMetalTexture() const override { return _metalTexture; }
+	const MetalTexture &getMetalTexture() const override { return _metalTexture; }
 protected:
 	const Graphics::PixelFormat _format;
 
 	void updateMetalTexture(Common::Rect &dirtyArea);
 
 private:
-	MetalTexture *_metalTexture;
+	MetalTexture _metalTexture;
 	MTL::Device *_device;
 
 	Graphics::Surface _textureData;
@@ -388,7 +388,7 @@ public:
 	const Graphics::Surface *getSurface() const override { return &_userPixelData; }
 
 	void updateMetalTexture() override;
-	const MetalTexture *getMetalTexture() const override;
+	const MetalTexture &getMetalTexture() const override;
 
 	static bool isSupportedByContext() {
 		return true;
@@ -397,16 +397,18 @@ private:
 	void lookUpColors();
 
 	MTL::Device *_device;
-	MetalTexture *_clut8Texture;
-	MetalTexture *_paletteTexture;
+	MetalTexture _clut8Texture;
+	MetalTexture _paletteTexture;
+
 	TextureTarget *_target;
 	CLUT8LookUpPipeline *_clut8Pipeline;
-	Renderer *_renderer;
-	
+
 	float _clut8Vertices[4*2];
 
 	Graphics::Surface _clut8Data;
 	Graphics::Surface _userPixelData;
+
+	Renderer *_renderer;
 
 	byte _palette[4 * 256];
 	bool _paletteDirty;

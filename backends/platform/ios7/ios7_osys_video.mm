@@ -125,6 +125,9 @@ void OSystem_iOS7::engineDone() {
 		[[iOS7AppDelegate iPhoneView] hideKeyboard];
 	});
 #endif
+	execute_on_main_thread(^ {
+		[[iOS7AppDelegate iPhoneView] applicationResume];
+	});
 }
 
 void OSystem_iOS7::taskStarted(Task task) {

@@ -36,11 +36,11 @@ class CommandQueue;
 class Device;
 }
 
+namespace Metal {
+
 enum {
 	GFX_METAL = 0
 };
-
-namespace Metal {
 
 class Renderer;
 class Framebuffer;

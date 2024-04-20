@@ -217,21 +217,21 @@ Common::Rect Surface::getDirtyArea() const {
 //
 
 Texture::Texture(/*GLenum glIntFormat, GLenum glFormat, GLenum glType,*/ MTL::Device *device, const Graphics::PixelFormat &format)
-	: Surface(), _format(format), _device(device), _metalTexture(new MetalTexture(device, MTL::PixelFormatRGBA8Unorm)),
+	: Surface(), _format(format), _device(device), _metalTexture(MetalTexture(device, MTL::PixelFormatRGBA8Unorm)),
 	  _textureData(), _userPixelData() {
 }
 
 Texture::~Texture() {
 	_textureData.free();
-	_metalTexture->destroy();
+	_metalTexture.destroy();
 }
 
 void Texture::destroy() {
-	_metalTexture->destroy();
+	_metalTexture.destroy();
 }
 
 void Texture::recreate() {
-	_metalTexture->create();
+	_metalTexture.create();
 
 	// In case image date exists assure it will be completely refreshed next
 	// time.
@@ -241,18 +241,18 @@ void Texture::recreate() {
 }
 
 void Texture::enableLinearFiltering(bool enable) {
-	_metalTexture->enableLinearFiltering(enable);
+	_metalTexture.enableLinearFiltering(enable);
 }
 
 void Texture::allocate(uint width, uint height) {
 	// Assure the texture can contain our user data.
-	_metalTexture->setSize(width, height);
+	_metalTexture.setSize(width, height);
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
-	if (_metalTexture->getWidth() != (uint)_textureData.w || _metalTexture->getHeight() != (uint)_textureData.h) {
+	if (_metalTexture.getWidth() != (uint)_textureData.w || _metalTexture.getHeight() != (uint)_textureData.h) {
 		// Create a buffer for the texture data.
-		_textureData.create(_metalTexture->getWidth(), _metalTexture->getHeight(), _format);
+		_textureData.create(_metalTexture.getWidth(), _metalTexture.getHeight(), _format);
 	}
 
 	// Create a sub-buffer for raw access.
@@ -278,7 +278,7 @@ void Texture::updateMetalTexture() {
 void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 	// In case we use linear filtering we might need to duplicate the last
 	// pixel row/column to avoid glitches with filtering.
-	if (_metalTexture->isLinearFilteringEnabled()) {
+	if (_metalTexture.isLinearFilteringEnabled()) {
 		if (dirtyArea.right == _userPixelData.w && _userPixelData.w != _textureData.w) {
 			uint height = dirtyArea.height();
 			
@@ -304,7 +304,7 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 			++dirtyArea.bottom;
 		}
 	}
-	_metalTexture->updateArea(dirtyArea, _textureData);
+	_metalTexture.updateArea(dirtyArea, _textureData);
 	// We should have handled everything, thus not dirty anymore.
 	clearDirty();
 }
@@ -479,17 +479,16 @@ void TextureRGBA8888Swap::updateMetalTexture() {
 // problems, we need to switch to GL_R8 and GL_RED, but that is only supported
 // for ARB_texture_rg and GLES3+ (EXT_rexture_rg does not support GL_R8).
 TextureCLUT8GPU::TextureCLUT8GPU(MTL::Device *device, Renderer *renderer)
-	: _device(device), _clut8Texture(new MetalTexture(device, MTL::PixelFormatA8Unorm)), _paletteTexture(nullptr), _renderer(renderer),
+	: _device(device), _clut8Texture(MetalTexture(device, MTL::PixelFormatA8Unorm)), _paletteTexture(MetalTexture(device, MTL::PixelFormatRGBA8Unorm)), _renderer(renderer),
 	  _target(new TextureTarget(device)), _clut8Pipeline(new CLUT8LookUpPipeline(renderer)),
 	  _clut8Data(), _userPixelData(), _palette(),
 	  _paletteDirty(false) {
 	// Allocate space for 256 colors.
-    _paletteTexture = new MetalTexture(device, MTL::PixelFormatRGBA8Unorm);
-    _paletteTexture->setSize(256, 1);
+    _paletteTexture.setSize(256, 1);
 
 	// Setup pipeline
 	_clut8Pipeline->setFramebuffer(_target);
-	_clut8Pipeline->setPaletteTexture(_paletteTexture);
+	_clut8Pipeline->setPaletteTexture(&_paletteTexture);
 	_clut8Pipeline->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
@@ -497,21 +496,20 @@ TextureCLUT8GPU::~TextureCLUT8GPU() {
 	delete _clut8Pipeline;
 	delete _target;
 	_clut8Data.free();
-	if (_clut8Texture)
-		_clut8Texture->destroy();
+	_clut8Texture.destroy();
 }
 
 void TextureCLUT8GPU::destroy() {
-	_clut8Texture->destroy();
-	_paletteTexture->destroy();
+	_clut8Texture.destroy();
+	_paletteTexture.destroy();
 	_target->destroy();
 	delete _clut8Pipeline;
 	_clut8Pipeline = nullptr;
 }
 
 void TextureCLUT8GPU::recreate() {
-	_clut8Texture->create();
-	_paletteTexture->create();
+	_clut8Texture.create();
+	_paletteTexture.create();
 	_target->create();
 
 	// In case image date exists assure it will be completely refreshed next
@@ -525,7 +523,7 @@ void TextureCLUT8GPU::recreate() {
 		_clut8Pipeline = new CLUT8LookUpPipeline(_renderer);
 		// Setup pipeline.
 		_clut8Pipeline->setFramebuffer(_target);
-		_clut8Pipeline->setPaletteTexture(_paletteTexture);
+		_clut8Pipeline->setPaletteTexture(&_paletteTexture);
 		_clut8Pipeline->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 }
@@ -536,14 +534,14 @@ void TextureCLUT8GPU::enableLinearFiltering(bool enable) {
 
 void TextureCLUT8GPU::allocate(uint width, uint height) {
 	// Assure the texture can contain our user data.
-	_clut8Texture->setSize(width, height);
+	_clut8Texture.setSize(width, height);
 	_target->setSize(width, height);
 
 	// In case the needed texture dimension changed we will reinitialize the
 	// texture data buffer.
-	if (_clut8Texture->getWidth() != (uint)_clut8Data.w || _clut8Texture->getHeight() != (uint)_clut8Data.h) {
+	if (_clut8Texture.getWidth() != (uint)_clut8Data.w || _clut8Texture.getHeight() != (uint)_clut8Data.h) {
 		// Create a buffer for the texture data.
-		_clut8Data.create(_clut8Texture->getWidth(), _clut8Texture->getHeight(), Graphics::PixelFormat::createFormatCLUT8());
+		_clut8Data.create(_clut8Texture.getWidth(), _clut8Texture.getHeight(), Graphics::PixelFormat::createFormatCLUT8());
 	}
 
 	// Create a sub-buffer for raw access.
@@ -600,8 +598,8 @@ void TextureCLUT8GPU::setPalette(uint start, uint colors, const byte *palData) {
 	_paletteDirty = true;
 }
 
-const MetalTexture *TextureCLUT8GPU::getMetalTexture() const {
-	return _target->getTexture();
+const MetalTexture &TextureCLUT8GPU::getMetalTexture() const {
+	return *_target->getTexture();
 }
 
 void TextureCLUT8GPU::updateMetalTexture() {
@@ -612,7 +610,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 	// representation, hence *4.
 	if (Surface::isDirty()) {
 		Common::Rect dirtyArea = getDirtyArea();
-		_clut8Texture->updateArea(dirtyArea, _clut8Data);
+		_clut8Texture.updateArea(dirtyArea, _clut8Data);
 		clearDirty();
 	}
 
@@ -627,7 +625,7 @@ void TextureCLUT8GPU::updateMetalTexture() {
 #endif
 					   );
 
-		_paletteTexture->updateArea(Common::Rect(256, 1), palSurface);
+		_paletteTexture.updateArea(Common::Rect(256, 1), palSurface);
 		_paletteDirty = false;
 	}
 
@@ -642,7 +640,7 @@ void TextureCLUT8GPU::lookUpColors() {
 	_clut8Pipeline->activate();
 
 	// Do color look up.
-	_clut8Pipeline->drawTexture(*_clut8Texture, _clut8Vertices);
+	_clut8Pipeline->drawTexture(_clut8Texture, _clut8Vertices);
 
 	_clut8Pipeline->deactivate();
 }
