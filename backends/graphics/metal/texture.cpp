@@ -432,6 +432,44 @@ void FakeTexture::applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch,
 	}
 }
 
+TextureRGB555::TextureRGB555(MTL::Device *device)
+	: FakeTexture(device, Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0), Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
+}
+
+void TextureRGB555::updateMetalTexture() {
+	if (!isDirty()) {
+		return;
+	}
+
+	// Convert color space.
+	Graphics::Surface *outSurf = Texture::getSurface();
+
+	const Common::Rect dirtyArea = getDirtyArea();
+
+	uint16 *dst = (uint16 *)outSurf->getBasePtr(dirtyArea.left, dirtyArea.top);
+	const uint dstAdd = outSurf->pitch - 2 * dirtyArea.width();
+
+	const uint16 *src = (const uint16 *)_rgbData.getBasePtr(dirtyArea.left, dirtyArea.top);
+	const uint srcAdd = _rgbData.pitch - 2 * dirtyArea.width();
+
+	for (int height = dirtyArea.height(); height > 0; --height) {
+		for (int width = dirtyArea.width(); width > 0; --width) {
+			const uint16 color = *src++;
+
+			*dst++ =   ((color & 0x7C00) << 1)                             // R
+					 | (((color & 0x03E0) << 1) | ((color & 0x0200) >> 4)) // G
+					 | (color & 0x001F);                                   // B
+		}
+
+		src = (const uint16 *)((const byte *)src + srcAdd);
+		dst = (uint16 *)((byte *)dst + dstAdd);
+	}
+
+	// Do generic handling of updating the texture.
+	Texture::updateMetalTexture();
+}
+
+
 TextureRGBA8888Swap::TextureRGBA8888Swap(MTL::Device *device)
 #ifdef SCUMM_LITTLE_ENDIAN
 	: FakeTexture(device, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) // RGBA8888 -> ABGR8888

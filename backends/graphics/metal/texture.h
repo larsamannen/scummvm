@@ -347,6 +347,14 @@ protected:
 	uint8 *_mask;
 };
 
+class TextureRGB555 : public FakeTexture {
+public:
+	TextureRGB555(MTL::Device *device);
+	~TextureRGB555() override {}
+
+	void updateMetalTexture() override;
+};
+
 class TextureRGBA8888Swap : public FakeTexture {
 public:
 	TextureRGBA8888Swap(MTL::Device *device);

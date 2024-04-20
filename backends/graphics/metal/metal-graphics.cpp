@@ -1075,7 +1075,7 @@ Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format
 
 #ifdef USE_SCALERS
 	if (wantScaler) {
-		return new ScaledTexture(_device, format, format);
+		return new ScaledTexture(_device, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), format);
 	}
 #endif
 
@@ -1087,6 +1087,12 @@ Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format
 	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) { // ABGR8888
 #endif
 		return new TextureRGBA8888Swap(_device);
+	} else if (format == Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
+		// OpenGL ES does not support a texture format usable for RGB555.
+		// Since SCUMM uses this pixel format for some games (and there is no
+		// hope for this to change anytime soon) we use pixel format
+		// conversion to a supported texture format.
+		return new TextureRGB555(_device);
 	} else {
 		return new Texture(_device, format);
 	}
