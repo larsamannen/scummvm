@@ -32,6 +32,10 @@
 #include "backends/graphics/metal/renderer.h"
 #include "common/translation.h"
 
+#ifdef USE_SCALERS
+#include "graphics/scalerplugin.h"
+#endif
+
 #include "graphics/blit.h"
 
 #include <QuartzCore/QuartzCore.hpp>
@@ -45,6 +49,9 @@ MetalGraphicsManager::MetalGraphicsManager() :
 	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
 	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false),
 	_screenChangeID(0)
+#ifdef USE_SCALERS
+	  , _scalerPlugins(ScalerMan.getPlugins())
+#endif
 {
 	_cursorX = 0;
 	_cursorY = 0;
@@ -196,22 +203,30 @@ void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 // GraphicsManager
 bool MetalGraphicsManager::hasFeature(OSystem::Feature f) const {
 	switch (f) {
-		case OSystem::kFeatureCursorPalette:
-		case OSystem::kFeatureCursorAlpha:
-		case OSystem::kFeatureFilteringMode:
-		case OSystem::kFeatureStretchMode:
-		case OSystem::kFeatureCursorMask:
-		case OSystem::kFeatureCursorMaskInvert:
-			return true;
-		case OSystem::kFeatureOverlaySupportsAlpha:
-			return _defaultFormatAlpha.aBits() > 3;
-		default:
-			return false;
+	case OSystem::kFeatureAspectRatioCorrection:
+	case OSystem::kFeatureCursorPalette:
+	case OSystem::kFeatureCursorAlpha:
+	case OSystem::kFeatureFilteringMode:
+	case OSystem::kFeatureStretchMode:
+	case OSystem::kFeatureCursorMask:
+	case OSystem::kFeatureCursorMaskInvert:
+#ifdef USE_SCALERS
+	case OSystem::kFeatureScalers:
+#endif
+		return true;
+	case OSystem::kFeatureOverlaySupportsAlpha:
+		return _defaultFormatAlpha.aBits() > 3;
+	default:
+		return false;
 	}
 }
 
 void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 	switch (f) {
+	case OSystem::kFeatureAspectRatioCorrection:
+	//	assert(_transactionMode != kTransactionNone);
+		_currentState.aspectRatioCorrection = enable;
+		break;
 	case OSystem::kFeatureFilteringMode:
 		_currentState.filtering = enable;
 		break;
@@ -226,6 +241,9 @@ void MetalGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
 
 bool MetalGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	switch (f) {
+	case OSystem::kFeatureAspectRatioCorrection:
+		return _currentState.aspectRatioCorrection;
+
 	case OSystem::kFeatureFilteringMode:
 		return _currentState.filtering;
 
@@ -351,6 +369,42 @@ int MetalGraphicsManager::getStretchMode() const {
 	return _stretchMode;
 }
 
+#ifdef USE_SCALERS
+uint MetalGraphicsManager::getDefaultScaler() const {
+	return ScalerMan.findScalerPluginIndex("normal");
+}
+
+uint MetalGraphicsManager::getDefaultScaleFactor() const {
+	return 1;
+}
+
+bool MetalGraphicsManager::setScaler(uint mode, int factor) {
+	//assert(_transactionMode != kTransactionNone);
+
+	int newFactor;
+	if (factor == -1)
+		newFactor = getDefaultScaleFactor();
+	else if (_scalerPlugins[mode]->get<ScalerPluginObject>().hasFactor(factor))
+		newFactor = factor;
+	else if (_scalerPlugins[mode]->get<ScalerPluginObject>().hasFactor(_oldState.scaleFactor))
+		newFactor = _oldState.scaleFactor;
+	else
+		newFactor = _scalerPlugins[mode]->get<ScalerPluginObject>().getDefaultFactor();
+
+	_currentState.scalerIndex = mode;
+	_currentState.scaleFactor = newFactor;
+
+	return true;
+}
+
+uint MetalGraphicsManager::getScaler() const {
+	return _currentState.scalerIndex;
+}
+
+uint MetalGraphicsManager::getScaleFactor() const {
+	return _currentState.scaleFactor;
+}
+#endif
 
 void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	Graphics::PixelFormat requestedFormat;
@@ -401,14 +455,14 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 		_currentState.gameFormat = Graphics::PixelFormat::createFormatCLUT8();
 	}
 #endif
-#if 0
+
 #ifdef USE_SCALERS
 	if (_oldState.scaleFactor != _currentState.scaleFactor ||
 		_oldState.scalerIndex != _currentState.scalerIndex) {
 		setupNewGameScreen = true;
 	}
 #endif
-
+#if 0
 	do {
 		const uint desiredAspect = getDesiredGameAspectRatio();
 		const uint requestedWidth  = _currentState.gameWidth;
@@ -783,11 +837,11 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 	inputFormat = Graphics::PixelFormat::createFormatCLUT8();
 #endif
 
-//#ifdef USE_SCALERS
-//	bool wantScaler = (_currentState.scaleFactor > 1) && !dontScale && _scalerPlugins[_currentState.scalerIndex]->get<ScalerPluginObject>().canDrawCursor();
-//#else
+#ifdef USE_SCALERS
+	bool wantScaler = (_currentState.scaleFactor > 1) && !dontScale && _scalerPlugins[_currentState.scalerIndex]->get<ScalerPluginObject>().canDrawCursor();
+#else
 	bool wantScaler = !dontScale;
-//#endif
+#endif
 
 	bool wantMask = (mask != nullptr);
 	bool haveMask = (_cursorMask != nullptr);
@@ -816,11 +870,11 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 
 		updateLinearFiltering();
 
-//#ifdef USE_SCALERS
-//		if (wantScaler) {
-//			_cursor->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
-//		}
-//#endif
+#ifdef USE_SCALERS
+		if (wantScaler) {
+			_cursor->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
+		}
+#endif
 	}
 
 	if (mask) {
@@ -831,11 +885,11 @@ void MetalGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int h
 
 			updateLinearFiltering();
 
-//#ifdef USE_SCALERS
-//			if (wantScaler) {
-//				_cursorMask->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
-//			}
-//#endif
+#ifdef USE_SCALERS
+			if (wantScaler) {
+				_cursorMask->setScaler(_currentState.scalerIndex, _currentState.scaleFactor);
+			}
+#endif
 		}
 	} else {
 		delete _cursorMask;
@@ -1018,6 +1072,13 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 }
 						   
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
+
+#ifdef USE_SCALERS
+	if (wantScaler) {
+		return new ScaledTexture(_device, format, format);
+	}
+#endif
+
 	if (format.bytesPerPixel == 1) {
 		return new TextureCLUT8GPU(_device, _renderer);
 #ifdef SCUMM_LITTLE_ENDIAN

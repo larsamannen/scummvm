@@ -87,7 +87,15 @@ public:
 	int getDefaultStretchMode() const override;
 	bool setStretchMode(int mode) override;
 	int getStretchMode() const override;
-	
+
+#ifdef USE_SCALERS
+	uint getDefaultScaler() const override;
+	uint getDefaultScaleFactor() const override;
+	bool setScaler(uint mode, int factor) override;
+	uint getScaler() const override;
+	uint getScaleFactor() const override;
+#endif
+
 	void initSize(uint width, uint height, const Graphics::PixelFormat *format = NULL) override;
 	int getScreenChangeID() const override;
 	
@@ -208,6 +216,13 @@ private:
 	byte _gamePalette[3 * 256];
 	
 	Surface *_overlay;
+
+#ifdef USE_SCALERS
+	/**
+	 * The list of scaler plugins
+	 */
+	const PluginList &_scalerPlugins;
+#endif
 
 	//
 	// Cursor

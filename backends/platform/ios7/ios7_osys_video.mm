@@ -298,6 +298,6 @@ int OSystem_iOS7::getScreenHeight() const {
 }
 
 float OSystem_iOS7::getSystemHiDPIScreenFactor() const {
-	return [[UIScreen mainScreen] scale];
+	return 1.0f; //[[UIScreen mainScreen] scale];
 }
 
