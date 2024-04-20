@@ -26,10 +26,7 @@
 #include "graphics/surface.h"
 #include "common/rect.h"
 
-namespace MTL {
-class Device;
-class Texture;
-}
+#include <Metal/Metal.hpp>
 
 namespace Metal {
 
@@ -49,7 +46,7 @@ public:
 	 * @param glFormat    The input format.
 	 * @param glType      The input type.
 	 */
-	MetalTexture(MTL::Device *device, uint pixelFormat, uint usage = 0);
+	MetalTexture(MTL::Device *device, MTL::PixelFormat pixelFormat, MTL::TextureUsage usage = 0);
 	~MetalTexture();
 
 	/**
@@ -62,7 +59,7 @@ public:
 	/**
 	 * Test whether linear filtering is enabled.
 	 */
-	bool isLinearFilteringEnabled() const;
+	bool isLinearFilteringEnabled() const { return _filter == MTL::SamplerMinMagFilterLinear; }
 
 	/**
 	 * Enable or disable linear texture filtering.
@@ -141,14 +138,14 @@ public:
 	 */
 	MTL::Texture *getMetalTexture() const { return _texture; }
 private:
-	uint _pixelFormat;
-	uint _usage;
+	MTL::PixelFormat _pixelFormat;
+	MTL::TextureUsage _usage;
 
 	uint _width, _height;
 	uint _logicalWidth, _logicalHeight;
 	float _texCoords[4*2];
 	
-	uint _filter;
+	MTL::SamplerMinMagFilter _filter;
 
 	MTL::Texture *_texture;
 	MTL::Device *_device;

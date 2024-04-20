@@ -23,7 +23,6 @@
 #define BACKENDS_GRAPHICS_METAL_METAL_GRAPHICS_H
 
 #include "backends/graphics/windowed.h"
-#include "backends/graphics/metal/texture.h"
 #include "backends/graphics/metal/framebuffer.h"
 
 
@@ -44,6 +43,7 @@ enum {
 
 class Renderer;
 class Framebuffer;
+class Surface;
 
 class MetalGraphicsManager : virtual public WindowedGraphicsManager {
 public:

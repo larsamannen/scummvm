@@ -32,16 +32,15 @@
 
 namespace Metal {
 
-MetalTexture::MetalTexture(MTL::Device *device, uint pixelFormat, uint usage)
+MetalTexture::MetalTexture(MTL::Device *device, MTL::PixelFormat pixelFormat, MTL::TextureUsage usage)
 	: _device(device), _pixelFormat(pixelFormat),
 	  _width(0), _height(0), _logicalWidth(0), _logicalHeight(0),
-	  _texCoords(), _usage(usage), //_glFilter(GL_NEAREST),
+	  _texCoords(), _usage(usage), _filter(MTL::SamplerMinMagFilterNearest),
 	  _texture(nullptr) {
 	create();
 }
 
 MetalTexture::~MetalTexture() {
-	_texture->release();
 }
 
 void MetalTexture::enableLinearFiltering(bool enable) {
@@ -50,10 +49,6 @@ void MetalTexture::enableLinearFiltering(bool enable) {
 	} else {
 		_filter = MTL::SamplerMinMagFilterNearest;
 	}
-}
-
-bool MetalTexture::isLinearFilteringEnabled() const {
-	return _filter == MTL::SamplerMinMagFilterLinear;
 }
 
 /*
@@ -95,8 +90,8 @@ void MetalTexture::create() {
 		MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 		d->setWidth(_width);
 		d->setHeight(_height);
-		d->setPixelFormat((MTL::PixelFormat)_pixelFormat);
-		d->setUsage((MTL::TextureUsage)_usage);
+		d->setPixelFormat(_pixelFormat);
+		d->setUsage(_usage);
 		_texture = _device->newTexture(d);
 		d->release();
 	}
@@ -131,13 +126,12 @@ bool MetalTexture::setSize(uint width, uint height) {
 
 		// Allocate storage for OpenGL texture if necessary.
 		if (oldWidth != _width || oldHeight != _height) {
-			destroy();
 			// Allocate storage for Metal texture.
 			MTL::TextureDescriptor *d = MTL::TextureDescriptor::alloc()->init();
 			d->setWidth(_width);
 			d->setHeight(_height);
-			d->setPixelFormat((MTL::PixelFormat)_pixelFormat);
-			d->setUsage((MTL::TextureUsage)_usage);
+			d->setPixelFormat(_pixelFormat);
+			d->setUsage(_usage);
 			_texture = _device->newTexture(d);
 			d->release();
 		}
@@ -223,7 +217,6 @@ Texture::Texture(/*GLenum glIntFormat, GLenum glFormat, GLenum glType,*/ MTL::De
 
 Texture::~Texture() {
 	_textureData.free();
-	_metalTexture.destroy();
 }
 
 void Texture::destroy() {
@@ -231,6 +224,8 @@ void Texture::destroy() {
 }
 
 void Texture::recreate() {
+	// Need to release metal textures
+	destroy();
 	_metalTexture.create();
 
 	// In case image date exists assure it will be completely refreshed next
@@ -508,6 +503,9 @@ void TextureCLUT8GPU::destroy() {
 }
 
 void TextureCLUT8GPU::recreate() {
+	// Release old data
+	destroy();
+
 	_clut8Texture.create();
 	_paletteTexture.create();
 	_target->create();
