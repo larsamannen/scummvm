@@ -136,7 +136,7 @@ public:
 protected:
 	void renderCursor();
 	Surface *createSurface(const Graphics::PixelFormat &format, bool wantAlpha = false, bool wantScaler = false, bool wantMask = false);
-
+	bool getMetalPixelFormat(const Graphics::PixelFormat &pixelFormat, uint &metalPixelFormat) const;
 	//
 	// Transaction support
 	//

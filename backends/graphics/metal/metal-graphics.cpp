@@ -1072,15 +1072,37 @@ void MetalGraphicsManager::grabPalette(byte *colors, uint start, uint num) const
 }
 						   
 Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format, bool wantAlpha, bool wantScaler, bool wantMask) {
+	uint metalPixelFormat;
 
 #ifdef USE_SCALERS
 	if (wantScaler) {
-		return new ScaledTexture(_device, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), format);
+		// TODO: Ensure that the requested pixel format is supported by the scaler
+		if (getMetalPixelFormat(format, metalPixelFormat)) {
+			return new ScaledTexture(_device, (MTL::PixelFormat)metalPixelFormat, format, format);
+		} else {
+#ifdef SCUMM_LITTLE_ENDIAN
+			return new ScaledTexture(_device, MTL::PixelFormatRGBA8Unorm, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), format);
+
+#else
+			return new ScaledTexture(_device, MTL::PixelFormatRGBA8Unorm, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), format);
+#endif
+		}
 	}
 #endif
-
 	if (format.bytesPerPixel == 1) {
-		return new TextureCLUT8GPU(_device, _renderer);
+		if (!wantMask) {
+			return new TextureCLUT8GPU(_device, _renderer);
+		}
+
+		const Graphics::PixelFormat &virtFormat = wantAlpha ? _defaultFormatAlpha : _defaultFormat;
+		const bool supported = getMetalPixelFormat(virtFormat, metalPixelFormat);
+		if (!supported) {
+			return nullptr;
+		} else {
+			return new FakeTexture(_device, (MTL::PixelFormat)metalPixelFormat, virtFormat, format);
+		}
+	} else if (getMetalPixelFormat(format, metalPixelFormat)) {
+		return new Texture(_device, (MTL::PixelFormat)metalPixelFormat, format);
 #ifdef SCUMM_LITTLE_ENDIAN
 	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
 #else
@@ -1094,7 +1116,30 @@ Surface *MetalGraphicsManager::createSurface(const Graphics::PixelFormat &format
 		// conversion to a supported texture format.
 		return new TextureRGB555(_device);
 	} else {
-		return new Texture(_device, format);
+		return nullptr;
+	}
+}
+
+bool MetalGraphicsManager::getMetalPixelFormat(const Graphics::PixelFormat &pixelFormat, uint &metalPixelFormat) const {
+#ifdef SCUMM_LITTLE_ENDIAN
+	if (pixelFormat == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) { // ABGR8888
+#else
+	if (pixelFormat == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
+#endif
+		metalPixelFormat = MTL::PixelFormatRGBA8Unorm;
+		return true;
+	} else if (pixelFormat == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) { // RGB565
+		metalPixelFormat = MTL::PixelFormatB5G6R5Unorm;
+		return true;
+	} else if (pixelFormat == Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0)) { // RGBA5551
+		metalPixelFormat = MTL::PixelFormatBGR5A1Unorm;
+		return true;
+	} else if (pixelFormat == Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0)) { // RGBA4444
+		// TODO may need to convert this
+		metalPixelFormat = MTL::PixelFormatABGR4Unorm;
+		return true;
+	} else {
+		return false;
 	}
 }
 

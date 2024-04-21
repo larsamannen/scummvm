@@ -282,7 +282,7 @@ public:
 	 * @param glType      The input type.
 	 * @param format      The format used for the texture input.
 	 */
-	Texture(MTL::Device *device, const Graphics::PixelFormat &format);
+	Texture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format);
 	~Texture() override;
 
 	void destroy() override;
@@ -321,7 +321,7 @@ private:
 
 class FakeTexture : public Texture {
 public:
-	FakeTexture(MTL::Device *device, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat);
+	FakeTexture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat);
 	~FakeTexture() override;
 
 	void allocate(uint width, uint height) override;
@@ -366,7 +366,7 @@ public:
 #ifdef USE_SCALERS
 class ScaledTexture : public FakeTexture {
 public:
-	ScaledTexture(MTL::Device *device, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat);
+	ScaledTexture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat);
 	~ScaledTexture() override;
 
 	void allocate(uint width, uint height) override;

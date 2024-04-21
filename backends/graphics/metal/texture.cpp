@@ -214,8 +214,8 @@ Common::Rect Surface::getDirtyArea() const {
 // Surface implementations
 //
 
-Texture::Texture(/*GLenum glIntFormat, GLenum glFormat, GLenum glType,*/ MTL::Device *device, const Graphics::PixelFormat &format)
-	: Surface(), _format(format), _device(device), _metalTexture(MetalTexture(device, MTL::PixelFormatRGBA8Unorm)),
+Texture::Texture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format)
+	: Surface(), _format(format), _device(device), _metalTexture(MetalTexture(device, metalPixelFormat)),
 	  _textureData(), _userPixelData() {
 }
 
@@ -308,8 +308,8 @@ void Texture::updateMetalTexture(Common::Rect &dirtyArea) {
 	clearDirty();
 }
 
-FakeTexture::FakeTexture(MTL::Device *device, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat)
-	: Texture(device, format),
+FakeTexture::FakeTexture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat)
+	: Texture(device, metalPixelFormat, format),
 	  _fakeFormat(fakeFormat),
 	  _rgbData(),
 	  _palette(nullptr),
@@ -433,7 +433,7 @@ void FakeTexture::applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch,
 }
 
 TextureRGB555::TextureRGB555(MTL::Device *device)
-	: FakeTexture(device, Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0), Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
+	: FakeTexture(device, MTL::PixelFormatB5G6R5Unorm, Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0), Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
 }
 
 void TextureRGB555::updateMetalTexture() {
@@ -472,7 +472,7 @@ void TextureRGB555::updateMetalTexture() {
 
 TextureRGBA8888Swap::TextureRGBA8888Swap(MTL::Device *device)
 #ifdef SCUMM_LITTLE_ENDIAN
-	: FakeTexture(device, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) // RGBA8888 -> ABGR8888
+	: FakeTexture(device, MTL::PixelFormatBGRA8Unorm, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) // RGBA8888 -> ABGR8888
 #else
 	: FakeTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) // ABGR8888 -> RGBA8888
 #endif
@@ -511,8 +511,8 @@ void TextureRGBA8888Swap::updateMetalTexture() {
 }
 
 #ifdef USE_SCALERS
-ScaledTexture::ScaledTexture(MTL::Device *device, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat)
-	: FakeTexture(device, format, fakeFormat), _convData(nullptr), _scaler(nullptr), _scalerIndex(0), _scaleFactor(1), _extraPixels(0) {
+ScaledTexture::ScaledTexture(MTL::Device *device, const MTL::PixelFormat metalPixelFormat, const Graphics::PixelFormat &format, const Graphics::PixelFormat &fakeFormat)
+	: FakeTexture(device, metalPixelFormat, format, fakeFormat), _convData(nullptr), _scaler(nullptr), _scalerIndex(0), _scaleFactor(1), _extraPixels(0) {
 }
 
 ScaledTexture::~ScaledTexture() {

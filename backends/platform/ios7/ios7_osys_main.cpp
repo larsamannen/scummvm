@@ -153,8 +153,8 @@ bool OSystem_iOS7::hasFeature(Feature f) {
 	case kFeatureOpenUrl:
 	case kFeatureNoQuit:
 	case kFeatureKbdMouseSpeed:
-	case kFeatureOpenGLForGame:
-	case kFeatureShadersForGame:
+	//case kFeatureOpenGLForGame:
+	//case kFeatureShadersForGame:
 	case kFeatureTouchscreen:
 #ifdef SCUMMVM_NEON
 	case kFeatureCpuNEON:
@@ -202,11 +202,11 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 	// If the new mode and the current mode are not from the same graphics
 	// manager, delete and create the new mode graphics manager
 	if (render3d && !supports3D) {
-		delete _graphicsManager;
-		iOSGraphics3dManager *manager = new iOSGraphics3dManager();
-		_graphicsManager = manager;
-		commonGraphics = manager;
-		switchedManager = true;
+//		delete _graphicsManager;
+//		iOSGraphics3dManager *manager = new iOSGraphics3dManager();
+//		_graphicsManager = manager;
+//		commonGraphics = manager;
+//		switchedManager = true;
 	} else if (!render3d && supports3D) {
 		delete _graphicsManager;
 		iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
