@@ -45,6 +45,8 @@ MetalTexture::MetalTexture(MTL::Device *device, MTL::PixelFormat pixelFormat, MT
 }
 
 MetalTexture::~MetalTexture() {
+	if (_texture)
+		_texture->release();
 }
 
 void MetalTexture::enableLinearFiltering(bool enable) {
@@ -82,6 +84,7 @@ void MetalTexture::setWrapMode(WrapMode wrapMode) {
 */
 void MetalTexture::destroy() {
 	_texture->release();
+	_texture = nullptr;
 }
 
 void MetalTexture::create() {

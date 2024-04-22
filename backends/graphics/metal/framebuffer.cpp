@@ -148,7 +148,7 @@ TextureTarget::TextureTarget(MTL::Device *device) : _texture(new MetalTexture(de
 }
 
 TextureTarget::~TextureTarget() {
-	_texture->destroy();
+	delete _texture;
 }
 
 void TextureTarget::activateInternal() {
