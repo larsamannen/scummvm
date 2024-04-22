@@ -35,7 +35,7 @@ MetalRenderbufferTarget::MetalRenderbufferTarget(CA::MetalLayer *metalLayer, MTL
 }
 
 MetalRenderbufferTarget::~MetalRenderbufferTarget() {
-	_metalLayer->release();
+	//_metalLayer->release();
 }
 
 bool MetalRenderbufferTarget::setSize(uint width, uint height) {

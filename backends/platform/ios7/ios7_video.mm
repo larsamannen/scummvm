@@ -101,48 +101,45 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 - (void)createContext {
 	_metalLayer = (CAMetalLayer *)self.layer;
-
-	//_metalLayer.opaque = NO;
+	_metalLayer.framebufferOnly = NO;
 	_metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
-	//_metalLayer.framebufferOnly = NO;
-	//metalLayer.drawableProperties = @{
-	//                                 kEAGLDrawablePropertyRetainedBacking: @NO,
-	//                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
-	//                                };
 
-	//_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-
+	_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+	
 	// In case creating the OpenGL ES context failed, we will error out here.
-	//if (_mainContext == nil) {
-	//	printError("Could not create OpenGL ES context.");
-	//	abort();
-	//}
+	if (_mainContext == nil) {
+		printError("Could not create OpenGL ES context.");
+		abort();
+	}
 
 	// main thread will always use _mainContext
-	//[EAGLContext setCurrentContext:_mainContext];
+	[EAGLContext setCurrentContext:_mainContext];
 }
 
 - (uint)createOpenGLContext {
+	_metalDevice = MTLCreateSystemDefaultDevice();
+	_commandQueue =  [_metalDevice newCommandQueue];
 	// Create OpenGL context with the sharegroup from the context
 	// connected to the Apple Core Animation layer
-	//if (!_openGLContext && _mainContext) {
-	//	_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_mainContext.sharegroup];
+	if (!_openGLContext && _mainContext) {
+		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_mainContext.sharegroup];
 
-	//	if (_openGLContext == nil) {
-	//		printError("Could not create OpenGL ES context using sharegroup");
-	//		abort();
-	//	}
+		if (_openGLContext == nil) {
+			printError("Could not create OpenGL ES context using sharegroup");
+			abort();
+		}
 		// background thread will always use _openGLContext
-	//	if ([EAGLContext setCurrentContext:_openGLContext]) {
-	//		[self setupRenderBuffer];
-	//	}
-	//}
+		if ([EAGLContext setCurrentContext:_openGLContext]) {
+			[self setupRenderBuffer];
+		}
+	}
+	[_metalLayer setDrawableSize:CGSizeMake(_renderBufferWidth, _renderBufferHeight)];
 	return _viewRenderbuffer;
 }
 
 - (void)destroyOpenGLContext {
-	//[_openGLContext release];
-	//_openGLContext = nil;
+	[_openGLContext release];
+	_openGLContext = nil;
 }
 
 - (CA::MetalLayer *)getMetalLayer {
@@ -150,8 +147,45 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)refreshScreen {
-	//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	//[_openGLContext presentRenderbuffer:GL_RENDERBUFFER];
+	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+	GLbyte *data = (GLbyte *)malloc(4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
+	GLbyte *flipped = (GLbyte *)malloc(4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+	glReadPixels(0, 0, _renderBufferWidth, _renderBufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+	commandBuffer.label = @"MyCommand";
+	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+	id<MTLTexture> targetTexture = [drawable texture];
+//	MTLTextureDescriptor *d = [[MTLTextureDescriptor alloc] init];
+//	d.width = _renderBufferWidth;
+//	d.height = _renderBufferHeight;
+//	d.pixelFormat = MTLPixelFormatRGBA8Unorm;
+//	id<MTLTexture> flipped = [_metalDevice newTextureWithDescriptor:d];
+//	[d release];
+
+	for (unsigned long i = 0, j = 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte) - 4*sizeof(GLbyte); i < 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte) && j > 0; i += 4*sizeof(GLbyte), j -= 4*sizeof(GLbyte)) {
+		memcpy(&flipped[j], &data[i], 4*sizeof(GLbyte));
+	}
+	memcpy(data, flipped, 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
+	
+	for (int i = 0; i < _renderBufferHeight; i ++) {
+		GLbyte *dataRow = &data[i*4*_renderBufferWidth*sizeof(GLbyte)];
+		GLbyte *flippedRow = &flipped[i*4*_renderBufferWidth*sizeof(GLbyte)];
+		for (unsigned long j = 0, k = 4*_renderBufferWidth*sizeof(GLbyte) - 4*sizeof(GLbyte); j < 4*_renderBufferWidth*sizeof(GLbyte) && k > 0; k -= 4*sizeof(GLbyte), j += 4*sizeof(GLbyte)) {
+			memcpy(&flippedRow[j], &dataRow[k], 4*sizeof(GLbyte));
+		}
+	}
+
+	MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, _renderBufferHeight);
+	[targetTexture replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:4*_renderBufferWidth];
+
+	[commandBuffer presentDrawable:drawable];
+
+	[commandBuffer commit];
+	free(data);
+	free(flipped);
 }
 
 - (int)getScreenWidth {
@@ -164,28 +198,31 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	//return _renderBufferHeight;
 }
 
+
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
-	//	if (!_viewRenderbuffer) {
-	//		glGenRenderbuffers(1, &_viewRenderbuffer);
+		if (!_viewRenderbuffer) {
+			glGenRenderbuffers(1, &_viewRenderbuffer);
 	//		printOpenGLError();
-	//	}
-	//	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	//	printOpenGLError();
-	//	if (![_mainContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer]) {
-	//		printError("Failed renderbufferStorage");
-	//	}
+		}
+		glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+
+		// Create a color renderbuffer, allocate storage for it,
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, [self getScreenWidth], [self getScreenHeight]);
+		//glRenderbufferStorageMultisampleAPPLE(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT16, [self getScreenWidth], [self getScreenHeight]);
+		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _viewRenderbuffer);
 		// Retrieve the render buffer size. This *should* match the frame size,
 		// i.e. g_fullWidth and g_fullHeight.
-	//	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
 	//	printOpenGLError();
-	//	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
+		
 	//	printOpenGLError();
 	});
 }
 
 - (void)deleteRenderbuffer {
-	//glDeleteRenderbuffers(1, &_viewRenderbuffer);
+	glDeleteRenderbuffers(1, &_viewRenderbuffer);
 }
 
 - (void)setupGestureRecognizers {

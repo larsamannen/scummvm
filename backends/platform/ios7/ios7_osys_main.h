@@ -72,6 +72,8 @@ protected:
 	Common::String _lastErrorMessage;
 
 	Common::String _chrootBasePath;
+	
+	GraphicMode _currentGraphicMode;
 
 public:
 
@@ -94,7 +96,9 @@ public:
 	void setFeatureState(Feature f, bool enable) override;
 	bool getFeatureState(Feature f) override;
 
-	bool setGraphicsMode(int mode, uint flags) override;
+	const OSystem::GraphicsMode *getSupportedGraphicsModes() const override;
+	bool setGraphicsMode(int mode, uint flags = OSystem::kGfxModeNoFlags) override;
+	int getDefaultGraphicsMode() const override;
 
 	TouchMode getCurrentTouchMode() const { return _currentTouchMode; };
 	void setCurrentTouchMode(TouchMode mode) { _currentTouchMode = mode; };

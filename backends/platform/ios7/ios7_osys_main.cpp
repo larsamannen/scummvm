@@ -131,6 +131,7 @@ void OSystem_iOS7::initBackend() {
 	_startTime = CACurrentMediaTime();
 
 	_graphicsManager = new iOSMetalGraphicsManager();//new iOSGraphicsManager();
+	_currentGraphicMode = kGraphicModeMetal;
 
 	setupMixer();
 
@@ -153,8 +154,6 @@ bool OSystem_iOS7::hasFeature(Feature f) {
 	case kFeatureOpenUrl:
 	case kFeatureNoQuit:
 	case kFeatureKbdMouseSpeed:
-	//case kFeatureOpenGLForGame:
-	//case kFeatureShadersForGame:
 	case kFeatureTouchscreen:
 #ifdef SCUMMVM_NEON
 	case kFeatureCpuNEON:
@@ -188,9 +187,28 @@ bool OSystem_iOS7::getFeatureState(Feature f) {
 	}
 }
 
+const OSystem::GraphicsMode metalGraphicsModes[] = {
+	{ "opengl", _s("OpenGL"), kGraphicModeOpenGl },
+	{ "metal",  _s("Metal"), kGraphicModeMetal },
+	{ nullptr, nullptr, 0 }
+};
+
+const OSystem::GraphicsMode *OSystem_iOS7::getSupportedGraphicsModes() const {
+	return metalGraphicsModes;
+}
+
+int OSystem_iOS7::getDefaultGraphicsMode() const {
+	return kGraphicModeMetal;
+}
+
 bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 	bool render3d = flags & OSystem::kGfxModeRender3d;
+	bool switchedGraphicMode = false;
 
+	if (_currentGraphicMode != (GraphicMode)mode) {
+		switchedGraphicMode = true;
+		_currentGraphicMode = (GraphicMode)mode;
+	}
 	// Utilize the same way to switch between 2D and 3D graphics manager as
 	// in SDL based backends and Android.
 	iOSCommonGraphics *commonGraphics = dynamic_cast<iOSCommonGraphics *>(_graphicsManager);
@@ -201,18 +219,28 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 
 	// If the new mode and the current mode are not from the same graphics
 	// manager, delete and create the new mode graphics manager
-	if (render3d && !supports3D) {
-//		delete _graphicsManager;
-//		iOSGraphics3dManager *manager = new iOSGraphics3dManager();
-//		_graphicsManager = manager;
-//		commonGraphics = manager;
-//		switchedManager = true;
-	} else if (!render3d && supports3D) {
-		delete _graphicsManager;
-		iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
-		_graphicsManager = manager;
-		commonGraphics = manager;
-		switchedManager = true;
+	if (switchedGraphicMode) {
+		if (_currentGraphicMode == kGraphicModeOpenGl) {
+			if (render3d && !supports3D) {
+				delete _graphicsManager;
+				iOSGraphics3dManager *manager = new iOSGraphics3dManager();
+				_graphicsManager = manager;
+				commonGraphics = manager;
+				switchedManager = true;
+			} else {
+				delete _graphicsManager;
+				iOSGraphicsManager *manager = new iOSGraphicsManager();
+				_graphicsManager = manager;
+				commonGraphics = manager;
+				switchedManager = true;
+			}
+		} else {
+			delete _graphicsManager;
+			iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
+			_graphicsManager = manager;
+			commonGraphics = manager;
+			switchedManager = true;
+		}
 	}
 
 	if (switchedManager) {
@@ -222,13 +250,12 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 		_graphicsManager->beginGFXTransaction();
 		if (!_graphicsManager->setGraphicsMode(mode, flags))
 			return false;
+		if (gfxManagerState.screenWidth == 0 || gfxManagerState.screenHeight == 0) {
+			gfxManagerState.screenWidth = getScreenWidth();
+			gfxManagerState.screenHeight = getScreenHeight();
+		}
 		_graphicsManager->initSize(gfxManagerState.screenWidth, gfxManagerState.screenHeight);
 		_graphicsManager->endGFXTransaction();
-
-		// This failing will probably have bad consequences...
-		//if (!androidGraphicsManager->setState(gfxManagerState)) {
-		//	return false;
-		//}
 
 		// Next setup the cursor again
 		CursorMan.pushCursor(0, 0, 0, 0, 0, 0);

@@ -25,10 +25,11 @@
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
 #include <QuartzCore/QuartzCore.hpp>
+#include <Metal/Metal.h>
 
-//#include <OpenGLES/EAGL.h>
-//#include <OpenGLES/ES2/gl.h>
-//#include <OpenGLES/ES2/glext.h>
+#include <OpenGLES/EAGL.h>
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
 
 #include "backends/platform/ios7/ios7_keyboard.h"
 #include "backends/platform/ios7/ios7_common.h"
@@ -53,20 +54,28 @@ uint getSizeNextPOT(uint size);
 #endif
 	UIBackgroundTaskIdentifier _backgroundSaveStateTask;
 
-	//EAGLContext *_mainContext;
-	//EAGLContext *_openGLContext;
+	EAGLContext *_mainContext;
+	EAGLContext *_openGLContext;
+	CVOpenGLESTextureCacheRef _CVGLTextureCache;
+	CVPixelBufferRef _CVPixelBuffer;
+	CVOpenGLESTextureRef _CVGLTexture;
+	CVMetalTextureRef _CVMTLTexture;
 	CAMetalLayer *_metalLayer;
+	CVMetalTextureCacheRef _CVMTLTextureCache;
 	
 	GLuint _viewRenderbuffer;
-
+	GLuint _color;
 	GLint _renderBufferWidth;
 	GLint _renderBufferHeight;
 }
 
 @property (nonatomic, assign) BOOL isInGame;
 @property (nonatomic, assign) UIInterfaceOrientationMask supportedScreenOrientations;
+@property (readonly, nonnull, nonatomic) id<MTLDevice> metalDevice;
+@property (readonly, nonnull, nonatomic) id<MTLTexture> metalTexture;
+@property (readonly, nonnull, nonatomic) id<MTLCommandQueue> commandQueue;
 
-- (id)initWithFrame:(struct CGRect)frame;
+- (nonnull id)initWithFrame:(struct CGRect)frame;
 
 - (uint)createOpenGLContext;
 - (void)destroyOpenGLContext;
