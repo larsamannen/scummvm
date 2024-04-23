@@ -241,7 +241,7 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 			iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
 			_graphicsManager = manager;
 			commonGraphics = manager;
-			switchedManager = false;
+			switchedManager = true;
 		}
 	} else {
 		if (_currentGraphicMode == kGraphicModeOpenGl) {

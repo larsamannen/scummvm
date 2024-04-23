@@ -648,6 +648,20 @@ void MetalGraphicsManager::renderCursor() {
 }
 
 void MetalGraphicsManager::updateScreen() {
+	if (!_gameScreen || !_pipeline) {
+		return;
+	}
+
+	// We only update the screen when there actually have been any changes.
+	if (   !_forceRedraw
+		&& !_cursorNeedsRedraw
+		&& !_gameScreen->isDirty()
+		&& !(_overlayVisible && _overlay->isDirty())
+		&& !(_cursorVisible && ((_cursor && _cursor->isDirty()) || (_cursorMask && _cursorMask->isDirty())))
+		) {
+		return;
+	}
+
 	// Update changes to textures.
 	_gameScreen->updateMetalTexture();
 	if (_cursorVisible && _cursor) {
