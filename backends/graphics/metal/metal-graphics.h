@@ -114,9 +114,6 @@ public:
 	void setFocusRectangle(const Common::Rect& rect) override;
 	void clearFocusRectangle() override;
 	
-	void showOverlay(bool inGUI) override;
-	void hideOverlay() override;
-	bool isOverlayVisible() const override;
 	Graphics::PixelFormat getOverlayFormat() const override;
 	void clearOverlay() override;
 	void grabOverlay(Graphics::Surface &surface) const override;

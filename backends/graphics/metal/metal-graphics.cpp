@@ -48,16 +48,11 @@ MetalGraphicsManager::MetalGraphicsManager() :
 	_cursorHotspotX(0), _cursorHotspotY(0), _targetBuffer(nullptr), _renderer(nullptr),
 	_cursorHotspotXScaled(0), _cursorHotspotYScaled(0), _cursorWidthScaled(0), _cursorHeightScaled(0),
 	_cursorKeyColor(0), _cursorUseKey(true), _cursorDontScale(false), _cursorPaletteEnabled(false),
-	_screenChangeID(0)
+	_screenChangeID(1 << (sizeof(int) * 8 - 2)), _stretchMode(STRETCH_FIT)
 #ifdef USE_SCALERS
 	  , _scalerPlugins(ScalerMan.getPlugins())
 #endif
 {
-	_cursorX = 0;
-	_cursorY = 0;
-	_forceRedraw = false;
-	_windowWidth = 0;
-	_windowHeight = 0;
 	memset(_gamePalette, 0, sizeof(_gamePalette));
 }
 
@@ -166,9 +161,7 @@ bool MetalGraphicsManager::gameNeedsAspectRatioCorrection() const {
 
 void MetalGraphicsManager::handleResizeImpl(const int width, const int height) {
 	// Setup backbuffer size.
-	// TODO!! Always utilize the whole window?
-	_targetBuffer->setSize(_windowWidth, _windowHeight);
-	//_targetBuffer->setSize(width, height);
+	_targetBuffer->setSize(width, height);
 
 	uint overlayWidth = width;
 	uint overlayHeight = height;
@@ -421,8 +414,6 @@ void MetalGraphicsManager::initSize(uint width, uint height, const Graphics::Pix
 	_currentState.gameHeight = height;
 	_gameScreenShakeXOffset = 0;
 	_gameScreenShakeYOffset = 0;
-
-	handleResizeImpl(width, height);
 }
 
 int MetalGraphicsManager::getScreenChangeID() const {
@@ -551,6 +542,7 @@ OSystem::TransactionError MetalGraphicsManager::endGFXTransaction() {
 		_currentState.valid = true;
 	} while (_transactionMode == kTransactionRollback);
 #endif
+	_currentState.valid = true;
 	if (setupNewGameScreen) {
 		delete _gameScreen;
 		_gameScreen = nullptr;
@@ -723,22 +715,6 @@ void MetalGraphicsManager::setFocusRectangle(const Common::Rect& rect) {
 
 void MetalGraphicsManager::clearFocusRectangle() {
 	
-}
-
-void MetalGraphicsManager::showOverlay(bool inGUI) {
-	if (_overlayVisible && _overlayInGUI == inGUI) {
-		return;
-	}
-
-	WindowedGraphicsManager::showOverlay(inGUI);
-	
-}
-void MetalGraphicsManager::hideOverlay() {
-	printf("HEJ");
-}
-
-bool MetalGraphicsManager::isOverlayVisible() const {
-	return false;
 }
 
 Graphics::PixelFormat MetalGraphicsManager::getOverlayFormat() const {
@@ -1169,12 +1145,10 @@ void MetalGraphicsManager::recalculateDisplayAreas() {
 	WindowedGraphicsManager::recalculateDisplayAreas();
 
 	// Setup drawing limitation for game graphics.
-	// This involves some trickery because OpenGL's viewport coordinate system
-	// is upside down compared to ours.
 	_targetBuffer->setScissorBox(_gameDrawRect.left,
-							  _windowHeight - _gameDrawRect.height() - _gameDrawRect.top,
-							  _gameDrawRect.width(),
-							  _gameDrawRect.height());
+								 _gameDrawRect.top,
+								 _gameDrawRect.width(),
+								 _gameDrawRect.height());
 	
 	_shakeOffsetScaled = Common::Point(_gameScreenShakeXOffset * _gameDrawRect.width() / (int)_currentState.gameWidth,
 		_gameScreenShakeYOffset * _gameDrawRect.height() / (int)_currentState.gameHeight);
