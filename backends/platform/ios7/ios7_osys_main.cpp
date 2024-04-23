@@ -159,7 +159,9 @@ bool OSystem_iOS7::hasFeature(Feature f) {
 	case kFeatureCpuNEON:
 #endif
 		return true;
-
+	case kFeatureOpenGLForGame:
+	case kFeatureShadersForGame:
+		return _currentGraphicMode == kGraphicModeOpenGl;
 	default:
 		return ModularGraphicsBackend::hasFeature(f);
 	}
@@ -220,6 +222,28 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 	// If the new mode and the current mode are not from the same graphics
 	// manager, delete and create the new mode graphics manager
 	if (switchedGraphicMode) {
+		if (_currentGraphicMode == kGraphicModeOpenGl) {
+			if (render3d && !supports3D) {
+				delete _graphicsManager;
+				iOSGraphics3dManager *manager = new iOSGraphics3dManager();
+				_graphicsManager = manager;
+				commonGraphics = manager;
+				switchedManager = false;
+			} else {
+				delete _graphicsManager;
+				iOSGraphicsManager *manager = new iOSGraphicsManager();
+				_graphicsManager = manager;
+				commonGraphics = manager;
+				switchedManager = true;
+			}
+		} else {
+			delete _graphicsManager;
+			iOSMetalGraphicsManager *manager = new iOSMetalGraphicsManager();
+			_graphicsManager = manager;
+			commonGraphics = manager;
+			switchedManager = false;
+		}
+	} else {
 		if (_currentGraphicMode == kGraphicModeOpenGl) {
 			if (render3d && !supports3D) {
 				delete _graphicsManager;
