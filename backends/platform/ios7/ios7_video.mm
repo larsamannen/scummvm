@@ -147,39 +147,32 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)refreshScreen {
+	uint rowLength = 4*_renderBufferWidth*sizeof(GLbyte);
+	uint nbrRows = _renderBufferHeight;
+	uint pixelSize = 4*sizeof(GLbyte);
+
 	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	GLbyte *data = (GLbyte *)malloc(4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
-	GLbyte *flipped = (GLbyte *)malloc(4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
+	GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
+	GLbyte *flipped = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 4);
 	glReadPixels(0, 0, _renderBufferWidth, _renderBufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-	commandBuffer.label = @"MyCommand";
-	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
-	id<MTLTexture> targetTexture = [drawable texture];
-//	MTLTextureDescriptor *d = [[MTLTextureDescriptor alloc] init];
-//	d.width = _renderBufferWidth;
-//	d.height = _renderBufferHeight;
-//	d.pixelFormat = MTLPixelFormatRGBA8Unorm;
-//	id<MTLTexture> flipped = [_metalDevice newTextureWithDescriptor:d];
-//	[d release];
-
-	for (unsigned long i = 0, j = 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte) - 4*sizeof(GLbyte); i < 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte) && j > 0; i += 4*sizeof(GLbyte), j -= 4*sizeof(GLbyte)) {
-		memcpy(&flipped[j], &data[i], 4*sizeof(GLbyte));
-	}
-	memcpy(data, flipped, 4*_renderBufferWidth*_renderBufferHeight*sizeof(GLbyte));
-	
-	for (int i = 0; i < _renderBufferHeight; i ++) {
-		GLbyte *dataRow = &data[i*4*_renderBufferWidth*sizeof(GLbyte)];
-		GLbyte *flippedRow = &flipped[i*4*_renderBufferWidth*sizeof(GLbyte)];
-		for (unsigned long j = 0, k = 4*_renderBufferWidth*sizeof(GLbyte) - 4*sizeof(GLbyte); j < 4*_renderBufferWidth*sizeof(GLbyte) && k > 0; k -= 4*sizeof(GLbyte), j += 4*sizeof(GLbyte)) {
-			memcpy(&flippedRow[j], &dataRow[k], 4*sizeof(GLbyte));
+	// This is very slow... need to accelerate
+	for (uint i = 0; i < nbrRows; i++) {
+		GLbyte *dataRow = &data[i * rowLength];
+		GLbyte *flippedRow = &flipped[(nbrRows - 1) * rowLength - i * rowLength];
+		for (uint j = 0; j < rowLength; j += pixelSize) {
+			memcpy(&flippedRow[j], &dataRow[j], pixelSize);
 		}
 	}
 
+	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+	commandBuffer.label = @"MyCommand";
+	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+
 	MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, _renderBufferHeight);
-	[targetTexture replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:4*_renderBufferWidth];
+	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:4*_renderBufferWidth];
 
 	[commandBuffer presentDrawable:drawable];
 
