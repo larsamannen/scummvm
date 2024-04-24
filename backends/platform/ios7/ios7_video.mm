@@ -153,54 +153,37 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)refreshScreen {
-	uint rowLength = 4*_renderBufferWidth*sizeof(GLbyte);
-	uint nbrRows = _renderBufferHeight;
-	uint pixelSize = 4*sizeof(GLbyte);
+	//uint rowLength = 4*_renderBufferWidth*sizeof(GLbyte);
+	//uint nbrRows = _renderBufferHeight;
+	//uint pixelSize = 4*sizeof(GLbyte);
 	//[EAGLContext setCurrentContext:_openGLContext];
 	//glBindTexture(GL_TEXTURE0, _renderTexture);
-	//GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
-	glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
-				  CVOpenGLESTextureGetName(_renderTexture));
-	//glFlush();
+	uint8_t *data = nullptr;
+	size_t bytesPerRow;
+	size_t height;
+
 	glFlush();
-	//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+
 	if (kCVReturnSuccess == CVPixelBufferLockBaseAddress(_renderTarget,
 		kCVPixelBufferLock_ReadOnly)) {
-		GLubyte *pixels=(GLubyte *)CVPixelBufferGetBaseAddress(_renderTarget);
+		uint8_t *pixels=(uint8_t *)CVPixelBufferGetBaseAddress(_renderTarget);
 		// process pixels how you like!
-		//memcpy(data, pixels, rowLength* nbrRows);
-		GLint bytesPerRow = CVPixelBufferGetBytesPerRow(_renderTarget);
-		GLint height = CVPixelBufferGetHeight(_renderTarget);
-		id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-		commandBuffer.label = @"MyCommand";
-		id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
-			
-		MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, height);
-		[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:pixels bytesPerRow:bytesPerRow];
-			
-		[commandBuffer presentDrawable:drawable];
-			
-		[commandBuffer commit];
+		bytesPerRow = CVPixelBufferGetBytesPerRow(_renderTarget);
+		height = CVPixelBufferGetHeight(_renderTarget);
+		data = (uint8_t *)malloc(bytesPerRow * height);
+		memcpy(data, pixels, bytesPerRow * height);
 		CVPixelBufferUnlockBaseAddress(_renderTarget, kCVPixelBufferLock_ReadOnly);
+	} else {
+		return;
 	}
-	//glFinish();
-	//CVOpenGLESTextureCacheFlush(_textureCache, 0);
-	//CFRelease(_renderTexture);
 
-	//GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
-	//GLbyte *flipped = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
+	uint8_t *flipped = (uint8_t *)malloc(bytesPerRow * height);
 
-	//glBindTexture(GL_TEXTURE_2D, _viewRenderbuffer);
-	
-	//glPixelStorei(GL_PACK_ALIGNMENT, 4);
-	//glReadPixels(0, 0, _renderBufferWidth, _renderBufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
-#if 0
-	// This is very slow... need to accelerate
-	for (uint i = 0; i < nbrRows; i++) {
-		GLbyte *dataRow = &data[i * rowLength];
-		GLbyte *flippedRow = &flipped[(nbrRows - 1) * rowLength - i * rowLength];
-		for (uint j = 0; j < rowLength; j += pixelSize) {
-			memcpy(&flippedRow[j], &dataRow[j], pixelSize);
+	for (uint i = 0; i < height; i++) {
+		uint8_t *dataRow = &data[i * bytesPerRow];
+		uint8_t *flippedRow = &flipped[(height - 1) * bytesPerRow - i * bytesPerRow];
+		for (uint j = 0; j < bytesPerRow; j += 4*sizeof(uint8_t)) {
+			memcpy(&flippedRow[j], &dataRow[j], 4*sizeof(uint8_t));
 		}
 	}
 
@@ -209,14 +192,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
 
 	MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, _renderBufferHeight);
-	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:data bytesPerRow:4*_renderBufferWidth];
+	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:bytesPerRow];
 
 	[commandBuffer presentDrawable:drawable];
 
 	[commandBuffer commit];
 	free(data);
-#endif
-	//free(flipped);
+	free(flipped);
 }
 
 - (int)getScreenWidth {
