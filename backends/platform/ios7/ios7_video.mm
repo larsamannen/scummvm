@@ -157,12 +157,12 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	uint nbrRows = _renderBufferHeight;
 	uint pixelSize = 4*sizeof(GLbyte);
 	//[EAGLContext setCurrentContext:_openGLContext];
-
+	//glBindTexture(GL_TEXTURE0, _renderTexture);
 	//GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
-	//glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
-	//			  CVOpenGLESTextureGetName(_renderTexture));
+	glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
+				  CVOpenGLESTextureGetName(_renderTexture));
 	//glFlush();
-	glFinish();
+	glFlush();
 	//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
 	if (kCVReturnSuccess == CVPixelBufferLockBaseAddress(_renderTarget,
 		kCVPixelBufferLock_ReadOnly)) {
@@ -183,6 +183,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		[commandBuffer commit];
 		CVPixelBufferUnlockBaseAddress(_renderTarget, kCVPixelBufferLock_ReadOnly);
 	}
+	//glFinish();
 	//CVOpenGLESTextureCacheFlush(_textureCache, 0);
 	//CFRelease(_renderTexture);
 
@@ -562,7 +563,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)initSurface {
-	[self setupRenderBuffer];
+	//[self setupRenderBuffer];
 
 	if (_keyboardView == nil) {
 		_keyboardView = [[SoftKeyboard alloc] initWithFrame:CGRectZero];
