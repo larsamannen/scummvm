@@ -49,7 +49,8 @@ void RenderbufferTarget::activateInternal() {
 
 	// Attach render buffer to newly created FBO.
 	if (needUpdate) {
-		GL_CALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _glRBO));
+		GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _glRBO, 0));
+		//GL_CALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _glRBO));
 	}
 }
 

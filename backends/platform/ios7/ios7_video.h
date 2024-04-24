@@ -62,6 +62,8 @@ uint getSizeNextPOT(uint size);
 	CVMetalTextureRef _CVMTLTexture;
 	CAMetalLayer *_metalLayer;
 	CVMetalTextureCacheRef _CVMTLTextureCache;
+	CVOpenGLESTextureRef _renderTexture;
+	CVPixelBufferRef _renderTarget;
 	
 	GLuint _viewRenderbuffer;
 	GLuint _color;
@@ -74,6 +76,7 @@ uint getSizeNextPOT(uint size);
 @property (readonly, nonnull, nonatomic) id<MTLDevice> metalDevice;
 @property (readonly, nonnull, nonatomic) id<MTLTexture> metalTexture;
 @property (readonly, nonnull, nonatomic) id<MTLCommandQueue> commandQueue;
+@property (readonly) CVOpenGLESTextureCacheRef _Nonnull _textureCache;
 
 - (nonnull id)initWithFrame:(struct CGRect)frame;
 

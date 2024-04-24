@@ -31,6 +31,8 @@
 
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
+#include <CoreVideo/CoreVideo.h>
+
 #ifdef __IPHONE_14_0
 #include <GameController/GameController.h>
 #endif
@@ -87,6 +89,9 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return [CAMetalLayer class];
 }
 
+@synthesize _textureCache;
+
+
 // According to Apple doc layoutSublayersOfLayer: is supported from iOS 10.0.
 // This doesn't seem to be correct since the instance method layoutSublayers,
 // supported from iOS 2.0, default calls the layoutSublayersOfLayer: method
@@ -134,7 +139,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		}
 	}
 	[_metalLayer setDrawableSize:CGSizeMake(_renderBufferWidth, _renderBufferHeight)];
-	return _viewRenderbuffer;
+	//return _viewRenderbuffer;
+	return CVOpenGLESTextureGetName(_renderTexture);
 }
 
 - (void)destroyOpenGLContext {
@@ -150,14 +156,44 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	uint rowLength = 4*_renderBufferWidth*sizeof(GLbyte);
 	uint nbrRows = _renderBufferHeight;
 	uint pixelSize = 4*sizeof(GLbyte);
+	//[EAGLContext setCurrentContext:_openGLContext];
 
-	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
-	GLbyte *flipped = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
+	//GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
+	//glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
+	//			  CVOpenGLESTextureGetName(_renderTexture));
+	//glFlush();
+	glFinish();
+	//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+	if (kCVReturnSuccess == CVPixelBufferLockBaseAddress(_renderTarget,
+		kCVPixelBufferLock_ReadOnly)) {
+		GLubyte *pixels=(GLubyte *)CVPixelBufferGetBaseAddress(_renderTarget);
+		// process pixels how you like!
+		//memcpy(data, pixels, rowLength* nbrRows);
+		GLint bytesPerRow = CVPixelBufferGetBytesPerRow(_renderTarget);
+		GLint height = CVPixelBufferGetHeight(_renderTarget);
+		id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+		commandBuffer.label = @"MyCommand";
+		id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+			
+		MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, height);
+		[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:pixels bytesPerRow:bytesPerRow];
+			
+		[commandBuffer presentDrawable:drawable];
+			
+		[commandBuffer commit];
+		CVPixelBufferUnlockBaseAddress(_renderTarget, kCVPixelBufferLock_ReadOnly);
+	}
+	//CVOpenGLESTextureCacheFlush(_textureCache, 0);
+	//CFRelease(_renderTexture);
 
-	glPixelStorei(GL_PACK_ALIGNMENT, 4);
-	glReadPixels(0, 0, _renderBufferWidth, _renderBufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	//GLbyte *data = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
+	//GLbyte *flipped = (GLbyte *)malloc(rowLength * nbrRows * pixelSize);
 
+	//glBindTexture(GL_TEXTURE_2D, _viewRenderbuffer);
+	
+	//glPixelStorei(GL_PACK_ALIGNMENT, 4);
+	//glReadPixels(0, 0, _renderBufferWidth, _renderBufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+#if 0
 	// This is very slow... need to accelerate
 	for (uint i = 0; i < nbrRows; i++) {
 		GLbyte *dataRow = &data[i * rowLength];
@@ -172,13 +208,14 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
 
 	MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, _renderBufferHeight);
-	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:4*_renderBufferWidth];
+	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:data bytesPerRow:4*_renderBufferWidth];
 
 	[commandBuffer presentDrawable:drawable];
 
 	[commandBuffer commit];
 	free(data);
-	free(flipped);
+#endif
+	//free(flipped);
 }
 
 - (int)getScreenWidth {
@@ -195,27 +232,81 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
 		if (!_viewRenderbuffer) {
-			glGenRenderbuffers(1, &_viewRenderbuffer);
+//			glGenRenderbuffers(1, &_viewRenderbuffer);
+			//glGenTextures(1, &_viewRenderbuffer);
 	//		printOpenGLError();
 		}
-		glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
+		_renderBufferWidth = [self getScreenWidth];
+		_renderBufferHeight = [self getScreenHeight];
+#if 0
+		glBindTexture(GL_TEXTURE_2D, _viewRenderbuffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _renderBufferWidth, _renderBufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+		CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, _openGLContext, NULL, &_textureCache);
+		
+		CFDictionaryRef empty; // empty value for attr value.
+		CFMutableDictionaryRef attrs;
+		empty = CFDictionaryCreate(kCFAllocatorDefault, // our empty IOSurface properties dictionary
+								   NULL,
+								   NULL,
+								   0,
+								   &kCFTypeDictionaryKeyCallBacks,
+								   &kCFTypeDictionaryValueCallBacks);
+		attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
+										  1,
+										  &kCFTypeDictionaryKeyCallBacks,
+										  &kCFTypeDictionaryValueCallBacks);
+
+		CFDictionarySetValue(attrs,
+							 kCVPixelBufferIOSurfacePropertiesKey,
+							 empty);
+
+		CVPixelBufferCreate(kCFAllocatorDefault, _renderBufferWidth, _renderBufferHeight,
+		  kCVPixelFormatType_32BGRA,
+		  attrs,
+		  &_renderTarget);
+
+		CVOpenGLESTextureCacheCreateTextureFromImage (kCFAllocatorDefault,
+													  _textureCache,
+													  _renderTarget,
+													  NULL, // texture attributes
+													  GL_TEXTURE_2D,
+													  GL_RGBA, // opengl format
+													  _renderBufferWidth,
+													  _renderBufferHeight,
+													  GL_RGBA, // native iOS format
+													  GL_UNSIGNED_BYTE,
+													  0,
+													  &_renderTexture);
+		
+		glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
+					  CVOpenGLESTextureGetName(_renderTexture));
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		//glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
 
 		// Create a color renderbuffer, allocate storage for it,
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, [self getScreenWidth], [self getScreenHeight]);
+		//glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, [self getScreenWidth], [self getScreenHeight]);
 		//glRenderbufferStorageMultisampleAPPLE(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT16, [self getScreenWidth], [self getScreenHeight]);
 		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _viewRenderbuffer);
 		// Retrieve the render buffer size. This *should* match the frame size,
 		// i.e. g_fullWidth and g_fullHeight.
-		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
+		//glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
 	//	printOpenGLError();
-		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
+		//glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
 		
 	//	printOpenGLError();
 	});
 }
 
 - (void)deleteRenderbuffer {
-	glDeleteRenderbuffers(1, &_viewRenderbuffer);
+	glDeleteTextures(1, &_viewRenderbuffer);
+//	glDeleteRenderbuffers(1, &_viewRenderbuffer);
 }
 
 - (void)setupGestureRecognizers {
