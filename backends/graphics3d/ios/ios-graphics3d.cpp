@@ -72,7 +72,8 @@ void iOSGraphics3dManager::initSurface() {
 	// Create the framebuffer attached to ObjC provided RBO
 	glGenFramebuffers(1, &_glFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, _glFBO);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, glRBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glRBO, 0);
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, glRBO);
 
 	// Attach a depth and stencil buffer
 	createDepthAndStencilBuffer(sys->getScreenWidth(), sys->getScreenHeight());

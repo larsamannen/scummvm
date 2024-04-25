@@ -122,11 +122,11 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (uint)createOpenGLContext {
-	_metalDevice = MTLCreateSystemDefaultDevice();
-	_commandQueue =  [_metalDevice newCommandQueue];
 	// Create OpenGL context with the sharegroup from the context
 	// connected to the Apple Core Animation layer
 	if (!_openGLContext && _mainContext) {
+		_metalDevice = MTLCreateSystemDefaultDevice();
+		_commandQueue =  [_metalDevice newCommandQueue];
 		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_mainContext.sharegroup];
 
 		if (_openGLContext == nil) {
@@ -144,8 +144,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)destroyOpenGLContext {
-	[_openGLContext release];
-	_openGLContext = nil;
+	//[_openGLContext release];
+	//_openGLContext = nil;
 }
 
 - (CA::MetalLayer *)getMetalLayer {
