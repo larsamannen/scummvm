@@ -167,6 +167,52 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return _renderBufferHeight;
 }
 
+- (void)setupOpenGLTextureCache {
+	if (_openGLTextureCache == nullptr) {
+		CVOpenGLESTextureCacheCreate(kCFAllocatorDefault,
+									 NULL, _openGLContext,
+									 NULL, &_openGLTextureCache);
+	}
+
+	if (_openGLPixelBuffer != nullptr) {
+		CVPixelBufferRelease(_openGLPixelBuffer);
+	}
+	CFDictionaryRef emptyDict;
+	emptyDict = CFDictionaryCreate(kCFAllocatorDefault,
+								   NULL, NULL, 0,
+								   &kCFTypeDictionaryKeyCallBacks,
+								   &kCFTypeDictionaryValueCallBacks);
+
+	CFMutableDictionaryRef attributes;
+	attributes = CFDictionaryCreateMutable(kCFAllocatorDefault,
+										   1,
+										   &kCFTypeDictionaryKeyCallBacks,
+										   &kCFTypeDictionaryValueCallBacks);
+
+	CFDictionarySetValue(attributes,
+						 kCVPixelBufferIOSurfacePropertiesKey, // important
+						 emptyDict);
+
+	CVPixelBufferCreate(kCFAllocatorDefault,
+						_renderBufferWidth, _renderBufferHeight,
+						kCVPixelFormatType_32BGRA,
+						attributes,
+						&_openGLPixelBuffer);
+
+	CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+												 _openGLTextureCache,
+												 _openGLPixelBuffer,
+												 NULL,
+												 GL_TEXTURE_2D,
+												 GL_RGBA,
+												 _renderBufferWidth,
+												 _renderBufferHeight,
+												 GL_RGBA,
+												 GL_UNSIGNED_BYTE,
+												 0,
+												 &_openGLTexture);
+}
+
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
 		if (!_viewRenderbuffer) {
@@ -184,6 +230,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		printOpenGLError();
 		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
 		printOpenGLError();
+
+		[self setupOpenGLTextureCache];
 	});
 }
 

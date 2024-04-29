@@ -59,6 +59,11 @@ uint getSizeNextPOT(uint size);
 
 	GLint _renderBufferWidth;
 	GLint _renderBufferHeight;
+
+	// Shared CoreVideo GPU context
+	CVOpenGLESTextureCacheRef _openGLTextureCache;
+	CVPixelBufferRef _openGLPixelBuffer;
+	CVOpenGLESTextureRef _openGLTexture;
 }
 
 @property (nonatomic, assign) BOOL isInGame;
