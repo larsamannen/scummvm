@@ -866,6 +866,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_tvOS.push_back("AudioToolbox.framework");
 	frameworks_tvOS.push_back("QuartzCore.framework");
 	frameworks_tvOS.push_back("OpenGLES.framework");
+	frameworks_tvOS.push_back("Metal.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_tvOS.push_back(getLibString("faad", setup.useXCFramework));
