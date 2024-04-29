@@ -73,6 +73,21 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return fetched;
 }
 
+const char* kernelFunc = R"(
+	#include <metal_stdlib>
+	#include <simd/simd.h>
+	using namespace metal;
+
+	kernel void flip_y(
+		texture2d<float, access::write> dst [[texture(0)]],
+		texture2d<float, access::read> src [[texture(1)]],
+		uint2 gid [[thread_position_in_grid]])
+	{
+		float4 flipColor = src.read(uint2(gid.x, src.get_height() - gid.y));
+
+		dst.write(flipColor, gid);
+	})";
+
 @implementation iPhoneView {
 #if TARGET_OS_IOS
 	UIButton *_menuButton;
@@ -83,6 +98,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	UILongPressGestureRecognizer *twoFingerLongPressGesture;
 	CGPoint touchesBegan;
 #endif
+	id<MTLLibrary> library;
+	id<MTLFunction> kernelFunctionFlipY;
 }
 
 + (Class)layerClass {
@@ -90,7 +107,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 @synthesize _textureCache;
-
+@synthesize _CVMTLTextureCache;
 
 // According to Apple doc layoutSublayersOfLayer: is supported from iOS 10.0.
 // This doesn't seem to be correct since the instance method layoutSublayers,
@@ -127,6 +144,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	if (!_openGLContext && _mainContext) {
 		_metalDevice = MTLCreateSystemDefaultDevice();
 		_commandQueue =  [_metalDevice newCommandQueue];
+		library = [_metalDevice newLibraryWithSource:[NSString stringWithUTF8String:kernelFunc] options:nil error:nil];//newLibraryWithData: error:nil];
+		kernelFunctionFlipY = [library newFunctionWithName:@"flip_y"];
 		_openGLContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:_mainContext.sharegroup];
 
 		if (_openGLContext == nil) {
@@ -153,30 +172,65 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)refreshScreen {
+	NSError *error = NULL;
 	//uint rowLength = 4*_renderBufferWidth*sizeof(GLbyte);
 	//uint nbrRows = _renderBufferHeight;
 	//uint pixelSize = 4*sizeof(GLbyte);
 	//[EAGLContext setCurrentContext:_openGLContext];
 	//glBindTexture(GL_TEXTURE0, _renderTexture);
-	uint8_t *data = nullptr;
-	size_t bytesPerRow;
-	size_t height;
+	//uint8_t *data = nullptr;
+	//size_t bytesPerRow;
+	//size_t height;
 
 	glFlush();
+	
+	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+	id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+	// Pipeline
+	id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoder];
+	[encoder setComputePipelineState:[_metalDevice newComputePipelineStateWithFunction:kernelFunctionFlipY error:&error]];
+	// dst
+	[encoder setTexture:[drawable texture] atIndex:0];
+	// src
+	[encoder setTexture:_metalTexture atIndex:1];
+	
+	// Run Kernel
+	MTLSize _threadgroupSize = MTLSizeMake(16, 16, 1);
+	MTLSize _threadgroupCount;
+	_threadgroupCount.width = (_metalTexture.width + _threadgroupSize.width - 1) / _threadgroupSize.width;
+	_threadgroupCount.height = (_metalTexture.height + _threadgroupSize.height - 1) / _threadgroupSize.height;
+	_threadgroupCount.depth = 1;
+	[encoder dispatchThreadgroups:_threadgroupCount threadsPerThreadgroup:_threadgroupSize];
+	
+	[encoder endEncoding];
 
-	if (kCVReturnSuccess == CVPixelBufferLockBaseAddress(_renderTarget,
-		kCVPixelBufferLock_ReadOnly)) {
-		uint8_t *pixels=(uint8_t *)CVPixelBufferGetBaseAddress(_renderTarget);
+//	id<MTLBlitCommandEncoder> encoder = [commandBuffer blitCommandEncoder];
+//	if (@available(iOS 13.0, *)) {
+//		[encoder copyFromTexture:_metalTexture toTexture:[drawable texture]];
+//	} else {
+		// Fallback on earlier versions
+//	}
+//	[encoder endEncoding];
+	[commandBuffer presentDrawable:drawable];
+
+	[commandBuffer commit];
+
+//	if (kCVReturnSuccess == CVPixelBufferLockBaseAddress(_renderTarget,
+//		kCVPixelBufferLock_ReadOnly)) {
+		
+//		_metalTexture = CVMetalTextureGetTexture(_CVMTLTexture);
+
+//		uint8_t *pixels=(uint8_t *)CVPixelBufferGetBaseAddress(_renderTarget);
 		// process pixels how you like!
-		bytesPerRow = CVPixelBufferGetBytesPerRow(_renderTarget);
-		height = CVPixelBufferGetHeight(_renderTarget);
-		data = (uint8_t *)malloc(bytesPerRow * height);
-		memcpy(data, pixels, bytesPerRow * height);
-		CVPixelBufferUnlockBaseAddress(_renderTarget, kCVPixelBufferLock_ReadOnly);
-	} else {
-		return;
-	}
-
+//		bytesPerRow = CVPixelBufferGetBytesPerRow(_renderTarget);
+//		height = CVPixelBufferGetHeight(_renderTarget);
+//		data = (uint8_t *)malloc(bytesPerRow * height);
+//		memcpy(data, pixels, bytesPerRow * height);
+//		CVPixelBufferUnlockBaseAddress(_renderTarget, kCVPixelBufferLock_ReadOnly);
+//	} else {
+//		return;
+//	}
+#if 0
 	uint8_t *flipped = (uint8_t *)malloc(bytesPerRow * height);
 
 	for (uint i = 0; i < height; i++) {
@@ -193,12 +247,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 	MTLRegion region = MTLRegionMake2D(0, 0, _renderBufferWidth, _renderBufferHeight);
 	[[drawable texture] replaceRegion:region mipmapLevel:0 withBytes:flipped bytesPerRow:bytesPerRow];
+#endif
 
-	[commandBuffer presentDrawable:drawable];
-
-	[commandBuffer commit];
-	free(data);
-	free(flipped);
+	//free(data);
+	//free(flipped);
 }
 
 - (int)getScreenWidth {
@@ -253,6 +305,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		  kCVPixelFormatType_32BGRA,
 		  attrs,
 		  &_renderTarget);
+		
+		err = CVMetalTextureCacheCreate(
+						kCFAllocatorDefault,
+						nil,
+						_metalDevice,
+						nil,
+						&_CVMTLTextureCache);
 
 		CVOpenGLESTextureCacheCreateTextureFromImage (kCFAllocatorDefault,
 													  _textureCache,
@@ -266,6 +325,17 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 													  GL_UNSIGNED_BYTE,
 													  0,
 													  &_renderTexture);
+		
+		err = CVMetalTextureCacheCreateTextureFromImage(
+						kCFAllocatorDefault,
+						_CVMTLTextureCache,
+						_renderTarget, nil,
+						MTLPixelFormatRGBA8Unorm,
+						_renderBufferWidth, _renderBufferHeight,
+						0,
+						&_CVMTLTexture);
+		
+		_metalTexture = CVMetalTextureGetTexture(_CVMTLTexture);
 		
 		glBindTexture(CVOpenGLESTextureGetTarget(_renderTexture),
 					  CVOpenGLESTextureGetName(_renderTexture));
