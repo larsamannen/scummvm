@@ -56,10 +56,6 @@ uint getSizeNextPOT(uint size);
 
 	EAGLContext *_mainContext;
 	EAGLContext *_openGLContext;
-	GLuint _viewRenderbuffer;
-
-	GLint _renderBufferWidth;
-	GLint _renderBufferHeight;
 
 	// Shared CoreVideo GPU context
 	CVOpenGLESTextureCacheRef _openGLTextureCache;
@@ -69,10 +65,13 @@ uint getSizeNextPOT(uint size);
 	// Metal context
 	CAMetalLayer *_metalLayer;
 	CVMetalTextureCacheRef _metalTextureCache;
-	CVMetalTextureRef _metalTexture;
+	CVMetalTextureRef _metalTextureRef;
 }
 @property (readonly, nonnull, nonatomic) id<MTLDevice> metalDevice;
 @property (readonly, nonnull, nonatomic) id<MTLCommandQueue> commandQueue;
+@property (readonly, nonnull, nonatomic) id<MTLLibrary> metalLibrary;
+@property (readonly, nonnull, nonatomic) id<MTLFunction> kernelFunctionFlipY;
+@property (readonly, nonnull, nonatomic) id<MTLTexture> metalTexture;
 
 @property (nonatomic, assign) BOOL isInGame;
 @property (nonatomic, assign) UIInterfaceOrientationMask supportedScreenOrientations;

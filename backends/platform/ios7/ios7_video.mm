@@ -82,6 +82,20 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return fetched;
 }
 
+const char* kernelFunc = R"(
+	#include <metal_stdlib>
+	#include <simd/simd.h>
+	using namespace metal;
+
+	kernel void flip_y(
+	   texture2d<float, access::write> dst [[texture(0)]],
+	   texture2d<float, access::read> src [[texture(1)]],
+	   uint2 gid [[thread_position_in_grid]])
+	{
+		float4 flipColor = src.read(uint2(gid.x, src.get_height() - gid.y));
+		dst.write(flipColor, gid);
+	})";
+
 @implementation iPhoneView {
 #if TARGET_OS_IOS
 	UIButton *_menuButton;
@@ -113,11 +127,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 - (void)createContext {
 	_metalLayer = (CAMetalLayer *)self.layer;
 	_metalLayer.framebufferOnly = NO;
-	_metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
+	_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
 	// let these live as long as the app is running
 	_metalDevice = MTLCreateSystemDefaultDevice();
 	_commandQueue =  [_metalDevice newCommandQueue];
+	_metalLibrary = [_metalDevice newLibraryWithSource:[NSString stringWithUTF8String:kernelFunc] options:nil error:nil];
+	_kernelFunctionFlipY = [_metalLibrary newFunctionWithName:@"flip_y"];
 
 	_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -146,7 +162,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 			[self setupRenderBuffer];
 		}
 	}
-	return _viewRenderbuffer;
+	return CVOpenGLESTextureGetName(_openGLTexture);
 }
 
 - (void)destroyOpenGLContext {
@@ -155,8 +171,29 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)refreshScreen {
-	glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-	[_openGLContext presentRenderbuffer:GL_RENDERBUFFER];
+	NSError *error = NULL;
+
+	glFlush();
+
+	@autoreleasepool {
+		id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+		id<CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+		id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoder];
+		[encoder setComputePipelineState:[_metalDevice newComputePipelineStateWithFunction:_kernelFunctionFlipY error:&error]];
+		// dst
+		[encoder setTexture:[drawable texture] atIndex:0];
+		// src
+		[encoder setTexture:_metalTexture atIndex:1];
+		MTLSize threadgroupSize = MTLSizeMake(16, 16, 1);
+		MTLSize threadgroupCount;
+		threadgroupCount.width = (_metalTexture.width + threadgroupSize.width - 1) / threadgroupSize.width;
+		threadgroupCount.height = (_metalTexture.height + threadgroupSize.height - 1) / threadgroupSize.height;
+		threadgroupCount.depth = 1;
+		[encoder dispatchThreadgroups:threadgroupCount threadsPerThreadgroup:threadgroupSize];
+		[encoder endEncoding];
+		[commandBuffer presentDrawable:drawable];
+		[commandBuffer commit];
+	}
 }
 
 - (int)getScreenWidth {
@@ -194,7 +231,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 						 emptyDict);
 
 	CVPixelBufferCreate(kCFAllocatorDefault,
-						_renderBufferWidth, _renderBufferHeight,
+						self.layer.frame.size.width,
+						self.layer.frame.size.height,
 						kCVPixelFormatType_32BGRA,
 						attributes,
 						&_openGLPixelBuffer);
@@ -205,9 +243,9 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 												 NULL,
 												 GL_TEXTURE_2D,
 												 GL_RGBA,
-												 _renderBufferWidth,
-												 _renderBufferHeight,
-												 GL_RGBA,
+												 self.layer.frame.size.width,
+												 self.layer.frame.size.height,
+												 GL_BGRA,
 												 GL_UNSIGNED_BYTE,
 												 0,
 												 &_openGLTexture);
@@ -224,38 +262,25 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 											  _metalTextureCache,
 											  _openGLPixelBuffer,
 											  NULL,
-											  MTLPixelFormatRGBA8Unorm,
-											  _renderBufferWidth, _renderBufferHeight,
+											  MTLPixelFormatBGRA8Unorm,
+											  self.layer.frame.size.width,
+											  self.layer.frame.size.height,
 											  0,
-											  &_metalTexture);
+											  &_metalTextureRef);
+
+	_metalTexture = CVMetalTextureGetTexture(_metalTextureRef);
 
 }
 
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
-		if (!_viewRenderbuffer) {
-			glGenRenderbuffers(1, &_viewRenderbuffer);
-			printOpenGLError();
-		}
-		glBindRenderbuffer(GL_RENDERBUFFER, _viewRenderbuffer);
-		printOpenGLError();
-		if (![_mainContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id <EAGLDrawable>) self.layer]) {
-			printError("Failed renderbufferStorage");
-		}
-		// Retrieve the render buffer size. This *should* match the frame size,
-		// i.e. g_fullWidth and g_fullHeight.
-		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_renderBufferWidth);
-		printOpenGLError();
-		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_renderBufferHeight);
-		printOpenGLError();
-
 		[self setupOpenGLTextureCache];
 		[self setupMetalTextureCache];
 	});
 }
 
 - (void)deleteRenderbuffer {
-	glDeleteRenderbuffers(1, &_viewRenderbuffer);
+	//glDeleteRenderbuffers(1, &_viewRenderbuffer);
 }
 
 - (void)setupGestureRecognizers {
@@ -511,7 +536,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)initSurface {
-	[self setupRenderBuffer];
+	//[self setupRenderBuffer];
 
 	if (_keyboardView == nil) {
 		_keyboardView = [[SoftKeyboard alloc] initWithFrame:CGRectZero];
