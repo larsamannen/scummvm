@@ -213,6 +213,24 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 												 &_openGLTexture);
 }
 
+- (void)setupMetalTextureCache {
+	CVMetalTextureCacheCreate(kCFAllocatorDefault,
+							  nil,
+							  _metalDevice,
+							  nil,
+							  &_metalTextureCache);
+
+	CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+											  _metalTextureCache,
+											  _openGLPixelBuffer,
+											  NULL,
+											  MTLPixelFormatRGBA8Unorm,
+											  _renderBufferWidth, _renderBufferHeight,
+											  0,
+											  &_metalTexture);
+
+}
+
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
 		if (!_viewRenderbuffer) {
@@ -232,6 +250,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		printOpenGLError();
 
 		[self setupOpenGLTextureCache];
+		[self setupMetalTextureCache];
 	});
 }
 

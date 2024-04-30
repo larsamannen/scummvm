@@ -68,6 +68,8 @@ uint getSizeNextPOT(uint size);
 
 	// Metal context
 	CAMetalLayer *_metalLayer;
+	CVMetalTextureCacheRef _metalTextureCache;
+	CVMetalTextureRef _metalTexture;
 }
 @property (readonly, nonnull, nonatomic) id<MTLDevice> metalDevice;
 @property (readonly, nonnull, nonatomic) id<MTLCommandQueue> commandQueue;
