@@ -25,6 +25,7 @@
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
 #include <QuartzCore/QuartzCore.h>
+#include <Metal/Metal.h>
 
 #include <OpenGLES/EAGL.h>
 #include <OpenGLES/ES2/gl.h>
@@ -64,12 +65,17 @@ uint getSizeNextPOT(uint size);
 	CVOpenGLESTextureCacheRef _openGLTextureCache;
 	CVPixelBufferRef _openGLPixelBuffer;
 	CVOpenGLESTextureRef _openGLTexture;
+
+	// Metal context
+	CAMetalLayer *_metalLayer;
 }
+@property (readonly, nonnull, nonatomic) id<MTLDevice> metalDevice;
+@property (readonly, nonnull, nonatomic) id<MTLCommandQueue> commandQueue;
 
 @property (nonatomic, assign) BOOL isInGame;
 @property (nonatomic, assign) UIInterfaceOrientationMask supportedScreenOrientations;
 
-- (id)initWithFrame:(struct CGRect)frame;
+- (id _Nonnull)initWithFrame:(struct CGRect)frame;
 
 - (uint)createOpenGLContext;
 - (void)destroyOpenGLContext;

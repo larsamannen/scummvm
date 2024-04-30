@@ -95,7 +95,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 + (Class)layerClass {
-	return [CAEAGLLayer class];
+	return [CAMetalLayer class];
 }
 
 // According to Apple doc layoutSublayersOfLayer: is supported from iOS 10.0.
@@ -103,7 +103,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 // supported from iOS 2.0, default calls the layoutSublayersOfLayer: method
 // of the layer’s delegate object. It's been verified that this function is
 // called in at least iOS 9.3.5.
-- (void)layoutSublayersOfLayer:(CAEAGLLayer *)layer {
+- (void)layoutSublayersOfLayer:(CAMetalLayer *)layer {
 	if (layer == self.layer) {
 		[self addEvent:InternalEvent(kInputScreenChanged, 0, 0)];
 	}
@@ -111,13 +111,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)createContext {
-	CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+	_metalLayer = (CAMetalLayer *)self.layer;
+	_metalLayer.framebufferOnly = NO;
+	_metalLayer.pixelFormat = MTLPixelFormatRGBA8Unorm;
 
-	eaglLayer.opaque = YES;
-	eaglLayer.drawableProperties = @{
-	                                 kEAGLDrawablePropertyRetainedBacking: @NO,
-	                                 kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8,
-	                                };
+	// let these live as long as the app is running
+	_metalDevice = MTLCreateSystemDefaultDevice();
+	_commandQueue =  [_metalDevice newCommandQueue];
 
 	_mainContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -160,11 +160,11 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (int)getScreenWidth {
-	return _renderBufferWidth;
+	return self.layer.frame.size.width;
 }
 
 - (int)getScreenHeight {
-	return _renderBufferHeight;
+	return self.layer.frame.size.height;
 }
 
 - (void)setupOpenGLTextureCache {
