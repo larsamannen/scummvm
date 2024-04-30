@@ -41,6 +41,7 @@ public:
 	 * Set size of the render target.
 	 */
 	bool setSize(uint width, uint height) override;
+	void notifyResize(GLuint renderbufferID);
 
 protected:
 	void activateInternal() override;

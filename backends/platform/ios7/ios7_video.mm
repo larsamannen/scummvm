@@ -128,6 +128,7 @@ const char* kernelFunc = R"(
 	_metalLayer = (CAMetalLayer *)self.layer;
 	_metalLayer.framebufferOnly = NO;
 	_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+	[_metalLayer setDrawableSize:CGSizeMake(self.frame.size.width * self.contentScaleFactor, self.frame.size.height * self.contentScaleFactor)];
 
 	// let these live as long as the app is running
 	_metalDevice = MTLCreateSystemDefaultDevice();
@@ -162,8 +163,14 @@ const char* kernelFunc = R"(
 			[self setupRenderBuffer];
 		}
 	}
+
 	return CVOpenGLESTextureGetName(_openGLTexture);
 }
+
+- (uint)getOpenGLRenderBuffer {
+	return CVOpenGLESTextureGetName(_openGLTexture);
+}
+
 
 - (void)destroyOpenGLContext {
 	[_openGLContext release];
@@ -197,11 +204,11 @@ const char* kernelFunc = R"(
 }
 
 - (int)getScreenWidth {
-	return self.layer.frame.size.width;
+	return _drawableWidth;
 }
 
 - (int)getScreenHeight {
-	return self.layer.frame.size.height;
+	return _drawableHeight;
 }
 
 - (void)setupOpenGLTextureCache {
@@ -211,9 +218,6 @@ const char* kernelFunc = R"(
 									 NULL, &_openGLTextureCache);
 	}
 
-	if (_openGLPixelBuffer != nullptr) {
-		CVPixelBufferRelease(_openGLPixelBuffer);
-	}
 	CFDictionaryRef emptyDict;
 	emptyDict = CFDictionaryCreate(kCFAllocatorDefault,
 								   NULL, NULL, 0,
@@ -230,12 +234,21 @@ const char* kernelFunc = R"(
 						 kCVPixelBufferIOSurfacePropertiesKey, // important
 						 emptyDict);
 
+	if (_openGLPixelBuffer != nullptr) {
+		CVPixelBufferRelease(_openGLPixelBuffer);
+	}
+
 	CVPixelBufferCreate(kCFAllocatorDefault,
-						self.layer.frame.size.width,
-						self.layer.frame.size.height,
+						_drawableWidth,
+						_drawableHeight,
 						kCVPixelFormatType_32BGRA,
 						attributes,
 						&_openGLPixelBuffer);
+
+	if (_openGLTexture != nullptr) {
+		CVBufferRelease(_openGLTexture);
+	}
+	CVOpenGLESTextureCacheFlush(_openGLTextureCache, 0);
 
 	CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
 												 _openGLTextureCache,
@@ -243,8 +256,8 @@ const char* kernelFunc = R"(
 												 NULL,
 												 GL_TEXTURE_2D,
 												 GL_RGBA,
-												 self.layer.frame.size.width,
-												 self.layer.frame.size.height,
+												 _drawableWidth,
+												 _drawableHeight,
 												 GL_BGRA,
 												 GL_UNSIGNED_BYTE,
 												 0,
@@ -252,28 +265,36 @@ const char* kernelFunc = R"(
 }
 
 - (void)setupMetalTextureCache {
-	CVMetalTextureCacheCreate(kCFAllocatorDefault,
-							  nil,
-							  _metalDevice,
-							  nil,
-							  &_metalTextureCache);
+	if (_metalTextureCache == nullptr) {
+		CVMetalTextureCacheCreate(kCFAllocatorDefault,
+								  nil,
+								  _metalDevice,
+								  nil,
+								  &_metalTextureCache);
+	}
+
+	if (_metalTextureRef != nullptr) {
+		CVBufferRelease(_metalTextureRef);
+	}
+	CVMetalTextureCacheFlush(_metalTextureCache, 0);
 
 	CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
 											  _metalTextureCache,
 											  _openGLPixelBuffer,
 											  NULL,
 											  MTLPixelFormatBGRA8Unorm,
-											  self.layer.frame.size.width,
-											  self.layer.frame.size.height,
+											  _drawableWidth,
+											  _drawableHeight,
 											  0,
 											  &_metalTextureRef);
 
 	_metalTexture = CVMetalTextureGetTexture(_metalTextureRef);
-
 }
 
 - (void)setupRenderBuffer {
 	execute_on_main_thread(^{
+		_drawableWidth = _metalLayer.drawableSize.width ? _metalLayer.drawableSize.width : self.frame.size.width * [self contentScaleFactor];
+		_drawableHeight = _metalLayer.drawableSize.height ? _metalLayer.drawableSize.height : self.frame.size.height * [self contentScaleFactor];
 		[self setupOpenGLTextureCache];
 		[self setupMetalTextureCache];
 	});
@@ -536,7 +557,7 @@ const char* kernelFunc = R"(
 }
 
 - (void)initSurface {
-	//[self setupRenderBuffer];
+	[self setupRenderBuffer];
 
 	if (_keyboardView == nil) {
 		_keyboardView = [[SoftKeyboard alloc] initWithFrame:CGRectZero];
@@ -610,6 +631,7 @@ const char* kernelFunc = R"(
 		[_toggleTouchModeButton setFrame:CGRectMake(newFrame.size.width - _toggleTouchModeButton.imageView.image.size.width - _toggleTouchModeButton.imageView.image.size.width, 0, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
 #endif
 		self.frame = newFrame;
+		[_metalLayer setDrawableSize:CGSizeMake(self.frame.size.width * self.contentScaleFactor, self.frame.size.height * self.contentScaleFactor)];
 	}
 #endif
 }

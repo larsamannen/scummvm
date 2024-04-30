@@ -57,6 +57,9 @@ uint getSizeNextPOT(uint size);
 	EAGLContext *_mainContext;
 	EAGLContext *_openGLContext;
 
+	uint _drawableWidth;
+	uint _drawableHeight;
+
 	// Shared CoreVideo GPU context
 	CVOpenGLESTextureCacheRef _openGLTextureCache;
 	CVPixelBufferRef _openGLPixelBuffer;
@@ -79,6 +82,7 @@ uint getSizeNextPOT(uint size);
 - (id _Nonnull)initWithFrame:(struct CGRect)frame;
 
 - (uint)createOpenGLContext;
+- (uint)getOpenGLRenderBuffer;
 - (void)destroyOpenGLContext;
 - (void)refreshScreen;
 - (int)getScreenWidth;

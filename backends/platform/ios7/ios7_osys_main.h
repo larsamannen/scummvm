@@ -108,6 +108,7 @@ public:
 	void applyTouchSettings(bool _3dMode, bool overlayShown);
 
 	uint createOpenGLContext();
+	uint getOpenGLRenderBuffer();
 	void destroyOpenGLContext();
 	void refreshScreen() const;
 	int getScreenWidth() const;

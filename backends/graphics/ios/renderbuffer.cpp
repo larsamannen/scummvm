@@ -53,6 +53,12 @@ void RenderbufferTarget::activateInternal() {
 	}
 }
 
+void RenderbufferTarget::notifyResize(GLuint renderbufferID) {
+	glDeleteTextures(1, &_glRBO);
+	_glRBO = renderbufferID;
+	GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _glRBO, 0));
+}
+
 bool RenderbufferTarget::setSize(uint width, uint height) {
 	// Set viewport dimensions.
 	_viewport[0] = 0;

@@ -274,6 +274,10 @@ uint OSystem_iOS7::createOpenGLContext() {
 	return [[iOS7AppDelegate iPhoneView] createOpenGLContext];
 }
 
+uint OSystem_iOS7::getOpenGLRenderBuffer() {
+	return [[iOS7AppDelegate iPhoneView] getOpenGLRenderBuffer];
+}
+
 void OSystem_iOS7::destroyOpenGLContext() {
 	[[iOS7AppDelegate iPhoneView] destroyOpenGLContext];
 }

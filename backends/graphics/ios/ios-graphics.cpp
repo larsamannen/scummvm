@@ -38,9 +38,9 @@ void iOSGraphicsManager::initSurface() {
 
 	// Create OpenGL context
 	GLuint rbo = sys->createOpenGLContext();
-
+	_targetBuffer = new OpenGL::RenderbufferTarget(rbo);
 	notifyContextCreate(OpenGL::kContextGLES2,
-	new OpenGL::RenderbufferTarget(rbo),
+						_targetBuffer,
 	// Currently iOS runs the ARMs in little-endian mode but prepare if
 	// that is changed in the future.
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -64,6 +64,8 @@ void iOSGraphicsManager::deinitSurface() {
 }
 
 void iOSGraphicsManager::notifyResize(const int width, const int height) {
+	GLuint newRbo = dynamic_cast<OSystem_iOS7 *>(g_system)->getOpenGLRenderBuffer();
+	_targetBuffer->notifyResize(newRbo);
 	handleResize(width, height);
 }
 
