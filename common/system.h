@@ -30,6 +30,7 @@
 #include "common/str-array.h" // For OSystem::updateStartSettings()
 #include "common/hash-str.h" // For OSystem::updateStartSettings()
 #include "common/path.h"
+#include "common/rect.h" // For OSystem::getSafeAreaInsets()
 #include "common/log.h"
 #include "graphics/pixelformat.h"
 #include "graphics/mode.h"
@@ -1205,6 +1206,16 @@ public:
 	 * Returns 1 for non-HiDPI screens, or if HiDPI display is not supported by the backend.
 	 */
 	virtual float getHiDPIScreenFactor() const { return 1.0f; }
+
+	/**
+	 * Return the values for the safe area insets.
+	 * Returns the left, right. top and bottom inset values to considerate to make sure that
+	 * any graphical element does not interefere with any system UI elements, such as the
+	 * notch or home indicator on mobile devices.
+	 *
+	 * @return The inset values represented as a Rect
+	 */
+	virtual Common::Rect getSafeAreaInsets() const { return Common::Rect(); }
 
 	/**
 	 * Blit a bitmap to the virtual screen.
