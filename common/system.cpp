@@ -218,6 +218,14 @@ bool OSystem::setStretchMode(const char *name) {
 	return false;
 }
 
+Common::Rect OSystem::getSafeOverlayArea(int16 *width, int16 *height) const {
+	int16 w = getOverlayWidth(),
+		  h = getOverlayHeight();
+	if (width) *width = w;
+	if (height) *height = h;
+	return Common::Rect(w, h);
+}
+
 void OSystem::fatalError() {
 	quit();
 	exit(1);
