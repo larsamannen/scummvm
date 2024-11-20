@@ -212,6 +212,26 @@ protected:
 	}
 
 	/**
+	 * Adjusts the drawRect for a system "safe area".
+	 */
+	void adjustDrawRectForSafeArea(Common::Rect &drawRect) {
+		int scaleFactor = g_system->getHiDPIScreenFactor();
+		auto safeAreaInsets = g_system->getSafeAreaInsets();
+
+		safeAreaInsets.left *= scaleFactor;
+		safeAreaInsets.right *= scaleFactor;
+		safeAreaInsets.top *= scaleFactor;
+		safeAreaInsets.bottom *= scaleFactor;
+
+		drawRect.left = drawRect.left > safeAreaInsets.left ? drawRect.left : safeAreaInsets.left;
+		drawRect.top = drawRect.top > safeAreaInsets.top ? drawRect.top : safeAreaInsets.top;
+		int safeWidth = drawRect.width() < (_windowWidth - safeAreaInsets.right - safeAreaInsets.left) ? drawRect.width() : _windowWidth - safeAreaInsets.right - safeAreaInsets.left;
+		int safeHeight = drawRect.height() < (_windowHeight - safeAreaInsets.top - safeAreaInsets.bottom) ? drawRect.height() : _windowHeight - safeAreaInsets.top - safeAreaInsets.bottom;
+		drawRect.setWidth(safeWidth);
+		drawRect.setHeight(safeHeight);
+	}
+
+	/**
 	 * Recalculates the display areas for the game and overlay surfaces within
 	 * the window.
 	 */
@@ -221,6 +241,8 @@ protected:
 		}
 
 		populateDisplayAreaDrawRect(getDesiredGameAspectRatio(), getWidth() * getGameRenderScale(), getHeight() * getGameRenderScale(), _gameDrawRect);
+
+		adjustDrawRectForSafeArea(_gameDrawRect);
 
 		if (getOverlayHeight()) {
 			const frac_t overlayAspect = intToFrac(getOverlayWidth()) / getOverlayHeight();
