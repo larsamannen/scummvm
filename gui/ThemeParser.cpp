@@ -1102,6 +1102,20 @@ bool ThemeParser::parseCommonLayoutProps(ParserNode *node, const Common::String 
 		_theme->getEvaluator()->setVar(var + "Padding.Bottom", SCALEVALUE(paddingB));
 	}
 
+	if (node->values.contains("inset")) {
+		int safeAreaInsetLeft, safeAreaInsetRight, safeAreaInsetTop, safeAreaInsetBottom;
+		if (!parseList(node->values["inset"], 4, &safeAreaInsetLeft, &safeAreaInsetRight, &safeAreaInsetTop, &safeAreaInsetBottom))
+			return false;
+
+		safeAreaInsetLeft += SCALEVALUE(safeAreaInsetLeft) + _theme->getEvaluator()->getVar(var + "Padding.Left");
+		safeAreaInsetRight += SCALEVALUE(safeAreaInsetRight) + _theme->getEvaluator()->getVar(var + "Padding.Right");
+		safeAreaInsetTop += SCALEVALUE(safeAreaInsetTop) + _theme->getEvaluator()->getVar(var + "Padding.Top");
+		safeAreaInsetBottom += SCALEVALUE(safeAreaInsetBottom) + _theme->getEvaluator()->getVar(var + "Padding.Bottom");
+		_theme->getEvaluator()->setVar(var + "Padding.Left", safeAreaInsetLeft);
+		_theme->getEvaluator()->setVar(var + "Padding.Right", safeAreaInsetRight);
+		_theme->getEvaluator()->setVar(var + "Padding.Top", safeAreaInsetTop);
+		_theme->getEvaluator()->setVar(var + "Padding.Bottom", safeAreaInsetBottom);
+	}
 
 	if (node->values.contains("textalign")) {
 		Graphics::TextAlign alignH = Graphics::kTextAlignStart;
