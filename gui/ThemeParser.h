@@ -186,6 +186,7 @@ protected:
 					XML_PROP(size, false)
 					XML_PROP(pos, false)
 					XML_PROP(padding, false)
+					XML_PROP(inset, false)
 					XML_PROP(resolution, false)
 					XML_PROP(textalign, false)
 					XML_PROP(rtl, false)
