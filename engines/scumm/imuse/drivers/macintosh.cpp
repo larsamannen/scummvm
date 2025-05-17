@@ -1310,17 +1310,10 @@ IMuseDriver_Macintosh::IMuseDriver_Macintosh(ScummEngine *vm, Audio::Mixer *mixe
 		_device = new NewMacSoundSystem(vm, mixer);
 		break;
 	case GID_INDY4:
-		// TODO: Detect the PowerPC version. Should it be version 2,
-		// 3, or something completely different?
-		if (false) {
-			_version = 2;
-			_numChannels = 12;
-			_baseTempo = 46439;
-			_device = new NewMacSoundSystem(vm, mixer);
-		} else {
-			_version = 0;
-			_device = new DJMSoundSystem(mixer);
-		}
+		_version = 1;
+		_numChannels = 12;
+		_baseTempo = 46439;
+		_device = new NewMacSoundSystem(vm, mixer);
 		break;
 	case GID_MONKEY2:
 		_version = 0;
