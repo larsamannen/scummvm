@@ -103,6 +103,34 @@ public:
 
 	bool isOverlayVisible() const override { return _overlayVisible; }
 
+	Common::Rect getSafeOverlayArea(int16 *width, int16 *height) const override {
+		Insets insets = getSafeAreaInsets();
+
+		// Create the overlay rect cut of the insets
+		// in the window coordinate space
+		// Make sure to avoid a negative size (and an invalid rect)
+		const int safeLeft = MAX(_overlayDrawRect.left, insets.left),
+		          safeTop = MAX(_overlayDrawRect.top, insets.top);
+		Common::Rect safeArea(safeLeft, safeTop,
+				MAX(safeLeft, MIN((int)_overlayDrawRect.right, _windowWidth - insets.right)),
+				MAX(safeTop, MIN((int)_overlayDrawRect.bottom, _windowHeight - insets.bottom)));
+
+		// Convert this safe area in the overlay coordinate space
+		const int targetWidth = getOverlayWidth(),
+			  targetHeight = getOverlayHeight(),
+			  sourceWidth = _overlayDrawRect.width(),
+			  sourceHeight = _overlayDrawRect.height();
+
+		if (width) *width = targetWidth;
+		if (height) *height = targetHeight;
+
+		return Common::Rect(
+			((safeArea.left - _overlayDrawRect.left) * targetWidth) / sourceWidth,
+			((safeArea.top - _overlayDrawRect.top) * targetHeight) / sourceHeight,
+			((safeArea.right - _overlayDrawRect.left) * targetWidth) / sourceWidth,
+			((safeArea.bottom - _overlayDrawRect.top) * targetHeight) / sourceHeight);
+	}
+
 	void setShakePos(int shakeXOffset, int shakeYOffset) override {
 		if (_gameScreenShakeXOffset != shakeXOffset || _gameScreenShakeYOffset != shakeYOffset) {
 			_gameScreenShakeXOffset = shakeXOffset;
@@ -199,6 +227,23 @@ protected:
 		return 1;
 	}
 
+	struct Insets {
+		int16 left;
+		int16 top;
+		int16 right;
+		int16 bottom;
+	};
+
+	/**
+	 * Returns the insets needed to get a safe area which does not interfere
+	 * with any susytem UI elements such as the notch or home indicator on mobile devices.
+	 *
+	 * @return The safe area insets
+	 */
+	virtual Insets getSafeAreaInsets() const {
+		return {0, 0, 0, 0};
+	}
+
 	/**
 	 * Called after the window has been updated with new dimensions.
 	 *
@@ -220,11 +265,25 @@ protected:
 			return;
 		}
 
-		populateDisplayAreaDrawRect(getDesiredGameAspectRatio(), getWidth() * getGameRenderScale(), getHeight() * getGameRenderScale(), _gameDrawRect);
+		// Compute a safe area rectangle out of the insets
+		Insets insets = getSafeAreaInsets();
+		Common::Rect safeArea(insets.left, insets.top,
+				_windowWidth - insets.right,
+				_windowHeight - insets.bottom);
+
+		// Create a game draw rect using the safe are dimensions
+		populateDisplayAreaDrawRect(getDesiredGameAspectRatio(),
+				getWidth() * getGameRenderScale(), getHeight() * getGameRenderScale(),
+				safeArea.width(), safeArea.height(), _gameDrawRect);
+
+		// Move the game draw rect in the safe area
+		_gameDrawRect.constrain(safeArea);
 
 		if (getOverlayHeight()) {
 			const frac_t overlayAspect = intToFrac(getOverlayWidth()) / getOverlayHeight();
-			populateDisplayAreaDrawRect(overlayAspect, getOverlayWidth(), getOverlayHeight(), _overlayDrawRect);
+			populateDisplayAreaDrawRect(overlayAspect,
+					getOverlayWidth(), getOverlayHeight(),
+					_windowWidth, _windowHeight, _overlayDrawRect);
 		}
 
 		if (_overlayInGUI) {
@@ -406,18 +465,18 @@ protected:
 	int _cursorX, _cursorY;
 
 private:
-	void populateDisplayAreaDrawRect(const frac_t displayAspect, int originalWidth, int originalHeight, Common::Rect &drawRect) const {
+	void populateDisplayAreaDrawRect(const frac_t displayAspect, int originalWidth, int originalHeight, int windowWidth, int windowHeight, Common::Rect &drawRect) const {
 		int mode = getStretchMode();
 		Common::RotationMode rotation = getRotationMode();
 		int rotatedWindowWidth;
 		int rotatedWindowHeight;
 
 		if (rotation == Common::kRotation90 || rotation == Common::kRotation270) {
-			rotatedWindowWidth = _windowHeight;
-			rotatedWindowHeight = _windowWidth;
+			rotatedWindowWidth = windowHeight;
+			rotatedWindowHeight = windowWidth;
 		} else {
-			rotatedWindowWidth = _windowWidth;
-			rotatedWindowHeight = _windowHeight;
+			rotatedWindowWidth = windowWidth;
+			rotatedWindowHeight = windowHeight;
 		}
 		// Mode Center   = use original size, or divide by an integral amount if window is smaller than game surface
 		// Mode Integral = scale by an integral amount.
