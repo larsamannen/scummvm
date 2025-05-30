@@ -138,6 +138,8 @@ public:
 	Common::Keymap *getKeymap();
 
 protected:
+	WindowedGraphicsManager::Insets getSafeAreaInsets() const override { return {30, 100, 80, 40}; }
+
 	enum CustomEventAction {
 		kActionToggleFullscreen = 100,
 		kActionToggleMouseCapture,
