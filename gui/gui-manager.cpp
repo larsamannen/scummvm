@@ -69,9 +69,6 @@ GuiManager::GuiManager() : CommandSender(nullptr), _redrawStatus(kRedrawDisabled
 
 	_iconsSetChanged = false;
 
-	_topDialogLeftPadding = 0;
-	_topDialogRightPadding = 0;
-
 	_displayTopDialogOnly = false;
 
 	// Clear the cursor
@@ -477,11 +474,6 @@ void GuiManager::redraw() {
 	if (_dialogStack.empty())
 		return;
 
-	// Reset any custom RTL paddings set by stacked dialogs when we go back to the top
-	if (useRTL() && _dialogStack.size() == 1) {
-		setDialogPaddings(0, 0);
-	}
-
 	if (_displayTopDialogOnly) {
 		redrawInternalTopDialogOnly();
 	} else {
@@ -842,9 +834,11 @@ void GuiManager::processEvent(const Common::Event &event, Dialog *const activeDi
 		return;
 	int button;
 	uint32 time;
+	int16 screenW;
 	Common::Point mouse(event.mouse.x - activeDialog->_x, event.mouse.y - activeDialog->_y);
 	if (g_gui.useRTL()) {
-		mouse.x = g_system->getOverlayWidth() - event.mouse.x - activeDialog->_x + g_gui.getOverlayOffset();
+		screenW = g_system->getOverlayWidth();
+		mouse.x = screenW - event.mouse.x - activeDialog->_x;
 	}
 	switch (event.type) {
 	case Common::EVENT_KEYDOWN:
@@ -855,7 +849,7 @@ void GuiManager::processEvent(const Common::Event &event, Dialog *const activeDi
 		break;
 	case Common::EVENT_MOUSEMOVE:
 		if (g_gui.useRTL()) {
-			_globalMousePosition.x = g_system->getOverlayWidth() - event.mouse.x + g_gui.getOverlayOffset();
+			_globalMousePosition.x = screenW - event.mouse.x;
 		} else {
 			_globalMousePosition.x = event.mouse.x;
 		}
@@ -946,11 +940,6 @@ void GuiManager::setLanguageRTL() {
 #endif // USE_TRANSLATION
 
 	_useRTL = false;
-}
-
-void GuiManager::setDialogPaddings(int l, int r) {
-	_topDialogLeftPadding = l;
-	_topDialogRightPadding = r;
 }
 
 void GuiManager::initTextToSpeech() {
