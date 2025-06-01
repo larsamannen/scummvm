@@ -105,13 +105,17 @@ void TextViewerDialog::destroy() {
 }
 
 void TextViewerDialog::reflowLayout() {
+	const int screenW = g_system->getOverlayWidth();
+	const int screenH = g_system->getOverlayHeight();
+	const Common::Rect safeArea = g_system->getSafeOverlayArea();
+
 	// Calculate the real width/height (rounded to char/line multiples)
-	_w = (uint16)(kDialogWidthPercent * g_system->getOverlayWidth());
-	_h = (uint16)((kDialogHeightPercent * g_system->getOverlayHeight() - 2) / _lineHeight);
+	_w = (uint16)(kDialogWidthPercent * safeArea.width());
+	_h = (uint16)((kDialogHeightPercent * safeArea.height() - 2) / _lineHeight);
 	_h = _h * _lineHeight + 2;
 
-	_x = (g_system->getOverlayWidth() - _w) / 2;
-	_y = (g_system->getOverlayHeight() - _h) / 2;
+	_x = MAX((screenW - _w) / 2, (int)safeArea.left);
+	_y = MAX((screenH - _h) / 2, (int)safeArea.top);
 
 	_padX = _w * kPadX;
 	_padY = _h * kPadY;
