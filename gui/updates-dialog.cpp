@@ -37,9 +37,9 @@ enum {
 
 
 UpdatesDialog::UpdatesDialog() : Dialog(30, 20, 260, 124) {
-
 	const int screenW = g_system->getOverlayWidth();
 	const int screenH = g_system->getOverlayHeight();
+	const Common::Rect safeArea = g_system->getSafeOverlayArea();
 
 	int buttonWidth = g_gui.xmlEval()->getVar("Globals.Button.Width", 0);
 	int buttonHeight = g_gui.xmlEval()->getVar("Globals.Button.Height", 0);
@@ -56,8 +56,8 @@ UpdatesDialog::UpdatesDialog() : Dialog(30, 20, 260, 124) {
 	// Using this, and accounting for the space the button(s) need, we can set
 	// the real size of the dialog
 	Common::Array<Common::U32String> lines, lines2;
-	int maxlineWidth = g_gui.getFont().wordWrapText(message, screenW - 2 * 20, lines);
-	int maxlineWidth2 = g_gui.getFont().wordWrapText(message2, screenW - 2 * 20, lines2);
+	int maxlineWidth = g_gui.getFont().wordWrapText(message, safeArea.width() - 2 * 20, lines);
+	int maxlineWidth2 = g_gui.getFont().wordWrapText(message2, safeArea.width() - 2 * 20, lines2);
 
 	_w = MAX(MAX(maxlineWidth, maxlineWidth2), (2 * buttonWidth) + 10) + 20;
 
@@ -69,8 +69,8 @@ UpdatesDialog::UpdatesDialog() : Dialog(30, 20, 260, 124) {
 	_h += lineCount * kLineHeight;
 
 	// Center the dialog
-	_x = (screenW - _w) / 2;
-	_y = (screenH - _h) / 2;
+	_x = MAX((screenW - _w) / 2, (int)safeArea.left);
+	_y = MAX((screenH - _h) / 2, (int)safeArea.top);
 
 	// Each line is represented by one static text item.
 	uint y = 10;
