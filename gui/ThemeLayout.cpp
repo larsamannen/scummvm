@@ -239,7 +239,7 @@ void ThemeLayoutMain::reflowLayout(Widget *widgetChain) {
 		_x = MAX(inset, (int)safeArea.left);
 		_y = MAX(inset, (int)safeArea.top);
 		int16 r = MIN(screenW - inset, (int)safeArea.right);
-		int16 b = MIN(screenW - inset, (int)safeArea.bottom);
+		int16 b = MIN(screenH - inset, (int)safeArea.bottom);
 		_w = r - _x;
 		_h = b - _y;
 		// Extend the dialog background only if it is supposed to stick on the borders
