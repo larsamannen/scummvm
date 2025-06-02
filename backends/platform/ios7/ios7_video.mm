@@ -516,7 +516,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		// We want to utilize as much screen area as possible and few
 		// games and launcher elements are put at the very bottom of
 		// the screen.
-		iOS7_setSafeAreaInsets(inset.left, inset.right, inset.top, 0);
+		CGFloat scale = [self contentScaleFactor];
+		iOS7_setSafeAreaInsets(inset.left * scale, inset.right * scale, inset.top * scale, [self isInGame] ? 0 : inset.bottom * scale);
 
 		// Add margins to respect the iPhone and iPad safe areas. Use the right
 		// safe area inset if available since the position of the buttons are
