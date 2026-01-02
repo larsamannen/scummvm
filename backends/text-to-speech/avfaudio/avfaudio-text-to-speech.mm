@@ -24,7 +24,7 @@
 
 #include "backends/text-to-speech/avfaudio/avfaudio-text-to-speech.h"
 
-#if defined(USE_TTS) && defined(MACOSX)
+#if defined(USE_TTS) && (defined(MACOSX) || defined(IPHONE_IOS7))
 #include "common/translation.h"
 #include <Foundation/NSString.h>
 #include <AVFoundation/AVFoundation.h>
