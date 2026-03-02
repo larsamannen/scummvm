@@ -125,10 +125,8 @@ public:
 		#if defined(RISCOS)
 		LINK_PLUGIN(RISCOS)
 		#endif
-		#if defined(MACOSX)
-		LINK_PLUGIN(COREAUDIO)
-		#endif
 		#if defined(MACOSX) || defined(IPHONE)
+		LINK_PLUGIN(COREAUDIO)
 		LINK_PLUGIN(COREMIDI)
 		#endif
 		#ifdef USE_FLUIDSYNTH

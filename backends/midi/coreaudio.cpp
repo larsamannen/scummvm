@@ -25,14 +25,16 @@
 #include "common/scummsys.h"
 
 #ifdef MACOSX
-
 #include "backends/platform/sdl/macosx/macosx-compat.h"
+#endif
+
+#if defined(MACOSX) || defined(IPHONE)
 
 // With the release of Mac OS X 10.5 in October 2007, Apple deprecated the
 // AUGraphNewNode & AUGraphGetNodeInfo APIs in favor of the new AUGraphAddNode &
 // AUGraphNodeInfo APIs. The newer APIs are used by default, but we do need to
 // use the old ones when building for 10.4.
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
+#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5 && !defined(IPHONE)
 	#define USE_DEPRECATED_COREAUDIO_API 1
 #else
 	#define USE_DEPRECATED_COREAUDIO_API 0
@@ -107,7 +109,7 @@ int MidiDriver_CORE::open() {
 	RequireNoErr(NewAUGraph(&_auGraph));
 
 	AUNode outputNode, synthNode;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_6
+#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_6 && !defined(IPHONE)
 	ComponentDescription desc;
 #else
 	AudioComponentDescription desc;
@@ -115,7 +117,12 @@ int MidiDriver_CORE::open() {
 
 	// The default output device
 	desc.componentType = kAudioUnitType_Output;
+#if defined(IPHONE)
+	// The audio unit that interfaces to the iOS audio system
+	desc.componentSubType = kAudioUnitSubType_RemoteIO;
+#else
 	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+#endif
 	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
 	desc.componentFlags = 0;
 	desc.componentFlagsMask = 0;
@@ -127,7 +134,11 @@ int MidiDriver_CORE::open() {
 
 	// The built-in default (softsynth) music device
 	desc.componentType = kAudioUnitType_MusicDevice;
+#if defined(IPHONE)
+	desc.componentSubType = kAudioUnitSubType_MIDISynth;
+#else
 	desc.componentSubType = kAudioUnitSubType_DLSSynth;
+#endif
 	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
 #if USE_DEPRECATED_COREAUDIO_API
 	RequireNoErr(AUGraphNewNode(_auGraph, &desc, 0, NULL, &synthNode));
@@ -198,17 +209,42 @@ void MidiDriver_CORE::loadSoundFont(const char *soundfont) {
 #else
 	// kMusicDeviceProperty_SoundBankURL was added in 10.5 as a replacement
 	// In addition, the File Manager API became deprecated starting in 10.8
-	CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8 *)soundfont, strlen(soundfont), false);
+	CFURLRef homeURL = CFCopyHomeDirectoryURL();
 
-	if (url) {
+	CFURLRef documentsURL = CFURLCreateCopyAppendingPathComponent(
+		NULL,
+		homeURL,
+		CFSTR("Documents"),
+		false
+	);
+	CFStringRef cfFilename = CFStringCreateWithCString(
+		NULL,
+		soundfont,
+		kCFStringEncodingUTF8
+	);
+	CFURLRef fileURL = CFURLCreateCopyAppendingPathComponent(
+		NULL,
+		documentsURL,
+		cfFilename,
+		false
+	);
+
+	char filePath[PATH_MAX];
+	if (!CFURLGetFileSystemRepresentation(fileURL, true, (UInt8 *)filePath, PATH_MAX)) {
+		printf("Error: Could not get file system representation.\n");
+		CFRelease(fileURL);
+	}
+	//CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8 *)soundfont, strlen(soundfont), false);
+
+	if (fileURL) {
 		err = AudioUnitSetProperty(
 			_synth,
 			kMusicDeviceProperty_SoundBankURL, kAudioUnitScope_Global,
 			0,
-			&url, sizeof(url)
+			&fileURL, sizeof(fileURL)
 		);
 
-		CFRelease(url);
+		CFRelease(fileURL);
 	} else {
 		warning("Failed to allocate CFURLRef from '%s'", soundfont);
 	}
@@ -260,7 +296,11 @@ void MidiDriver_CORE::sysEx(const byte *msg, uint16 length) {
 class CoreAudioMusicPlugin : public MusicPluginObject {
 public:
 	const char *getName() const {
+#if defined(IPHONE)
+		return "Apple MIDI Sampler Synthesizer";
+#else
 		return "Apple DLS Software Synthesizer";
+#endif
 	}
 
 	const char *getId() const {
